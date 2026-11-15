@@ -1,0 +1,2927 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prototype de Gest’club, l’outil de gestion des clubs sportifs amateurs.">
+  <title>Gest’club — Tableau de bord</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f7f2;
+      --white: #fff;
+      --ink: #162820;
+      --muted: #536359;
+      --rule: #e4e8e1;
+      --green: #154433;
+      --soft-green: #e7f1e9;
+      --orange: #a73c25;
+      --soft-orange: #fbece5;
+      --sidebar: 238px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      font-size: 14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); }
+    button, input, select, textarea { font: inherit; }
+    button, select { cursor: pointer; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+      outline: 2px solid #a54b33;
+      outline-offset: 3px;
+    }
+    button:disabled { opacity: .54; cursor: default; }
+    h1, h2, h3, p { margin: 0; }
+    a { color: inherit; }
+    [hidden] { display: none !important; }
+    .icon { width: 19px; height: 19px; flex: none; vertical-align: middle; }
+
+    .shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); }
+    .sidebar {
+      position: sticky; top: 0; height: 100dvh; background: #fdfdfa;
+      border-right: 1px solid var(--rule); display: flex; flex-direction: column; padding: 26px 15px 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; margin: 0 10px 33px; font-size: 23px; font-weight: 780; letter-spacing: -.075em; }
+    .brand-mark {
+      width: 33px; height: 33px; border-radius: 9px; background: var(--green);
+      display: grid; place-items: center; color: #fff; transform: rotate(-7deg);
+    }
+    .brand-mark .icon { width: 24px; height: 24px; transform: rotate(7deg); }
+    .club { display: flex; align-items: center; gap: 10px; padding: 11px 10px; border: 1px solid var(--rule); border-radius: 11px; }
+    .club-mark, .avatar { flex: none; display: grid; place-items: center; font-weight: 750; }
+    .club-mark { width: 35px; height: 35px; border-radius: 8px; background: var(--soft-orange); color: var(--orange); font-size: 12px; }
+    .club strong { display: block; font-size: 13px; }
+    .club small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .workspace { display: grid; gap: 6px; margin-top: 24px; }
+    .workspace label { padding-left: 6px; color: var(--muted); font-size: 11px; font-weight: 720; }
+    .workspace select { width: 100%; min-height: 39px; padding: 6px 9px; border: 1px solid #dbe1d9; border-radius: 8px; background: #fff; color: var(--ink); font-weight: 720; }
+    .navigation { display: grid; gap: 4px; margin-top: 12px; }
+    .nav-button {
+      background: transparent; border: 0; display: flex; align-items: center; gap: 11px;
+      text-align: left; border-radius: 8px; padding: 11px 10px; font-weight: 610; color: var(--muted); white-space: nowrap;
+    }
+    .nav-button:hover { background: #f0f3ed; color: var(--ink); }
+    .nav-button[aria-current="page"] { background: var(--soft-green); color: var(--green); font-weight: 750; }
+    .sidebar-footer { margin-top: auto; padding: 15px 7px 1px; border-top: 1px solid var(--rule); }
+    #online-controls { margin-top: 7px; }
+    #local-export { margin-top: 7px; }
+    .demo-label { display: inline-flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .demo-label::before { content: ""; height: 7px; width: 7px; border-radius: 50%; background: #b9573d; }
+
+    main { width: 100%; max-width: 1480px; margin-inline: auto; padding: 32px clamp(22px, 4vw, 64px) 44px; }
+    .page-header, .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .page-header { margin-bottom: 24px; }
+    h1 { font-size: clamp(28px, 3.4vw, 39px); font-weight: 780; letter-spacing: -.055em; line-height: 1.1; }
+    h2 { font-size: 18px; font-weight: 750; letter-spacing: -.025em; }
+    h3 { font-size: 16px; }
+    .season { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+    .season label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    .season select, .filters select {
+      min-height: 39px; border: 1px solid #dbe1d9; border-radius: 8px; color: var(--ink); background: var(--white);
+      padding: 7px 9px; font-weight: 650;
+    }
+    .hero {
+      position: relative; isolation: isolate; overflow: hidden; color: #fff; background: #153e2d;
+      border-radius: 15px; min-height: 215px; display: flex; align-items: center; padding: 29px 34px;
+    }
+    .hero::before {
+      content: ""; position: absolute; inset: 0; z-index: -2;
+      background: linear-gradient(110deg, #153e2d 33%, #20543a 74%, #2b6548);
+    }
+    .hero-copy { max-width: 535px; }
+    .hero-kicker { display: flex; align-items: center; gap: 8px; color: #dfeddb; font-size: 13px; font-weight: 650; }
+    .hero-kicker::before { content: ""; width: 15px; height: 2px; border-radius: 3px; background: #efac85; }
+    .hero h2 { margin: 8px 0 14px; font-size: clamp(29px, 4vw, 47px); line-height: 1.06; letter-spacing: -.06em; }
+    .pitch {
+      --line: #a2c4a48a;
+      position: absolute; z-index: -1; width: 410px; height: 246px; right: -3%; top: 51%;
+      transform: translateY(-50%) rotate(-18deg); opacity: .76;
+      border: 2px solid var(--line); border-radius: 3px;
+      background: repeating-linear-gradient(90deg, #71ad8329 0 39px, transparent 39px 80px);
+    }
+    .pitch::before, .pitch::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); }
+    .pitch::before { height: 100%; border-left: 2px solid var(--line); }
+    .pitch::after { width: 72px; height: 72px; top: calc(50% - 36px); border: 2px solid var(--line); border-radius: 50%; }
+    .pitch-box { position: absolute; top: 25%; width: 16%; height: 50%; border: 2px solid var(--line); }
+    .pitch-box::after { content: ""; position: absolute; top: 25%; width: 45%; height: 50%; border: 2px solid var(--line); }
+    .pitch-left, .pitch-left::after { left: -2px; }
+    .pitch-right, .pitch-right::after { right: -2px; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px;
+      padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; font-weight: 700; font-size: 13px;
+    }
+    .button .icon { width: 16px; height: 16px; }
+    .button.primary { background: var(--green); color: #fff; }
+    .button.primary:hover { background: #0d3225; }
+    .button.light { background: #f8e7d7; color: #342319; }
+    .button.light:hover { background: #ffefdf; }
+    .button.outline { background: #fff; border-color: #dbe1d9; }
+    .button.outline:hover { background: var(--paper); }
+    .link-button { background: none; border: 0; padding: 5px 0; color: var(--green); font-size: 12px; font-weight: 750; white-space: nowrap; }
+    .link-button:hover { text-decoration: underline; }
+    .link-button .icon { width: 15px; height: 15px; margin-left: 4px; }
+    .overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 17px 0 20px; }
+    .stat { padding: 15px 17px; border: 1px solid var(--rule); border-radius: 12px; background: #fff; }
+    .stat-label { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; color: var(--muted); }
+    .tile { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--green); background: var(--soft-green); }
+    .tile.warm { color: var(--orange); background: var(--soft-orange); }
+    .tile .icon { width: 17px; height: 17px; }
+    .stat-value { margin: 9px 0 0; font-size: 31px; line-height: 1.1; letter-spacing: -.045em; font-weight: 780; font-variant-numeric: tabular-nums; }
+    .stat-value span { font-size: 14px; color: var(--muted); font-weight: 550; letter-spacing: 0; margin-left: 6px; }
+
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(245px, .43fr); gap: 16px; align-items: start; }
+    .panel { background: #fff; border: 1px solid var(--rule); border-radius: 12px; min-width: 0; }
+    .panel-header { padding: 17px 18px; }
+    .table-wrap { overflow-x: auto; }
+    table { text-align: left; width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+    th { color: var(--muted); background: #f8f9f6; font-size: 11px; font-weight: 700; }
+    th, td { padding: 9px 16px; border-top: 1px solid #edf0eb; }
+    th:first-child, td:first-child { padding-left: 18px; }
+    td:last-child { text-align: right; }
+    .identity { display: flex; gap: 9px; align-items: center; font-weight: 690; }
+    .avatar { border-radius: 50%; width: 30px; height: 30px; font-size: 10px; }
+    .avatar.sage { background: #e5f0e5; color: #29583e; }
+    .avatar.peach { background: #faebe0; color: #743b24; }
+    .avatar.blue { background: #e7edf7; color: #3a527c; }
+    .avatar.gold { background: #f5eddb; color: #694d19; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 8px; font-size: 11px; font-weight: 720; }
+    .badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .badge.paid { color: #28583f; background: #e7f2e9; }
+    .badge.unpaid { color: #843923; background: #fcece4; }
+    .row-action { border: 0; background: transparent; width: 30px; height: 30px; border-radius: 7px; color: var(--muted); }
+    .row-action:hover { background: var(--soft-green); color: var(--green); }
+    .row-action .icon { width: 15px; height: 15px; }
+    .empty { text-align: left !important; color: var(--muted); padding: 24px 18px; white-space: normal; }
+    .payment-panel { padding: 17px 18px; }
+    .payment-panel h2 { margin-bottom: 17px; }
+    .payment-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+    .ring {
+      width: 83px; height: 83px; flex: none; display: grid; place-items: center; border-radius: 50%;
+      background: conic-gradient(#347456 var(--progress), #e9ede7 0);
+    }
+    .ring span { width: 66px; height: 66px; display: grid; place-items: center; background: #fff; border-radius: 50%; font-size: 21px; font-weight: 780; letter-spacing: -.045em; }
+    .payment-summary dl { margin: 0; display: grid; gap: 9px; flex: 1; font-size: 12px; }
+    .payment-summary dl div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .payment-summary dt { color: var(--muted); white-space: nowrap; }
+    .payment-summary dd { margin: 0; font-weight: 750; }
+    .payment-panel .link-button { display: block; margin-top: 16px; padding: 12px 0 0; border-top: 1px solid var(--rule); width: 100%; text-align: left; }
+    .filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 18px 14px; }
+    .search { display: flex; align-items: center; gap: 6px; min-height: 39px; padding: 0 10px; border: 1px solid #dbe1d9; border-radius: 8px; flex: 1 1 195px; max-width: 320px; }
+    .search:focus-within { outline: 2px solid #a54b33; outline-offset: 2px; }
+    .search .icon { color: var(--muted); width: 16px; height: 16px; }
+    .search input { padding: 8px 0; background: transparent; border: 0; outline: 0; width: 100%; min-width: 0; }
+    .search input:focus-visible { outline: 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); gap: 14px; }
+    .team { padding: 19px; }
+    .team h2 { margin-top: 11px; }
+    .team p { color: var(--muted); margin: 7px 0 12px; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    dialog { color: var(--ink); background: #fff; width: min(440px, calc(100% - 30px)); border: 1px solid var(--rule); border-radius: 15px; padding: 22px; }
+    dialog::backdrop { background: #13291ec0; }
+    dialog form { display: grid; gap: 14px; }
+    dialog header, dialog footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    dialog footer { justify-content: flex-end; margin-top: 4px; }
+    .field { display: grid; gap: 6px; font-size: 13px; font-weight: 690; }
+    .field input, .field select, .field textarea { width: 100%; min-height: 40px; padding: 8px 10px; border-radius: 7px; border: 1px solid #dbe1d9; color: var(--ink); background: #fff; }
+    .field textarea { resize: vertical; min-height: 68px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .toast { position: fixed; z-index: 2; right: 18px; bottom: 18px; max-width: calc(100% - 36px); padding: 12px 16px; border-radius: 9px; box-shadow: 0 4px 18px #143c2a30; background: #143c2a; color: #fff; font-weight: 650; }
+    .module-hero { min-height: 171px; }
+    .module-hero::after { content: ""; position: absolute; z-index: -1; right: 8%; top: -45px; width: 238px; height: 238px; border-radius: 50%; border: 1px solid #ffffff45; box-shadow: 0 0 0 35px #ffffff14, 0 0 0 69px #ffffff12, 0 0 0 104px #ffffff0d; }
+    .module-hero h2 { font-size: clamp(28px, 3.8vw, 43px); }
+    .module-hero.secretary { background: #243b48; }
+    .module-hero.secretary::before { background: linear-gradient(105deg, #263d4a 32%, #365c6c); }
+    .module-hero.secretary .hero-kicker { color: #dfedf1; }
+    .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin: 0 0 16px; }
+    .quick-card { padding: 17px; display: grid; justify-items: start; align-content: start; gap: 10px; }
+    .quick-card p, .panel-note, .meeting-meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .stack { display: grid; gap: 16px; }
+    .panel-note { padding: 0 18px 14px; }
+    .ledger-table td.numeric, .ledger-table th.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+    .ledger-table td:first-child { white-space: normal; }
+    .ledger-table td.label-cell { min-width: 155px; white-space: normal; }
+    .secondary-value { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
+    .ledger-table tfoot { font-weight: 750; background: #f8f9f6; }
+    .positive { color: var(--green); }
+    .negative { color: var(--orange); }
+    .text-button { background: #fff; border: 1px solid #dbe1d9; border-radius: 7px; padding: 6px 9px; font-weight: 660; font-size: 12px; }
+    .text-button:hover { background: var(--soft-green); }
+    .meeting-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; padding: 0 18px 18px; }
+    .meeting-card { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; padding: 15px; border: 1px solid var(--rule); border-radius: 9px; overflow-wrap: anywhere; }
+    .meeting-card p { white-space: pre-wrap; }
+    .meeting-card .actions { margin-top: auto; }
+    .row-actions { display: inline-flex; align-items: center; gap: 5px; }
+    .money-overview .stat-value { font-size: clamp(16px, 2.55vw, 31px); overflow-wrap: anywhere; }
+    .account-period { color: var(--muted); white-space: nowrap; font-size: 12px; }
+    .account-line-end td { border-bottom: 1px solid var(--rule); }
+    .finance-state { color: var(--green); margin: 0 0 15px; }
+    .file-field small { font-weight: 500; color: var(--muted); }
+    .report-details { padding: 0 18px 18px; }
+    .report-details summary { cursor: pointer; font-weight: 700; }
+    .report-details ul { margin-bottom: 0; padding-left: 19px; line-height: 1.65; }
+    .report-title { overflow-wrap: anywhere; }
+    .selection-list { display: grid; gap: 7px; max-height: 255px; overflow-y: auto; padding: 5px 2px; }
+    .selection-list label { display: flex; align-items: flex-start; gap: 8px; padding: 3px 4px; }
+    .selection-list input { accent-color: var(--green); flex: none; }
+    .import-preview { max-height: 240px; overflow: auto; }
+    .import-preview th { position: sticky; top: 0; }
+    @media print {
+      body:has(.closing-report) { background: #fff; }
+      body:has(.closing-report) .shell { display: block; }
+      body:has(.closing-report) .sidebar, body:has(.closing-report) .page-header,
+      body:has(.closing-report) .toast, .closing-report button, .closing-report .no-print { display: none !important; }
+      body:has(.closing-report) main { padding: 0; }
+      .closing-report .table-wrap { overflow: visible; }
+      .closing-report .panel { break-inside: avoid; }
+    }
+    .module-dialog { width: min(522px, calc(100% - 26px)); }
+    .module-dialog form { gap: 12px; }
+    .empty-note { padding: 16px 18px; color: var(--muted); }
+    .page-description { color: var(--muted); margin: -12px 0 17px; line-height: 1.5; }
+
+    @media (max-width: 1050px) {
+      :root { --sidebar: 193px; }
+      main { padding-inline: 24px; }
+      .pitch { right: -13%; }
+      .dashboard-grid { grid-template-columns: minmax(0, 1fr) minmax(215px, .43fr); }
+      th, td { padding-inline: 10px; }
+    }
+    @media (max-width: 865px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .payment-summary { max-width: 285px; }
+    }
+    @media (max-width: 680px) {
+      .shell { display: block; }
+      .sidebar { position: static; height: auto; border: 0; border-bottom: 1px solid var(--rule); padding: 13px 15px 8px; }
+      .brand { margin: 0; font-size: 21px; }
+      .brand-mark { width: 29px; height: 29px; }
+      .sidebar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 7px; padding: 7px 0 0; }
+      #online-controls, #local-export { margin-top: 0; }
+      .club { display: none; }
+      .workspace { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+      .workspace label { padding: 0; }
+      .workspace select { width: auto; min-height: 32px; }
+      .navigation { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 8px; }
+      .navigation[data-workspace="treasurer"], .navigation[data-workspace="secretary"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .nav-button { flex-direction: column; justify-content: flex-start; white-space: normal; padding: 7px 2px; gap: 4px; font-size: 11px; text-align: center; }
+      .nav-button .icon { width: 15px; height: 15px; }
+      main { padding: 21px 15px 26px; }
+      .page-header { margin-bottom: 15px; }
+      .season label { display: none; }
+      .hero { padding: 23px 19px; min-height: 173px; }
+      .pitch { right: -32%; opacity: .42; width: 315px; height: 195px; }
+      .overview { gap: 6px; margin: 12px 0; }
+      .stat { padding: 10px 7px; }
+      .stat-label { align-items: flex-start; flex-direction: column; gap: 5px; font-size: 11px; }
+      .tile { width: 26px; height: 26px; }
+      .stat-value { font-size: 25px; }
+      .stat-value span { font-size: 11px; margin-left: 3px; }
+      .money-overview .stat-value { font-size: clamp(13px, 4vw, 17px); }
+      .panel-header { flex-wrap: wrap; padding: 14px 11px; }
+      .filters { padding-inline: 11px; }
+      th, td { padding-inline: 7px; }
+      th:first-child, td:first-child { padding-left: 10px; }
+      .identity { gap: 5px; }
+      .avatar { width: 24px; height: 24px; font-size: 9px; }
+      .quick-grid { grid-template-columns: 1fr; gap: 10px; }
+      .page-description { margin-top: -5px; }
+      .meeting-grid, .panel-note { padding-inline: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true" id="brand-icon"></span>
+        Gest’club
+      </div>
+      <div class="club">
+        <span class="club-mark" aria-hidden="true">AS</span>
+        <div><strong id="club-name">AS des Tilleuls</strong><small id="club-subtitle">Club de football</small></div>
+      </div>
+      <div class="workspace">
+        <label for="workspace-role">Espace de travail</label>
+        <select id="workspace-role">
+          <option value="director">Dirigeant</option>
+          <option value="treasurer">Trésorier</option>
+          <option value="secretary">Secrétaire</option>
+        </select>
+      </div>
+      <nav class="navigation" aria-label="Menu principal" id="navigation"></nav>
+      <div class="sidebar-footer"><span class="demo-label" id="storage-mode">Mode démo</span>
+        <button type="button" class="text-button" id="local-export">Exporter les données locales</button>
+        <div class="actions" id="online-controls" hidden>
+          <button type="button" class="text-button" id="online-refresh">Actualiser</button>
+          <form method="post"><input type="hidden" name="csrf" id="logout-token">
+            <button type="submit" name="logout" class="text-button">Déconnexion</button></form>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <header class="page-header">
+        <h1 id="page-title">Tableau de bord</h1>
+        <div class="season">
+          <label for="season">Saison</label>
+          <select id="season" aria-label="Saison">
+            <option value="2026">2026–2027</option>
+            <option value="2025">2025–2026</option>
+          </select>
+        </div>
+      </header>
+      <div id="content"></div>
+    </main>
+  </div>
+
+  <dialog id="member-dialog" aria-labelledby="dialog-title">
+    <form id="member-form">
+      <header>
+        <h2 id="dialog-title">Ajouter un adhérent</h2>
+        <button class="row-action" type="button" data-close aria-label="Fermer" id="close-dialog"></button>
+      </header>
+      <div class="form-row">
+        <label class="field">Prénom <input name="first" required maxlength="60"></label>
+        <label class="field">Nom <input name="last" required maxlength="60"></label>
+      </div>
+      <label class="field">Équipe <select name="team" id="member-team"></select></label>
+      <label class="field">Dossier
+        <select name="fileStatus"><option>À vérifier</option><option>Incomplet</option><option>Complet</option></select>
+      </label>
+      <label class="field">Pièces ou informations manquantes <input name="fileNote" maxlength="180"></label>
+      <label class="field">Cotisation
+        <select name="paid"><option value="false">En attente</option><option value="true">Réglée</option></select>
+      </label>
+      <footer>
+        <button class="button outline" type="button" data-close>Annuler</button>
+        <button class="button primary" type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+  <dialog class="module-dialog" id="module-dialog" aria-labelledby="module-dialog-title"></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script>
+    (function () {
+  "use strict";
+
+  const icons = {
+    logo: '<path d="M5 7h14v10H5zM12 7v10"/><circle cx="12" cy="12" r="2"/>',
+    dashboard: '<rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/>',
+    members: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m2-15a3 3 0 0 1 0 6m4 9v-2a4 4 0 0 0-3-4"/>',
+    teams: '<path d="m12 22 2-4h4a3 3 0 0 0 3-3V5l-9-3-9 3v10a3 3 0 0 0 3 3h4l2 4Z"/><path d="m9 10 2 2 4-4"/>',
+    payments: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-14 5h4"/>',
+    ledger: '<path d="M5 3h12a2 2 0 0 1 2 2v16H6a2 2 0 1 1 0-4h13M5 17V3m4 4h6m-6 4h6"/>',
+    budget: '<path d="M4 19h16M6 15v-4m6 4V6m6 9V9"/>',
+    meetings: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4m8-4v4M3 10h18m-12 5h6"/>',
+    tasks: '<path d="m4 7 2 2 4-4m3 2h7M4 16l2 2 4-4m3 2h7"/>',
+    invoices: '<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h7m-7 4h7"/>',
+    accounting: '<path d="M12 3v17m-6 0h12M4 7h16M7 7l-3 6h6L7 7Zm10 0-3 6h6l-3-6Z"/>',
+    bank: '<path d="M3 9h18l-9-5-9 5Zm2 10h14M7 10v7m5-7v7m5-7v7"/>',
+    expenses: '<path d="M6 3v18l3-2 3 2 3-2 3 2V3L15 5l-3-2-3 2-3-2Zm3 6h6m-6 4h6"/>',
+    closing: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    arrow: '<path d="M4 12h15m-6-6 6 6-6 6"/>',
+    pencil: '<path d="m15 5 4 4M4 20l4.5-1 12-12a2.8 2.8 0 0 0-4-4l-12 12L4 20Z"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+    download: '<path d="M12 3v12m-4-4 4 4 4-4M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
+    close: '<path d="m6 6 12 12M18 6 6 18"/>'
+  };
+
+  function icon(name) {
+    return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]}</svg>`;
+  }
+
+  const pages = {
+    dashboard: "Tableau de bord", members: "Adhérents", teams: "Équipes", payments: "Cotisations",
+    ledger: "Journal de trésorerie", budget: "Budget et rapport", meetings: "Réunions et PV", tasks: "Plan d’action",
+    invoices: "Factures et échéances", accounting: "Écritures et balance", bank: "Rapprochement bancaire",
+    expenses: "Notes de frais", closing: "Clôture et rapport d’AG", renewals: "Renouvellement des adhésions",
+    decisions: "Décisions du bureau", volunteers: "Bénévoles", assembly: "Préparation de l’AG"
+  };
+  const workspaces = {
+    director: ["dashboard", "teams", "members", "decisions", "tasks", "volunteers", "expenses"],
+    treasurer: ["dashboard", "ledger", "bank", "invoices", "expenses", "accounting", "budget", "payments", "closing"],
+    secretary: ["dashboard", "members", "renewals", "meetings", "tasks"]
+  };
+  const menuLabels = { ledger: "Trésorerie", budget: "Budget", invoices: "Factures", accounting: "Comptabilité",
+    bank: "Rapprochement", closing: "Clôture", renewals: "Renouvellement", decisions: "Décisions" };
+  const pageIcons = { renewals: "members", decisions: "tasks", volunteers: "teams", assembly: "meetings" };
+  const teams = ["Seniors", "U17", "U15"];
+  const examples = [
+    ["Louise", "Martin", "Seniors", true], ["Adam", "Bernard", "U17", false],
+    ["Inès", "Petit", "U15", true], ["Hugo", "Robert", "Seniors", true],
+    ["Maya", "Laurent", "U17", false], ["Sara", "Diallo", "U15", true],
+    ["Nathan", "Thomas", "U17", true], ["Chloé", "Roux", "Seniors", true],
+    ["Noé", "Garnier", "U15", false], ["Emma", "Vincent", "U15", true],
+    ["Lucas", "Mercier", "U17", true], ["Lina", "Dupont", "Seniors", false],
+    ["Amine", "Haddad", "Seniors", true], ["Gabriel", "Morel", "U15", true],
+    ["Léna", "Simon", "U17", true], ["Raphaël", "Leroy", "Seniors", true],
+    ["Jade", "Muller", "U15", false], ["Hana", "Nguyen", "U17", true],
+    ["Arthur", "Girard", "U17", true], ["Zoé", "Robin", "Seniors", false],
+    ["Louis", "Fournier", "Seniors", true], ["Nina", "André", "U15", true],
+    ["Éliott", "Lopez", "U17", false], ["Fatou", "Ndiaye", "Seniors", true]
+  ];
+
+  const elements = Object.fromEntries(
+    ["brand-icon", "navigation", "page-title", "season", "content", "member-dialog", "member-form",
+      "dialog-title", "close-dialog", "member-team", "toast", "workspace-role", "module-dialog"]
+      .map(id => [id, document.getElementById(id)])
+  );
+  const nav = elements.navigation;
+  const season = elements.season;
+  const main = elements.content;
+  const dialog = elements["member-dialog"];
+  const form = elements["member-form"];
+  const role = elements["workspace-role"];
+  const moduleDialog = elements["module-dialog"];
+  const remote = window.gestclubRemote || null;
+  const clubName = remote?.clubName || "AS des Tilleuls";
+  let remoteBusy = false;
+  if (remote) {
+    role.replaceChildren(...remote.roles.map(value => new Option(
+      { director: "Dirigeant", treasurer: "Trésorier", secretary: "Secrétaire" }[value], value
+    )));
+    role.value = remote.role;
+    season.replaceChildren(...Object.keys(remote.state.records).sort().reverse()
+      .map(year => new Option(`${year}–${Number(year) + 1}`, year)));
+    document.getElementById("club-name").textContent = clubName;
+    document.getElementById("club-subtitle").hidden = true;
+    document.getElementById("storage-mode").textContent = "Données partagées";
+    document.getElementById("online-controls").hidden = false;
+    document.getElementById("local-export").hidden = true;
+    document.getElementById("logout-token").value = remote.csrf;
+  }
+  const storageKey = "gestclub-demo-v1";
+  const records = loadRecords();
+  let page = "dashboard";
+  let filters = { search: "", team: "", payment: "" };
+  let editingId = null;
+  let selectedAssemblyId = "";
+  let toastTimeout;
+
+  function loadRecords() {
+    if (remote) return structuredClone(remote.state.records);
+    const initial = {
+      2026: examples.map(([first, last, team, paid], id) => ({ id: String(id), first, last, team, paid })),
+      2025: [
+        ...examples.slice(0, 18).map(([first, last, team], id) =>
+          ({ id: String(id), first, last, team, paid: id !== 1 && id !== 4 })),
+        { id: "prior-1", first: "Mila", last: "Lefèvre", team: "U17", paid: true },
+        { id: "prior-2", first: "Léo", last: "Perrin", team: "U15", paid: true },
+        { id: "prior-3", first: "Yanis", last: "Dubois", team: "Seniors", paid: true }
+      ]
+    };
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey));
+      if (Array.isArray(saved?.[2026]) && Array.isArray(saved?.[2025])) return saved;
+    } catch {
+      // The demonstration still works in browsers that block local storage.
+    }
+    return initial;
+  }
+
+  function notify(message) {
+    elements.toast.textContent = message;
+    elements.toast.hidden = false;
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => { elements.toast.hidden = true; }, 4500);
+  }
+
+  function getMembers() {
+    return records[season.value];
+  }
+
+  function hasRecordedDues(member) {
+    return clubYear().entries.some(entry => entry.memberId === member.id);
+  }
+
+  function hasPaid(member) {
+    return member.paid || hasRecordedDues(member);
+  }
+
+  function escapeHtml(value) {
+    const substitutions = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return String(value).replace(/[&<>"']/g, character => substitutions[character]);
+  }
+
+  function initials(member) {
+    return `${[...member.first][0] || ""}${[...member.last][0] || ""}`.toLocaleUpperCase("fr");
+  }
+
+  function stat(label, value, symbol, secondary = "", warm = false) {
+    return `<article class="stat">
+      <p class="stat-label"><span class="tile${warm ? " warm" : ""}">${icon(symbol)}</span>${label}</p>
+      <p class="stat-value">${value}${secondary ? `<span>${secondary}</span>` : ""}</p>
+    </article>`;
+  }
+
+  function rows(members) {
+    if (!members.length) return `<tr><td colspan="${page === "members" ? 5 : 4}" class="empty">Aucun adhérent à afficher.</td></tr>`;
+    const avatarColors = ["sage", "peach", "blue", "gold"];
+    return members.map((member, index) => {
+      const name = escapeHtml(`${member.first} ${member.last}`);
+      const isPaid = hasPaid(member);
+      const paid = isPaid ? "Réglée" : "En attente";
+      const collect = page === "payments" && !isPaid ? action("Encaisser", "dues", member.id) : "";
+      return `<tr>
+        <td><span class="identity"><span class="avatar ${avatarColors[index % avatarColors.length]}" aria-hidden="true">${escapeHtml(initials(member))}</span>${name}</span></td>
+        <td>${escapeHtml(member.team)}</td>
+        ${page === "members" ? `<td>${badge(fileStatus(member), fileStatus(member) !== "Complet")}
+        ${member.fileNote ? `<span class="secondary-value">${escapeHtml(member.fileNote)}</span>` : ""}</td>` : ""}
+        <td><span class="badge ${isPaid ? "paid" : "unpaid"}">${paid}</span></td>
+        <td><span class="row-actions">${collect}<button type="button" class="row-action" data-edit="${escapeHtml(member.id)}" aria-label="Modifier ${name}" title="Modifier">${icon("pencil")}</button></span></td>
+      </tr>`;
+    }).join("");
+  }
+
+  function table(members) {
+    return `<div class="table-wrap" tabindex="0" role="region" aria-label="Liste des adhérents">
+      <table>
+        <thead><tr><th scope="col">Adhérent</th><th scope="col">Équipe</th>${page === "members" ? '<th scope="col">Dossier</th>' : ""}<th scope="col">Cotisation</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody id="member-rows">${rows(members)}</tbody>
+      </table>
+    </div>`;
+  }
+
+  function dashboard() {
+    const members = getMembers();
+    const paid = members.filter(hasPaid).length;
+    const unpaid = members.length - paid;
+    const percent = members.length ? Math.round((paid / members.length) * 100) : 0;
+    return `
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="pitch" aria-hidden="true"><i class="pitch-box pitch-left"></i><i class="pitch-box pitch-right"></i></div>
+        <div class="hero-copy">
+          <p class="hero-kicker">${escapeHtml(clubName)} · Espace dirigeant</p>
+          <h2 id="hero-title">La saison en un coup d’œil.</h2>
+          <button type="button" class="button light" data-add>${icon("plus")} Ajouter un adhérent</button>
+        </div>
+      </section>
+      <section class="overview" aria-label="Chiffres de la saison">
+        ${stat("Adhérents", members.length, "members")}
+        ${stat("Équipes", teams.length, "teams", "", true)}
+        ${stat("Cotisations réglées", paid, "payments", `sur ${members.length}`)}
+      </section>
+      <div class="dashboard-grid">
+        <section class="panel" aria-labelledby="recent-title">
+          <header class="panel-header"><h2 id="recent-title">Derniers adhérents</h2>
+            <button type="button" class="link-button" data-nav="members">Voir la liste ${icon("arrow")}</button>
+          </header>
+          ${table(members.slice(0, 5))}
+        </section>
+        <section class="panel payment-panel" aria-labelledby="fees-title">
+          <h2 id="fees-title">Suivi des cotisations</h2>
+          <div class="payment-summary">
+            <div class="ring" style="--progress: ${percent}%"><span aria-label="${percent} % de cotisations réglées">${percent}&nbsp;%</span></div>
+            <dl><div><dt>Réglées</dt><dd>${paid}</dd></div><div><dt>En attente</dt><dd>${unpaid}</dd></div></dl>
+          </div>
+          <button type="button" class="link-button" data-nav="payments" data-role="treasurer" data-payment="${unpaid ? "unpaid" : ""}">${unpaid ? `Voir les ${unpaid} en attente` : "Voir les cotisations"} ${icon("arrow")}</button>
+        </section>
+      </div>
+      <div class="quick-grid" style="margin-top: 16px">
+        ${quickCard("Trésorerie du club", budgetSummary().ending + " de solde dans le journal de la saison.", "Ouvrir le budget", "budget", "treasurer")}
+        ${quickCard("Vie du club", actionSummary(), "Ouvrir le plan d’action", "tasks")}
+      </div>${directorOverview()}`;
+  }
+
+  function normalize(value) {
+    return value.toLocaleLowerCase("fr").normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  }
+
+  function filteredMembers() {
+    const query = normalize(filters.search.trim());
+    return getMembers().filter(member =>
+      (!query || normalize(`${member.first} ${member.last}`).includes(query) ||
+        normalize(`${member.last} ${member.first}`).includes(query)) &&
+      (!filters.team || member.team === filters.team) &&
+      (!filters.payment || hasPaid(member) === (filters.payment === "paid")) &&
+      (!filters.fileStatus || fileStatus(member) === filters.fileStatus)
+    );
+  }
+
+  function option(value, label, current) {
+    return `<option value="${escapeHtml(value)}"${value === current ? " selected" : ""}>${escapeHtml(label)}</option>`;
+  }
+
+  function list() {
+    const payments = page === "payments";
+    return `<section class="panel" aria-labelledby="list-title">
+      <header class="panel-header">
+        <h2 id="list-title">${payments ? "Statut des cotisations" : "Liste des adhérents"}</h2>
+        <div class="actions">
+          <button type="button" class="button outline" data-export>${icon("download")} Export CSV</button>
+          ${role.value === "secretary" && !payments ? action("Importer un CSV", "import-members") : ""}
+          ${payments ? "" : `<button type="button" class="button primary" data-add>${icon("plus")} Ajouter un adhérent</button>`}
+        </div>
+      </header>
+      ${payments ? '<p class="panel-note">L’action « Encaisser » inscrit le paiement au journal et marque la cotisation comme réglée.</p>' : ""}
+      <div class="filters">
+        <label class="search">${icon("search")}<span class="visually-hidden">Rechercher un adhérent</span>
+          <input type="search" placeholder="Rechercher un adhérent" data-filter="search" value="${escapeHtml(filters.search)}">
+        </label>
+        <select data-filter="team" aria-label="Filtrer par équipe">
+          ${option("", "Toutes les équipes", filters.team)}
+          ${teams.map(team => option(team, team, filters.team)).join("")}
+        </select>
+        ${payments ? "" : `<select data-filter="fileStatus" aria-label="Filtrer par état du dossier">
+          ${option("", "Tous les dossiers", filters.fileStatus)}${optionList(memberFileStates, filters.fileStatus)}</select>`}
+        <select data-filter="payment" aria-label="Filtrer par statut de cotisation">
+          ${option("", "Toutes les cotisations", filters.payment)}
+          ${option("paid", "Réglées", filters.payment)}
+          ${option("unpaid", "En attente", filters.payment)}
+        </select>
+      </div>
+      ${table(filteredMembers())}
+    </section>`;
+  }
+
+  function teamCards() {
+    return `<section class="team-grid" aria-label="Équipes de la saison">${teams.map(team => {
+      const count = getMembers().filter(member => member.team === team).length;
+      return `<article class="panel team">
+        <span class="tile">${icon("teams")}</span><h2>${escapeHtml(team)}</h2>
+        <p>${count} ${count === 1 ? "adhérent" : "adhérents"}</p>
+        <button type="button" class="link-button" data-nav="members" data-team="${escapeHtml(team)}">Voir les adhérents ${icon("arrow")}</button>
+      </article>`;
+    }).join("")}</section>`;
+  }
+
+  function render() {
+    const available = workspaces[role.value];
+    if (nav.dataset.workspace !== role.value) {
+      nav.innerHTML = available.map(key =>
+        `<button type="button" class="nav-button" data-nav="${key}">${icon(pageIcons[key] || key)}${menuLabels[key] || pages[key]}</button>`
+      ).join("");
+      nav.dataset.workspace = role.value;
+    }
+    for (const button of nav.querySelectorAll("button")) {
+      if (button.dataset.nav === (page === "assembly" ? "meetings" : page)) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
+    elements["page-title"].textContent = pages[page];
+    document.title = `Gest’club — ${pages[page]}`;
+    if (page === "dashboard") {
+      main.innerHTML = role.value === "treasurer" ? financeDashboard() :
+        role.value === "secretary" ? secretaryDashboard() : dashboard();
+    }
+    else if (page === "teams") main.innerHTML = teamCards();
+    else if (page === "ledger") main.innerHTML = ledger();
+    else if (page === "invoices") main.innerHTML = invoicesPage();
+    else if (page === "accounting") main.innerHTML = accountingPage();
+    else if (page === "bank") main.innerHTML = reconciliationPage();
+    else if (page === "expenses") main.innerHTML = expenseClaimsPage();
+    else if (page === "closing") main.innerHTML = closingPage();
+    else if (page === "budget") main.innerHTML = budget();
+    else if (page === "meetings") main.innerHTML = meetings();
+    else if (page === "renewals") main.innerHTML = renewalsPage();
+    else if (page === "decisions") main.innerHTML = decisionsPage();
+    else if (page === "volunteers") main.innerHTML = volunteersPage();
+    else if (page === "assembly") main.innerHTML = assemblyPage();
+    else if (page === "tasks") main.innerHTML = tasks();
+    else main.innerHTML = list();
+    if (remote) {
+      for (const control of main.querySelectorAll("[data-role]")) {
+        if (control.dataset.role && !remote.roles.includes(control.dataset.role)) control.hidden = true;
+      }
+    }
+    if ((role.value === "treasurer" || page === "expenses") && lockedFinanceYear()) {
+      if (page !== "closing") main.insertAdjacentHTML("afterbegin", `<p class="finance-state">${financeLockMessage()}</p>`);
+      for (const button of main.querySelectorAll("[data-module-action]")) {
+        if (financeWrites.has(button.dataset.moduleAction)) button.hidden = true;
+      }
+    }
+  }
+
+  function openMember(member) {
+    editingId = member?.id ?? null;
+    form.reset();
+    elements["dialog-title"].textContent = member ? "Modifier un adhérent" : "Ajouter un adhérent";
+    form.elements.first.setCustomValidity("");
+    form.elements.last.setCustomValidity("");
+    form.elements.first.value = member?.first ?? "";
+    form.elements.last.value = member?.last ?? "";
+    form.elements.team.value = member?.team ?? teams[0];
+    form.elements.fileStatus.value = fileStatus(member);
+    form.elements.fileNote.value = member?.fileNote ?? "";
+    form.elements.paid.value = String(member ? hasPaid(member) : false);
+    form.elements.paid.disabled = Boolean(remote || lockedFinanceYear() || (member && hasRecordedDues(member)));
+    dialog.showModal();
+    form.elements.first.focus();
+  }
+
+  function exportCsv() {
+    const members = filteredMembers();
+    if (!members.length) {
+      notify("Aucun adhérent à exporter.");
+      return;
+    }
+    downloadCsv("adherents", [
+      ["Prénom", "Nom", "Équipe", "Cotisation", "Saison", "Dossier", "Informations manquantes"],
+      ...members.map(member => [
+        member.first, member.last, member.team, hasPaid(member) ? "Réglée" : "En attente",
+        season.selectedOptions[0].textContent, fileStatus(member), member.fileNote || ""
+      ])
+    ]);
+  }
+
+  function downloadCsv(name, lines) {
+    const csvCell = value => {
+      const text = String(value);
+      const formula = /^[=+@\-\t\r\n]/.test(text) && !/^-?\d+(?:[,.]\d+)?$/.test(text);
+      const safe = formula ? "'" + text : text;
+      return '"' + safe.replaceAll('"', '""') + '"';
+    };
+    const csv = lines.map(row => row.map(csvCell).join(";")).join("\r\n");
+    downloadFile(`${name}-${season.value}.csv`, ["\uFEFF", csv], "text/csv;charset=utf-8");
+    notify("Export CSV préparé.");
+  }
+
+  function downloadFile(name, content, mime) {
+    const url = URL.createObjectURL(new Blob(content, { type: mime }));
+    const download = document.createElement("a");
+    download.href = url;
+    download.download = `gestclub-${name}`;
+    document.body.append(download);
+    download.click();
+    download.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  const categories = {
+    income: ["Cotisations", "Subventions", "Partenariats", "Événements", "Dons", "Autres recettes"],
+    expense: ["Licences fédérales", "Matériel", "Déplacements", "Installations", "Assurance", "Remboursements", "Autres dépenses"]
+  };
+  const accounts = { bank: "Banque", cash: "Caisse" };
+  const directions = { income: "Encaissement", expense: "Décaissement" };
+  const meetingTypes = ["Réunion du bureau", "Conseil d’administration", "Assemblée générale", "Commission"];
+  const meetingStates = ["À venir", "Tenue", "PV approuvé"];
+  const taskStates = ["À faire", "En cours", "Terminée"];
+  const moduleKey = "gestclub-bureau-v1";
+  const asEuros = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+  const asDate = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const ledgerFilters = { kind: "", account: "" };
+
+  function demoSeason(year) {
+    const moves = [
+      ["09-07", "Rentrée sportive", "income", "Cotisations", "bank", year === "2026" ? 187000 : 176000, "COT-01", true],
+      ["09-15", "Affiliation et licences", "expense", "Licences fédérales", "bank", 62000, "FED-01", true],
+      ["09-27", "Versement de la commune", "income", "Subventions", "bank", 150000, "SUB-01", true],
+      ["10-04", "Ballons et chasubles", "expense", "Matériel", "bank", 28450, "FAC-02", true],
+      ["10-10", "Buvette du tournoi", "income", "Événements", "cash", 19500, "CAI-01", false],
+      ["11-06", "Déplacement U17", "expense", "Déplacements", "bank", 7860, "NDF-01", false]
+    ];
+    return {
+      opening: { bank: 124000, cash: 4500 },
+      invoices: year === "2026" ? [
+        { id: "demo-invoice-supplier", kind: "expense", reference: "FAC-26114", party: "Sports Équipement",
+          label: "Filets pour les buts", date: "2026-10-26", due: "2026-11-10", category: "Matériel", amount: 27500 },
+        { id: "demo-invoice-client", kind: "income", reference: "AS-2026-08", party: "Cycles des Tilleuls",
+          label: "Partenariat tournoi d’hiver", date: "2026-11-04", due: "2026-11-30", category: "Partenariats", amount: 45000 }
+      ] : [],
+      entries: moves.map(([day, label, kind, category, account, amount, reference, cleared], index) =>
+        ({ id: `demo-${index + 1}`, date: `${year}-${day}`, label, kind, category, account, amount, reference, cleared })),
+      plan: { income: { Cotisations: 264000, Subventions: 180000, Événements: 45000 },
+        expense: { "Licences fédérales": 85000, Matériel: 65000, Déplacements: 40000, Assurance: 25000, Installations: 110000 } },
+      meetings: [
+        { id: "demo-m1", type: "Réunion du bureau", title: "Bilan de la rentrée", date: `${year}-10-08`, place: "Maison des associations",
+          status: "Tenue", agenda: "Point sur les adhésions et bilan du tournoi de rentrée.", attendance: "Bureau et responsables d’équipe",
+          minutes: "Le bureau valide le renouvellement du matériel d’entraînement." },
+        { id: "demo-m2", type: "Assemblée générale", title: "Assemblée générale de la saison", date: `${Number(year) + 1}-06-12`,
+          place: "Salle municipale", status: "À venir", agenda: "Rapport d’activité, présentation financière et vote du budget.", attendance: "", minutes: "" }
+      ],
+      tasks: [
+        { id: "demo-t1", title: "Faire le point sur les cotisations", owner: "Trésorerie", date: `${year}-11-30`, status: "En cours" },
+        { id: "demo-t2", title: "Finaliser le PV de rentrée", owner: "Secrétariat", date: `${year}-11-25`, status: "À faire" }
+      ]
+    };
+  }
+
+  function loadBureau() {
+    if (remote) return structuredClone(remote.state.bureau);
+    try {
+      const saved = JSON.parse(localStorage.getItem(moduleKey));
+      if (saved?.[2026]?.entries && saved?.[2025]?.entries) return saved;
+    } catch {
+      // Fall back to the examples when browser storage is unavailable.
+    }
+    return { 2026: demoSeason("2026"), 2025: demoSeason("2025") };
+  }
+
+  const bureau = loadBureau();
+
+  function clubYear() { return bureau[season.value]; }
+  function money(cents) { return asEuros.format(cents / 100); }
+  function dateLabel(date) { return date ? asDate.format(new Date(date + "T00:00:00Z")) : "—"; }
+  function newId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`; }
+
+  function saveBureau(message) {
+    if (remote) {
+      syncRemote(message);
+      return;
+    }
+    try {
+      localStorage.setItem(moduleKey, JSON.stringify(bureau));
+      notify(message);
+    } catch {
+      notify("Modifications disponibles jusqu’à la fermeture de cette page.");
+    }
+  }
+
+  function action(text, command, value = "", style = "outline", symbol = "") {
+    return `<button type="button" class="button ${style}" data-module-action="${command}" data-value="${escapeHtml(value)}">${symbol ? icon(symbol) : ""}${text}</button>`;
+  }
+
+  function quickCard(title, text, label, target, workspace = "") {
+    return `<article class="panel quick-card"><h2>${title}</h2><p>${escapeHtml(text)}</p>
+      <button type="button" class="link-button" data-nav="${target}" data-role="${workspace}">${label}${icon("arrow")}</button></article>`;
+  }
+
+  function financialTotals(entries, includeTransfers = false) {
+    return entries.reduce((totals, entry) => {
+      if (includeTransfers || !entry.transferId) totals[entry.kind] += entry.amount;
+      return totals;
+    }, { income: 0, expense: 0 });
+  }
+
+  function budgetSummary(totals) {
+    if (clubYear().report) return { ending: money(clubYear().report.balance) };
+    totals ??= financialTotals(clubYear().entries);
+    const opening = clubYear().opening;
+    return { ending: money(opening.bank + opening.cash + totals.income - totals.expense) };
+  }
+
+  function financeDashboard() {
+    const year = clubYear();
+    const totals = financialTotals(year.entries);
+    const toCheck = year.entries.filter(entry => entry.account === "bank" && !entry.cleared).length;
+    const pending = toCheck === 0 ? "Toutes les opérations bancaires sont pointées." :
+      toCheck === 1 ? "1 opération bancaire à pointer." : `${toCheck} opérations bancaires à pointer.`;
+    return `<section class="hero module-hero"><div class="hero-copy">
+      <p class="hero-kicker">Espace trésorier</p><h2>Trésorerie de la saison</h2>
+      ${action("Nouvelle opération", "entry", "", "light", "plus")}
+      </div></section>
+      <section class="overview money-overview" aria-label="Chiffres de trésorerie">
+        ${stat("Solde suivi", budgetSummary(totals).ending, "payments")}
+        ${stat("Encaissements", money(totals.income), "ledger")}
+        ${stat("Décaissements", money(totals.expense), "budget", "", true)}
+      </section>
+      <div class="stack">
+        ${accountSummary()}
+        <div class="quick-grid">
+          ${quickCard("Factures et échéances", invoiceSummary(), "Voir les factures", "invoices")}
+          ${quickCard("Comptabilité", "Consulter les écritures au débit et au crédit et la balance des comptes.", "Ouvrir la comptabilité", "accounting")}
+          ${quickCard("Journal de trésorerie", pending, "Ouvrir le journal", "ledger")}
+          ${quickCard("Rapprochement bancaire", "Comparer le relevé importé aux écritures de banque.", "Ouvrir le rapprochement", "bank")}
+          ${quickCard("Budget prévisionnel", "Comparer les montants prévus aux encaissements et décaissements saisis.", "Voir le budget", "budget")}
+        </div>
+      </div>`;
+  }
+
+  function dataTable(columns, rows, title, footer = "") {
+    const headings = columns.map(([text, numeric]) => `<th scope="col"${numeric ? ' class="numeric"' : ""}>${text}</th>`).join("");
+    return `<div class="table-wrap" tabindex="0" role="region" aria-label="${title}">
+      <table class="ledger-table"><thead><tr>${headings}</tr></thead>
+      <tbody>${rows || `<tr><td colspan="${columns.length}" class="empty">Aucun élément à afficher.</td></tr>`}</tbody>${footer}
+      </table></div>`;
+  }
+
+  function amountCell(cents, signed = false) {
+    const label = (signed && cents > 0 ? "+" : "") + money(cents);
+    const color = signed ? (cents < 0 ? "negative" : "positive") : "";
+    return `<td class="numeric ${color}">${label}</td>`;
+  }
+
+  function accountSummary() {
+    const rows = Object.entries(accounts).map(([id, label]) => {
+      const entries = clubYear().entries.filter(entry => entry.account === id);
+      const totals = financialTotals(entries, true);
+      const cleared = financialTotals(entries.filter(entry => entry.cleared), true);
+      const opening = clubYear().opening[id];
+      const clearedCell = id === "bank" ? amountCell(opening + cleared.income - cleared.expense) : '<td class="numeric">—</td>';
+      return `<tr><td>${label}</td>${amountCell(opening + totals.income - totals.expense)}${clearedCell}
+        ${amountCell(opening)}${amountCell(totals.income)}${amountCell(totals.expense)}</tr>`;
+    }).join("");
+    const columns = [["Compte"], ["Solde suivi", true], ["Solde pointé", true], ["Ouverture", true], ["Entrées", true], ["Sorties", true]];
+    return `<section class="panel"><header class="panel-header"><h2>Banque et caisse</h2>
+      ${action("Soldes d’ouverture", "opening")}</header>${dataTable(columns, rows, "Soldes par compte")}</section>`;
+  }
+
+  function visibleEntries() {
+    return clubYear().entries
+      .filter(entry => (!ledgerFilters.kind || (entry.transferId ? "transfer" : entry.kind) === ledgerFilters.kind) &&
+        (!ledgerFilters.account || entry.account === ledgerFilters.account))
+      .sort((first, second) => second.date.localeCompare(first.date));
+  }
+
+  function ledgerRows() {
+    return visibleEntries().map(entry => {
+      const label = escapeHtml(entry.label);
+      const reference = entry.reference ? ` · ${escapeHtml(entry.reference)}` : "";
+      const clearButton = entry.bankLineId ? badge("Rapprochée", false) : entry.account === "bank" && lockedFinanceYear() ?
+        (entry.cleared ? "Pointée" : "À pointer") : entry.account === "bank" ? `<button type="button" class="text-button" data-module-action="clear" data-value="${entry.id}"
+        aria-label="${entry.cleared ? "Dépointer" : "Pointer"} ${label}" aria-pressed="${entry.cleared}">${entry.cleared ? "Pointée" : "À pointer"}</button>` : "—";
+      const editAction = entry.transferId ? "transfer" : entry.invoiceId ? "invoice-payment-edit" : "entry";
+      const editId = entry.transferId ?? entry.id;
+      return `<tr><td>${dateLabel(entry.date)}</td><td class="label-cell"><strong>${label}</strong>
+        <span class="secondary-value">${escapeHtml(entry.category)}${reference}</span></td>
+        <td>${accounts[entry.account]}</td>${amountCell(entry.amount * (entry.kind === "income" ? 1 : -1), true)}
+        <td>${clearButton}</td><td><span class="row-actions">
+        ${!entry.transferId ? receiptActions(entry.invoiceId ? "invoice" : "entry", entry.invoiceId || entry.id) : ""}
+        ${lockedFinanceYear() ? "" : `<button type="button" class="row-action" data-module-action="${editAction}" data-value="${editId}" aria-label="Modifier ${label} (${accounts[entry.account]})">${icon("pencil")}</button>`}</span></td></tr>`;
+    }).join("");
+  }
+
+  function choices(labels, selected) {
+    return Object.entries(labels).map(([value, label]) => option(value, label, selected)).join("");
+  }
+
+  function ledger() {
+    const columns = [["Date"], ["Libellé"], ["Compte"], ["Montant", true], ["Pointage"], ["Modifier"]];
+    return `<div class="stack"><section class="panel">
+      <header class="panel-header"><h2>Opérations de la saison</h2><div class="actions">
+      ${action("Export CSV", "export-ledger", "", "outline", "download")}
+      <button type="button" class="button outline" data-nav="bank">Rapprochement</button>
+      ${action("Virement interne", "transfer")}
+      ${action("Nouvelle opération", "entry", "", "primary", "plus")}</div></header>
+      <p class="panel-note">Saisis les recettes encaissées et les dépenses payées. Utilise le pointage pour repérer les opérations vérifiées sur le relevé bancaire.</p>
+      <div class="filters">
+      <select id="ledger-kind" aria-label="Type d’opération">${option("", "Tous les mouvements", ledgerFilters.kind)}${choices(directions, ledgerFilters.kind)}${option("transfer", "Virements internes", ledgerFilters.kind)}</select>
+      <select id="ledger-account" aria-label="Compte">${option("", "Tous les comptes", ledgerFilters.account)}${choices(accounts, ledgerFilters.account)}</select>
+      </div>${dataTable(columns, ledgerRows(), "Journal de trésorerie")}
+      </section>${accountSummary()}</div>`;
+  }
+
+  function budgetRows(kind) {
+    const year = clubYear();
+    return categories[kind].map(category => ({
+      category,
+      planned: year.plan[kind][category] ?? 0,
+      actual: year.entries.filter(entry => !entry.transferId && entry.kind === kind && entry.category === category)
+        .reduce((sum, entry) => sum + entry.amount, 0)
+    }));
+  }
+
+  function budget() {
+    const blocks = Object.keys(categories).map(kind => {
+      const lines = budgetRows(kind);
+      const total = lines.reduce(({ planned, actual }, line) =>
+        ({ planned: planned + line.planned, actual: actual + line.actual }), { planned: 0, actual: 0 });
+      const lineHtml = ({ category, planned, actual }) =>
+        `<tr><td>${escapeHtml(category)}</td>${amountCell(planned)}${amountCell(actual)}${amountCell(actual - planned)}</tr>`;
+      const title = kind === "income" ? "Recettes" : "Dépenses";
+      const columns = [["Catégorie"], ["Prévu", true], ["Réalisé", true], ["Écart", true]];
+      return `<section class="panel"><header class="panel-header"><h2>${title}</h2>
+        ${action("Modifier le prévisionnel", "plan", kind)}</header>
+        ${dataTable(columns, lines.map(lineHtml).join(""), title, `<tfoot>${lineHtml({ category: "Total", ...total })}</tfoot>`)}
+        </section>`;
+    });
+    const { income, expense } = financialTotals(clubYear().entries);
+    return `<p class="page-description">Le réalisé repose sur les encaissements et décaissements. L’écart correspond au réalisé moins le prévu.</p>
+      <div class="stack"><section class="panel"><header class="panel-header"><h2>Rapport de trésorerie</h2>
+      ${action("Export CSV", "export-budget", "", "outline", "download")}</header>
+      <p class="panel-note">Variation de la saison <strong>${money(income - expense)}</strong> · Solde suivi <strong>${budgetSummary().ending}</strong></p></section>
+      ${blocks.join("")}${analysisPanel()}</div>`;
+  }
+
+  function secretaryDashboard() {
+    const year = clubYear();
+    const scheduled = year.meetings.filter(meeting => meeting.status === "À venir").sort((a, b) => a.date.localeCompare(b.date));
+    const draftCount = year.meetings.filter(meeting => meeting.status === "Tenue").length;
+    const next = scheduled[0];
+    return `<section class="hero module-hero secretary"><div class="hero-copy">
+      <p class="hero-kicker">Espace secrétaire</p><h2>Vie administrative du club</h2>
+      ${action("Planifier une réunion", "meeting", "", "light", "plus")}
+      </div></section>
+      <section class="overview" aria-label="Suivi du secrétariat">
+        ${stat("Adhérents", getMembers().length, "members")}
+        ${stat("Réunions à venir", scheduled.length, "meetings")}
+        ${stat("PV à approuver", draftCount, "tasks", "", true)}
+      </section>
+      <div class="quick-grid">
+        ${quickCard("Prochaine réunion", next ? `${next.title} · ${dateLabel(next.date)}` : "Aucune réunion à venir.", "Réunions et PV", "meetings")}
+        ${quickCard("Registre des adhérents", "Consulter et exporter les adhésions de la saison.", "Ouvrir le registre", "members")}
+        ${quickCard("Renouvellement", renewalSummary(), "Préparer la rentrée", "renewals")}
+      </div>`;
+  }
+
+  function badge(text, pending) {
+    return `<span class="badge ${pending ? "unpaid" : "paid"}">${escapeHtml(text)}</span>`;
+  }
+
+  function meetings() {
+    const cards = [...clubYear().meetings].sort((a, b) => a.date.localeCompare(b.date)).map(meeting => {
+      const place = meeting.place ? ` · ${escapeHtml(meeting.place)}` : "";
+      const documentAction = meeting.minutes ? action("Télécharger le PV", "minutes", meeting.id) : "";
+      return `<article class="meeting-card">
+        ${badge(meeting.status, meeting.status !== "PV approuvé")}
+        <h3>${escapeHtml(meeting.title)}</h3><p class="meeting-meta">${escapeHtml(meeting.type)} · ${dateLabel(meeting.date)}${place}</p>
+        ${meeting.agenda ? `<p>${escapeHtml(meeting.agenda)}</p>` : ""}
+        <div class="actions">${action("Modifier", "meeting", meeting.id)}${action("Convocation", "invitation", meeting.id)}${documentAction}
+        ${isAssembly(meeting) ? action("Préparer l’AG", "assembly", meeting.id, "primary") : ""}</div>
+      </article>`;
+    }).join("");
+    return `<section class="panel"><header class="panel-header"><h2>Réunions de la saison</h2>
+      ${action("Planifier une réunion", "meeting", "", "primary", "plus")}</header>
+      ${cards ? `<div class="meeting-grid">${cards}</div>` : '<p class="empty-note">Aucune réunion enregistrée.</p>'}</section>`;
+  }
+
+  function actionSummary() {
+    const count = clubYear().tasks.filter(task => task.status !== "Terminée").length;
+    if (!count) return "Aucune action ouverte.";
+    return count === 1 ? "1 action ouverte." : `${count} actions ouvertes.`;
+  }
+
+  function tasks() {
+    const rows = [...clubYear().tasks].sort((a, b) => (a.status === "Terminée") - (b.status === "Terminée") ||
+      (a.date || "9999").localeCompare(b.date || "9999")).map(task => {
+      const title = escapeHtml(task.title);
+      const finish = task.status === "Terminée" ? "" : `<button type="button" class="text-button" data-module-action="finish" data-value="${task.id}" aria-label="Terminer ${title}">Terminer</button>`;
+      return `<tr><td class="label-cell"><strong>${title}</strong></td><td>${escapeHtml(task.owner) || "—"}</td>
+        <td>${dateLabel(task.date)}</td><td>${badge(task.status, task.status !== "Terminée")}</td>
+        <td><span class="row-actions">${finish}<button type="button" class="row-action" data-module-action="task" data-value="${task.id}" aria-label="Modifier ${title}">${icon("pencil")}</button></span></td></tr>`;
+    }).join("");
+    return `<section class="panel"><header class="panel-header"><h2>Suivi des actions du bureau</h2>
+      ${action("Nouvelle action", "task", "", "primary", "plus")}</header>
+      ${dataTable([["Action"], ["Responsable"], ["Échéance"], ["Statut"], ["Actions"]], rows, "Plan d’action de la saison")}</section>`;
+  }
+
+  function openModuleDialog(title, fields, save, saveChanges = saveBureau) {
+    const trigger = document.activeElement;
+    moduleDialog.innerHTML = `<form><header><h2 id="module-dialog-title">${title}</h2>
+      <button type="button" class="row-action" data-module-action="close" aria-label="Fermer">${icon("close")}</button>
+      </header>${fields}<footer><button type="button" class="button outline" data-module-action="close">Annuler</button>
+      <button type="submit" class="button primary">Enregistrer</button></footer></form>`;
+    const editor = moduleDialog.querySelector("form");
+    editor.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (editor.dataset.saving) return;
+      for (const input of editor.querySelectorAll("input[required], textarea[required]")) {
+        if (input.value.trim()) continue;
+        input.setCustomValidity("Renseigne ce champ.");
+        input.reportValidity();
+        return;
+      }
+      const data = Object.fromEntries(new FormData(editor).entries());
+      let message;
+      try {
+        editor.dataset.saving = "true";
+        for (const button of editor.querySelectorAll("button")) button.disabled = true;
+        message = await save(data, editor);
+      } catch (error) {
+        notify(error instanceof Error ? error.message : "Enregistrement impossible.");
+        return;
+      } finally {
+        delete editor.dataset.saving;
+        for (const button of editor.querySelectorAll("button")) button.disabled = false;
+      }
+      if (!message) return;
+      moduleDialog.close();
+      saveChanges(message);
+      render();
+      restoreActionFocus(trigger);
+    });
+    editor.addEventListener("input", event => event.target.setCustomValidity?.(""));
+    moduleDialog.showModal();
+    editor.querySelector("input, select, textarea")?.focus();
+    return editor;
+  }
+
+  moduleDialog.addEventListener("cancel", event => {
+    if (moduleDialog.querySelector("form")?.dataset.saving) event.preventDefault();
+  });
+
+  function restoreActionFocus(trigger) {
+    if (!trigger?.dataset.moduleAction) return;
+    const similar = Array.from(main.querySelectorAll("[data-module-action]")).filter(button =>
+      button.dataset.moduleAction === trigger.dataset.moduleAction);
+    const target = similar.find(button => button.dataset.value === trigger.dataset.value) || similar[0] ||
+      main.querySelector(".panel-header button, .hero button");
+    target?.focus();
+  }
+
+  function inputField(label, name, value = "", attributes = "") {
+    return `<label class="field">${label}<input name="${name}" value="${escapeHtml(value)}" ${attributes}></label>`;
+  }
+
+  function selectField(label, name, options) {
+    return `<label class="field">${label}<select name="${name}">${options}</select></label>`;
+  }
+
+  function textarea(label, name, value) {
+    return `<label class="field">${label}<textarea name="${name}" maxlength="5000">${escapeHtml(value || "")}</textarea></label>`;
+  }
+
+  function optionList(values, selected) {
+    return values.map(value => option(value, value, selected)).join("");
+  }
+
+  function seasonDates() {
+    return { start: `${season.value}-09-01`, end: `${Number(season.value) + 1}-08-31` };
+  }
+
+  function dateField(label, value, required = true) {
+    const { start, end } = seasonDates();
+    return inputField(label, "date", value, `type="date" min="${start}" max="${end}" ${required ? "required" : ""}`);
+  }
+
+  function todayIso() {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  }
+
+  function defaultDate() {
+    const value = todayIso();
+    const { start, end } = seasonDates();
+    return value >= start && value <= end ? value : start;
+  }
+
+  function amountField(label, name, cents, minimum = 0, required = true) {
+    return inputField(label, name, cents === undefined ? "" : (cents / 100).toFixed(2),
+      `type="number" inputmode="decimal" step="0.01" min="${minimum}" max="999999999" ${required ? "required" : ""}`);
+  }
+
+  function cents(value) {
+    return Math.round(Number(value) * 100);
+  }
+
+  function saveItem(items, item) {
+    const index = items.findIndex(existing => existing.id === item.id);
+    if (index < 0) items.push(item);
+    else items[index] = item;
+  }
+
+  function editEntry(entry, member) {
+    const memberId = member?.id ?? entry?.memberId;
+    const linked = memberId !== undefined;
+    const kind = entry?.kind ?? "income";
+    const label = entry?.label ?? (member ? `Cotisation · ${member.first} ${member.last}` : "");
+    const fields = `<div class="form-row">${dateField("Date de l’opération", entry?.date || defaultDate())}
+      ${selectField("Mouvement", "kind", choices(linked ? { income: directions.income } : directions, kind))}</div>
+      ${inputField("Libellé", "label", label, "maxlength=145 required")}
+      <div class="form-row">${selectField("Compte", "account", choices(accounts, entry?.account))}
+      ${amountField("Montant (€)", "amount", entry?.amount, 0.01)}</div>
+      ${selectField("Catégorie", "category", optionList(linked ? ["Cotisations"] : categories[kind], entry?.category))}
+      ${inputField("Référence du justificatif", "reference", entry?.reference, 'maxlength="100" placeholder="Ex. FAC-2026-17"')}
+      ${analysisFields(entry?.analysis)}`;
+    const title = entry ? "Modifier l’opération" : linked ? "Encaisser la cotisation" : "Nouvelle opération";
+    const editor = openModuleDialog(title, fields, data => {
+      const amount = cents(data.amount);
+      const sameBankMovement = entry?.account === "bank" && data.account === "bank" &&
+        entry.date === data.date && entry.amount === amount && entry.kind === data.kind;
+      saveItem(clubYear().entries, {
+        id: entry?.id ?? newId(), date: data.date, label: data.label.trim(), kind: data.kind,
+        account: data.account, category: data.category, amount, reference: data.reference.trim(),
+        cleared: Boolean(sameBankMovement && entry.cleared), memberId, receipt: entry?.receipt, analysis: readAnalysis(data)
+      });
+      if (!entry && !linked) {
+        ledgerFilters.kind = "";
+        ledgerFilters.account = "";
+        page = "ledger";
+      }
+      return entry ? "Opération modifiée." : linked ? "Cotisation encaissée et enregistrée dans le journal." : "Opération enregistrée.";
+    });
+    editor.elements.kind.addEventListener("change", () => {
+      editor.elements.category.innerHTML = optionList(categories[editor.elements.kind.value]);
+    });
+  }
+
+  function editOpening() {
+    const opening = clubYear().opening;
+    const fields = `<p class="meeting-meta">Montants disponibles au premier jour de la saison.</p>
+      ${amountField("Solde bancaire (€)", "bank", opening.bank, -999999999)}
+      ${amountField("Solde de caisse (€)", "cash", opening.cash)}`;
+    openModuleDialog("Soldes d’ouverture", fields, data => {
+      clubYear().opening = { bank: cents(data.bank), cash: cents(data.cash) };
+      return "Soldes d’ouverture enregistrés.";
+    });
+  }
+
+  function editTransfer(transferId) {
+    const year = clubYear();
+    const outgoing = year.entries.find(entry => entry.transferId === transferId && entry.kind === "expense");
+    const source = outgoing?.account ?? "cash";
+    const flows = { cash: "Caisse vers banque", bank: "Banque vers caisse" };
+    const fields = `${dateField("Date du virement", outgoing?.date || defaultDate())}
+      ${selectField("Sens du virement", "source", choices(flows, source))}
+      ${amountField("Montant (€)", "amount", outgoing?.amount, 0.01)}
+      ${inputField("Référence du justificatif", "reference", outgoing?.reference, "maxlength=100")}
+      <p class="meeting-meta">Le virement change les soldes des deux comptes. Il n’entre pas dans le réalisé du budget.</p>`;
+    openModuleDialog(transferId ? "Modifier le virement interne" : "Virement interne", fields, data => {
+      const id = transferId || newId();
+      const bankEntry = year.entries.find(entry => entry.transferId === id && entry.account === "bank");
+      const amount = cents(data.amount);
+      const label = flows[data.source];
+      const base = { transferId: id, date: data.date, label, amount, category: "Virement interne", reference: data.reference.trim() };
+      const destination = data.source === "cash" ? "bank" : "cash";
+      const bankKind = destination === "bank" ? "income" : "expense";
+      const bankCleared = Boolean(bankEntry?.cleared && bankEntry.date === data.date && bankEntry.amount === amount && bankEntry.kind === bankKind);
+      saveItem(year.entries, { ...base, id: id + "-out", kind: "expense", account: data.source, cleared: data.source === "bank" && bankCleared });
+      saveItem(year.entries, { ...base, id: id + "-in", kind: "income", account: destination, cleared: destination === "bank" && bankCleared });
+      if (!transferId) {
+        ledgerFilters.kind = "transfer";
+        ledgerFilters.account = "";
+      }
+      return "Virement interne enregistré.";
+    });
+  }
+
+  function editPlan(kind) {
+    const fields = categories[kind].map((category, index) =>
+      amountField(`${category} (€)`, `amount${index}`, clubYear().plan[kind][category] ?? 0, 0, false)).join("");
+    openModuleDialog(kind === "income" ? "Prévisionnel des recettes" : "Prévisionnel des dépenses", fields, data => {
+      clubYear().plan[kind] = Object.fromEntries(categories[kind].map((name, index) => [name, cents(data[`amount${index}`])]));
+      return "Prévisionnel enregistré.";
+    });
+  }
+
+  function editMeeting(meeting) {
+    const fields = `${inputField("Titre", "title", meeting?.title, "maxlength=120 required")}
+      <div class="form-row">${selectField("Type de réunion", "type", optionList(meetingTypes, meeting?.type))}
+      ${dateField("Date", meeting?.date || defaultDate())}</div>
+      <div class="form-row">${inputField("Lieu ou lien de visio", "place", meeting?.place, "maxlength=240")}
+      ${selectField("Statut", "status", optionList(meetingStates, meeting?.status))}</div>
+      ${textarea("Ordre du jour", "agenda", meeting?.agenda)}
+      ${textarea("Présents et représentés", "attendance", meeting?.attendance)}
+      ${textarea("Procès-verbal et décisions", "minutes", meeting?.minutes)}`;
+    openModuleDialog(meeting ? "Modifier la réunion" : "Planifier une réunion", fields, (data, editor) => {
+      if (data.status === "PV approuvé" && !data.minutes.trim()) {
+        editor.elements.minutes.setCustomValidity("Rédige le procès-verbal avant de le marquer comme approuvé.");
+        editor.elements.minutes.reportValidity();
+        return "";
+      }
+      saveItem(clubYear().meetings, { ...meeting, id: meeting?.id ?? newId(), ...data, title: data.title.trim() });
+      if (!meeting) page = "meetings";
+      return "Réunion enregistrée.";
+    }).elements.status.addEventListener("change", event => {
+      event.target.form.elements.minutes.setCustomValidity("");
+    });
+  }
+
+  function editTask(task, decision) {
+    const fields = `${inputField("Action", "title", task?.title || decision?.title, "maxlength=140 required")}
+      ${inputField("Responsable ou équipe", "owner", task?.owner, "maxlength=100")}
+      <div class="form-row">${dateField("Échéance", task?.date || "", false)}
+      ${selectField("Statut", "status", optionList(taskStates, task?.status))}</div>`;
+    openModuleDialog(task ? "Modifier l’action" : "Nouvelle action", fields, data => {
+      const id = task?.id ?? newId();
+      saveItem(clubYear().tasks, { ...task, id, ...data, title: data.title.trim() });
+      if (decision) decision.taskId = id;
+      return "Action enregistrée.";
+    });
+  }
+
+  function asCsvEuros(amount) { return (amount / 100).toFixed(2).replace(".", ","); }
+
+  function exportLedger() {
+    const entries = visibleEntries();
+    if (!entries.length) {
+      notify("Aucune opération à exporter.");
+      return;
+    }
+    downloadCsv("journal", [
+      ["Date", "Libellé", "Catégorie", "Compte", "Encaissement EUR", "Décaissement EUR", "Pointage", "Justificatif", "Identifiant du virement"],
+      ...entries.map(entry => [entry.date, entry.label, entry.category, accounts[entry.account],
+        entry.kind === "income" ? asCsvEuros(entry.amount) : "", entry.kind === "expense" ? asCsvEuros(entry.amount) : "",
+        entry.account === "bank" ? (entry.cleared ? "Pointée" : "À pointer") : "", entry.reference, entry.transferId || ""])
+    ]);
+  }
+
+  function exportBudget() {
+    downloadCsv("budget", [
+      ["Type", "Catégorie", "Prévu EUR", "Réalisé EUR", "Écart EUR"],
+      ...Object.keys(categories).flatMap(kind => budgetRows(kind).map(({ category, planned, actual }) =>
+        [directions[kind], category, asCsvEuros(planned), asCsvEuros(actual), asCsvEuros(actual - planned)]))
+    ]);
+  }
+
+  function exportMeeting(meeting, minutes) {
+    const heading = minutes ? (meeting.status === "PV approuvé" ? "Procès-verbal approuvé" : "Projet de procès-verbal") : "Projet de convocation";
+    const lines = [heading, clubName, meeting.type, meeting.title,
+      `Date : ${dateLabel(meeting.date)}`, `Lieu : ${meeting.place || "À préciser"}`,
+      "", "Ordre du jour", meeting.agenda || "À préciser"];
+    if (minutes) lines.push("", "Présents et représentés", meeting.attendance || "À préciser", "", "Décisions", meeting.minutes);
+    lines.push(...assemblyExportLines(meeting, minutes));
+    downloadFile(`${minutes ? "pv" : "convocation"}-${meeting.date}.txt`, [lines.join("\n")], "text/plain;charset=utf-8");
+    notify(minutes ? "Procès-verbal préparé." : "Projet de convocation préparé.");
+  }
+
+  function handleModuleAction(button) {
+    const value = button.dataset.value;
+    const year = clubYear();
+    const command = button.dataset.moduleAction;
+    if (financeWrites.has(command) && lockedFinanceYear()) {
+      notify(financeLockMessage());
+      return;
+    }
+    if (["entry", "invoice-payment-edit", "clear", "transfer"].includes(command) &&
+      year.entries.some(entry => entry.bankLineId && (entry.id === value || entry.transferId === value))) {
+      notify("Annule le rapprochement bancaire pour modifier cette opération.");
+      return;
+    }
+    switch (command) {
+      case "renew-members": renewMembersDialog(); break;
+      case "import-members": importMembersDialog(); break;
+      case "decision": editDecision(year.decisions?.find(item => item.id === value)); break;
+      case "decision-task": {
+        const decision = year.decisions?.find(item => item.id === value);
+        if (decision) editTask(year.tasks.find(task => task.id === decision.taskId), decision);
+        break;
+      }
+      case "volunteer": editVolunteer(year.volunteers?.find(item => item.id === value)); break;
+      case "assembly": openAssembly(value); break;
+      case "assembly-list": editAssemblyList(); break;
+      case "assembly-attendee": editAssemblyAttendee(value); break;
+      case "assembly-vote": editAssemblyVote(value); break;
+      case "assembly-vote-decision": recordVoteDecision(value); break;
+      case "assembly-report": attachAssemblyReport(); break;
+      case "assembly-export": exportAssemblyList(); break;
+      case "bank-import": importBankDialog(); break;
+      case "bank-match": matchBankDialog(value); break;
+      case "bank-unmatch": unmatchBank(value); break;
+      case "expense": expenseDialog(value); break;
+      case "expense-review": reviewExpense(value); break;
+      case "receipt": attachReceipt(value); break;
+      case "receipt-download": downloadReceipt(value); break;
+      case "close-finance": closeFinance(); break;
+      case "print-report": window.print(); break;
+      case "entry": editEntry(year.entries.find(entry => entry.id === value)); break;
+      case "invoice": editInvoice(value); break;
+      case "invoice-payment": editInvoicePayment(findInvoice(value)); break;
+      case "invoice-payment-edit": {
+        const entry = year.entries.find(item => item.id === value);
+        const invoice = findInvoice(entry.invoiceId);
+        if (invoice) editInvoicePayment(invoice, entry);
+        break;
+      }
+      case "export-invoices": exportInvoices(); break;
+      case "export-accounting": exportAccounting(); break;
+      case "export-trial-balance": exportTrialBalance(); break;
+      case "dues": {
+        const member = getMembers().find(item => item.id === value);
+        if (member && !hasPaid(member)) editEntry(undefined, member);
+        break;
+      }
+      case "transfer": editTransfer(value); break;
+      case "opening": editOpening(); break;
+      case "plan": editPlan(value); break;
+      case "meeting": editMeeting(year.meetings.find(meeting => meeting.id === value)); break;
+      case "task": editTask(year.tasks.find(task => task.id === value)); break;
+      case "export-ledger": exportLedger(); break;
+      case "export-budget": exportBudget(); break;
+      case "close": moduleDialog.close(); break;
+      case "clear": {
+        const entry = year.entries.find(item => item.id === value);
+        entry.cleared = !entry.cleared;
+        saveBureau(entry.cleared ? "Opération pointée." : "Pointage retiré.");
+        render();
+        restoreActionFocus(button);
+        break;
+      }
+      case "finish": {
+        year.tasks.find(item => item.id === value).status = "Terminée";
+        saveBureau("Action terminée.");
+        render();
+        restoreActionFocus(button);
+        break;
+      }
+      case "invitation":
+      case "minutes":
+        exportMeeting(year.meetings.find(item => item.id === value), button.dataset.moduleAction === "minutes");
+        break;
+    }
+  }
+
+  main.addEventListener("change", event => {
+    if (event.target.id === "ledger-kind") ledgerFilters.kind = event.target.value;
+    else if (event.target.id === "ledger-account") ledgerFilters.account = event.target.value;
+    else return;
+    const tableBody = main.querySelector(".ledger-table tbody");
+    tableBody.innerHTML = ledgerRows() || '<tr><td colspan="6" class="empty">Aucune opération pour ces filtres.</td></tr>';
+  });
+
+
+  const invoiceKinds = { expense: "Fournisseur", income: "Client" };
+  const bankAccounts = { bank: "512", cash: "53" };
+  const categoryAccounts = {
+    Cotisations: "756", Subventions: "741", Partenariats: "706", Événements: "70", Dons: "754", "Autres recettes": "75",
+    "Licences fédérales": "628", Matériel: "606", Déplacements: "625", Installations: "613", Assurance: "616",
+    Remboursements: "62", "Autres dépenses": "65"
+  };
+  const accountNames = {
+    401: "Fournisseurs", 411: "Clients", 467: "Autres comptes débiteurs ou créditeurs", 512: "Banque", 53: "Caisse", 58: "Virements internes",
+    606: "Achats non stockés", 613: "Locations", 616: "Primes d’assurances", 62: "Autres services extérieurs",
+    625: "Déplacements et réceptions", 628: "Charges externes diverses", 65: "Autres charges de gestion courante",
+    70: "Ventes et prestations", 706: "Prestations de services", 741: "Subventions d’exploitation",
+    75: "Autres produits de gestion courante", 754: "Ressources liées à la générosité du public", 756: "Cotisations",
+    890: "Contrepartie d’ouverture"
+  };
+  const movementNames = { AN: "Ouverture", AC: "Achats", VE: "Ventes", BQ: "Banque", CA: "Caisse" };
+  const invoiceFilters = { kind: "", status: "" };
+  let accountingAccount = "";
+
+  function findInvoice(id) {
+    return allInvoices().find(invoice => invoice.id === id);
+  }
+
+  function allInvoices() {
+    return Object.values(bureau).flatMap(year => year.invoices ?? []);
+  }
+
+  function settledAmount(invoice, until = "9999-12-31", except = null) {
+    return Object.values(bureau).reduce((total, year) => total + year.entries
+      .filter(entry => entry.invoiceId === invoice.id && entry.date <= until && entry !== except)
+      .reduce((sum, entry) => sum + entry.amount, 0), 0);
+  }
+
+  function invoicesForSeason() {
+    const { start, end } = seasonDates();
+    const today = todayIso();
+    const comparison = today < end ? today : end;
+    return allInvoices().filter(invoice => invoice.date <= end &&
+      (invoice.date >= start || settledAmount(invoice, previousClosing()) < invoice.amount))
+      .map(invoice => {
+        const paid = settledAmount(invoice, end);
+        const remaining = invoice.amount - paid;
+        const status = remaining === 0 ? "Réglée" : paid === 0 ? "À régler" : "Partielle";
+        const overdue = invoice.due < comparison && settledAmount(invoice, comparison) < invoice.amount;
+        return { ...invoice, paid, remaining, status, overdue };
+      }).sort((a, b) => a.due.localeCompare(b.due));
+  }
+
+  function previousClosing() {
+    return `${season.value}-08-31`;
+  }
+
+  function invoiceTotals() {
+    return invoicesForSeason().reduce((totals, invoice) => {
+      totals[invoice.kind] += invoice.remaining;
+      if (invoice.overdue) totals.overdue += 1;
+      return totals;
+    }, { income: 0, expense: 0, overdue: 0 });
+  }
+
+  function invoiceSummary() {
+    const totals = invoiceTotals();
+    return `${money(totals.expense)} à payer · ${money(totals.income)} à encaisser`;
+  }
+
+  function visibleInvoices() {
+    return invoicesForSeason().filter(invoice =>
+      (!invoiceFilters.kind || invoice.kind === invoiceFilters.kind) &&
+      (!invoiceFilters.status || (invoiceFilters.status === "overdue" ? invoice.overdue :
+        invoiceFilters.status === "closed" ? !invoice.remaining : invoice.remaining > 0)));
+  }
+
+  function invoicesPage() {
+    const totals = invoiceTotals();
+    const rows = visibleInvoices().map(invoice => {
+      const status = badge(invoice.status, invoice.remaining > 0);
+      const late = invoice.overdue ? '<span class="secondary-value negative">Échéance dépassée</span>' : "";
+      const carry = invoice.date < seasonDates().start ? '<span class="secondary-value">Report de la saison précédente</span>' : "";
+      const payment = invoice.remaining > 0 && settledAmount(invoice) < invoice.amount ?
+        action(invoice.kind === "expense" ? "Régler" : "Encaisser", "invoice-payment", invoice.id) : "";
+      const edit = invoice.date >= seasonDates().start && !invoice.expenseId ?
+        action("Modifier", "invoice", invoice.id) : "";
+      return `<tr><td class="label-cell"><strong>${escapeHtml(invoice.reference)}</strong>
+        <span class="secondary-value">${escapeHtml(invoice.label)} · ${dateLabel(invoice.date)}</span>${carry}</td>
+        <td>${escapeHtml(invoice.party)}<span class="secondary-value">${invoiceKinds[invoice.kind]}</span></td>
+        <td>${dateLabel(invoice.due)}</td>${amountCell(invoice.amount)}${amountCell(invoice.paid)}${amountCell(invoice.remaining)}
+        <td>${status}${late}</td><td><span class="row-actions">${edit}${payment}${receiptActions("invoice", invoice.id)}</span></td></tr>`;
+    }).join("");
+    const columns = [["Facture"], ["Tiers"], ["Échéance"], ["Montant", true], ["Réglé", true], ["Reste", true], ["Statut"], ["Actions"]];
+    return `<p class="page-description">Enregistre les factures à leur date d’émission. Le journal de trésorerie se met à jour à chaque règlement.</p>
+      <section class="overview money-overview" aria-label="Échéances">
+        ${stat("À payer", money(totals.expense), "invoices", "", true)}
+        ${stat("À encaisser", money(totals.income), "payments")}
+        ${stat("Échéances dépassées", totals.overdue, "meetings")}
+      </section>
+      <section class="panel"><header class="panel-header"><h2>Factures de la saison</h2><div class="actions">
+      ${action("Export CSV", "export-invoices", "", "outline", "download")}
+      ${action("Nouvelle facture", "invoice", "", "primary", "plus")}</div></header>
+      <div class="filters">
+        <select id="invoice-kind" aria-label="Type de facture">${option("", "Tous les tiers", invoiceFilters.kind)}${choices(invoiceKinds, invoiceFilters.kind)}</select>
+        <select id="invoice-status" aria-label="Statut des factures">
+          ${choices({ "": "Tous les statuts", open: "Restent à régler", overdue: "En retard", closed: "Réglées" }, invoiceFilters.status)}
+        </select>
+      </div>${dataTable(columns, rows, "Factures de la saison")}</section>`;
+  }
+
+  function invalidInput(input, message) {
+    input.setCustomValidity(message);
+    input.reportValidity();
+    return "";
+  }
+
+  function editInvoice(id) {
+    const existing = id ? findInvoice(id) : null;
+    if (existing?.expenseId) return;
+    const paid = existing ? settledAmount(existing) : 0;
+    const kind = existing?.kind ?? "expense";
+    const directions = paid ? { [kind]: invoiceKinds[kind] } : invoiceKinds;
+    const validCategories = paid ? [existing.category] : categories[kind];
+    const issued = existing?.date || defaultDate();
+    const dateControl = paid
+      ? inputField("Date de facture", "date", issued, 'type="date" readonly required')
+      : dateField("Date de facture", issued);
+    const lockIdentity = paid ? "readonly" : "";
+    const fields = `<div class="form-row">${selectField("Type de facture", "kind", choices(directions, kind))}
+      ${inputField("Numéro de facture", "reference", existing?.reference, `maxlength=80 required ${lockIdentity}`)}</div>
+      ${inputField("Fournisseur ou client", "party", existing?.party, `maxlength=120 required ${lockIdentity}`)}
+      ${inputField("Libellé", "label", existing?.label, "maxlength=120 required")}
+      <div class="form-row">${dateControl}
+      ${inputField("Date d’échéance", "due", existing?.due ?? issued, `type="date" min="${issued}" max="9999-12-31" required`)}</div>
+      ${selectField("Catégorie", "category", optionList(validCategories, existing?.category))}
+      ${amountField("Montant total (€)", "amount", existing?.amount, 0.01)}
+      ${analysisFields(existing?.analysis)}
+      ${paid ? `<p class="meeting-meta">${money(paid)} déjà réglés sur cette facture.</p>` : ""}`;
+    const editor = openModuleDialog(existing ? "Modifier la facture" : "Nouvelle facture", fields, (data, form) => {
+      const amount = cents(data.amount);
+      if (data.due < data.date) return invalidInput(form.elements.due, "L’échéance doit suivre la date de la facture ou tomber le même jour.");
+      if (amount < paid) return invalidInput(form.elements.amount, `Le montant doit couvrir les ${money(paid)} déjà réglés.`);
+      const reference = data.reference.trim();
+      const party = data.party.trim();
+      const duplicate = allInvoices().some(invoice => invoice.id !== id && invoice.kind === data.kind &&
+        normalize(invoice.party) === normalize(party) && normalize(invoice.reference) === normalize(reference));
+      if (duplicate) return invalidInput(form.elements.reference, "Une facture de ce tiers porte déjà ce numéro.");
+      clubYear().invoices ??= [];
+      const { kind, date, due } = data;
+      saveItem(clubYear().invoices, { ...existing, kind, date, due, id: id || newId(),
+        amount, party, reference, label: data.label.trim(), analysis: readAnalysis(data) });
+      invoiceFilters.kind = "";
+      invoiceFilters.status = "";
+      return existing ? "Facture modifiée." : "Facture enregistrée.";
+    });
+    editor.elements.kind.addEventListener("change", () => {
+      editor.elements.category.innerHTML = optionList(categories[editor.elements.kind.value]);
+    });
+    editor.elements.date.addEventListener("input", () => {
+      const due = editor.elements.due;
+      due.min = editor.elements.date.value;
+      due.setCustomValidity("");
+      if (due.value < due.min) due.value = due.min;
+    });
+    editor.elements.party.addEventListener("input", () => editor.elements.reference.setCustomValidity(""));
+    editor.elements.kind.addEventListener("change", () => editor.elements.reference.setCustomValidity(""));
+  }
+
+  function editInvoicePayment(invoice, entry) {
+    if (!invoice) return;
+    const remaining = invoice.amount - settledAmount(invoice, "9999-12-31", entry);
+    if (remaining <= 0) return;
+    const { start, end } = seasonDates();
+    const earliest = invoice.date > start ? invoice.date : start;
+    const proposed = defaultDate();
+    const date = entry?.date ?? (proposed < earliest ? earliest : proposed);
+    const fields = `<p class="meeting-meta">${escapeHtml(invoice.reference)} · ${escapeHtml(invoice.party)}<br>
+      Montant disponible pour ce règlement <strong>${money(remaining)}</strong></p>
+      ${inputField("Date du règlement", "date", date, `type="date" min="${earliest}" max="${end}" required`)}
+      ${selectField("Compte", "account", choices(accounts, entry?.account))}
+      ${amountField("Montant du règlement (€)", "amount", entry?.amount ?? remaining, 0.01)}
+      ${inputField("Référence du règlement", "reference", entry?.reference, "maxlength=100")}`;
+    openModuleDialog(entry ? "Modifier le règlement" : "Enregistrer un règlement", fields, (data, form) => {
+      const amount = cents(data.amount);
+      if (amount > remaining) return invalidInput(form.elements.amount, `Le montant disponible est de ${money(remaining)}.`);
+      const sameBankMovement = data.account === "bank" && entry?.account === "bank" &&
+        entry.date === data.date && entry.amount === amount;
+      saveItem(clubYear().entries, {
+        id: entry?.id ?? newId(), invoiceId: invoice.id, date: data.date, kind: invoice.kind,
+        account: data.account, amount, category: invoice.category,
+        label: `Règlement ${invoice.reference} · ${invoice.party}`, reference: data.reference.trim(),
+        cleared: Boolean(sameBankMovement && entry.cleared)
+      });
+      return "Règlement enregistré dans la trésorerie et les écritures.";
+    });
+  }
+
+  function exportInvoices() {
+    downloadCsv("factures", [
+      ["Type", "Numéro", "Tiers", "Libellé", "Émission", "Échéance", "Montant EUR", "Réglé EUR", "Reste EUR", "Statut"],
+      ...visibleInvoices().map(row => [invoiceKinds[row.kind], row.reference, row.party, row.label,
+        row.date, row.due, asCsvEuros(row.amount), asCsvEuros(row.paid), asCsvEuros(row.remaining), row.status])
+    ]);
+  }
+
+  function accountingMovements() {
+    const { start } = seasonDates();
+    const year = clubYear();
+    const movements = [];
+    const add = (journal, id, date, label, reference, debit, credit, amount) => {
+      if (amount === 0) return;
+      movements.push({ journal, id, date, label, reference, debit, credit, amount });
+    };
+
+    for (const [key, amount] of Object.entries(year.opening)) {
+      const bank = bankAccounts[key];
+      const contra = "890";
+      add("AN", `AN-${key}`, start, `Solde d’ouverture · ${accounts[key]}`, "",
+        amount >= 0 ? bank : contra, amount >= 0 ? contra : bank, Math.abs(amount));
+    }
+
+    for (const invoice of invoicesForSeason()) {
+      const income = invoice.kind === "income";
+      const carried = invoice.date < start;
+      const other = carried ? "890" : categoryAccounts[invoice.category];
+      const thirdParty = invoice.expenseId ? "467" : income ? "411" : "401";
+      const amount = carried ? invoice.amount - settledAmount(invoice, previousClosing()) : invoice.amount;
+      const journal = carried ? "AN" : income ? "VE" : "AC";
+      add(journal, `${journal}-${invoice.id}`, carried ? start : invoice.date,
+        `${carried ? "Report · " : ""}${invoice.label} · ${invoice.party}`, invoice.reference,
+        income ? thirdParty : other, income ? other : thirdParty, amount);
+    }
+
+    for (const entry of year.entries) {
+      const income = entry.kind === "income";
+      const account = bankAccounts[entry.account];
+      let contra = categoryAccounts[entry.category];
+      if (entry.transferId) contra = "58";
+      else if (entry.invoiceId) contra = findInvoice(entry.invoiceId)?.expenseId ? "467" : income ? "411" : "401";
+      const journal = entry.account === "bank" ? "BQ" : "CA";
+      add(journal, `${journal}-${entry.id}`, entry.date, entry.label, entry.reference,
+        income ? account : contra, income ? contra : account, entry.amount);
+    }
+
+    return movements.sort((a, b) => a.date.localeCompare(b.date) ||
+      (a.journal !== "AN") - (b.journal !== "AN") || a.journal.localeCompare(b.journal));
+  }
+
+  function accountingLines(movements) {
+    return movements.flatMap(move => [
+      { ...move, account: move.debit, debit: move.amount, credit: 0 },
+      { ...move, account: move.credit, debit: 0, credit: move.amount }
+    ]);
+  }
+
+  function trialBalance(lines) {
+    const balances = new Map();
+    for (const line of lines) {
+      const balance = balances.get(line.account) ?? { code: line.account, debit: 0, credit: 0 };
+      balance.debit += line.debit;
+      balance.credit += line.credit;
+      balances.set(line.account, balance);
+    }
+    return [...balances.values()].sort((a, b) => a.code.localeCompare(b.code));
+  }
+
+  function balanceSummary(balances) {
+    return balances.reduce((summary, item) => {
+      const net = item.debit - item.credit;
+      summary.debit += item.debit;
+      summary.credit += item.credit;
+      summary.debitBalance += Math.max(net, 0);
+      summary.creditBalance += Math.max(-net, 0);
+      if (item.code.startsWith("6")) summary.expenses += net;
+      if (item.code.startsWith("7")) summary.income -= net;
+      return summary;
+    }, { debit: 0, credit: 0, debitBalance: 0, creditBalance: 0, expenses: 0, income: 0 });
+  }
+
+  function filteredAccountingLines(lines) {
+    return accountingAccount ? lines.filter(line => line.account === accountingAccount) : lines;
+  }
+
+  function accountingPage() {
+    const lines = accountingLines(accountingMovements());
+    const balances = trialBalance(lines);
+    const summary = balanceSummary(balances);
+    const visible = filteredAccountingLines(lines);
+    const accountOptions = balances.map(item => option(item.code, `${item.code} · ${accountNames[item.code]}`, accountingAccount)).join("");
+    return `<p class="page-description">Les écritures sont générées à partir du journal de trésorerie et des factures saisies. Les comptes utilisés constituent un plan simplifié.</p>
+      <section class="overview money-overview" aria-label="Charges et produits enregistrés">
+        ${stat("Produits enregistrés", money(summary.income), "payments")}
+        ${stat("Charges enregistrées", money(summary.expenses), "invoices", "", true)}
+        ${stat("Solde produits − charges", money(summary.income - summary.expenses), "accounting")}
+      </section>
+      <div class="stack">
+        <section class="panel" aria-labelledby="trial-balance-title">
+          <header class="panel-header"><div><h2 id="trial-balance-title">Balance des comptes</h2>
+          <span class="account-period">${badge(summary.debit === summary.credit ? "Total débit = total crédit" : "Écart à vérifier", summary.debit !== summary.credit)}</span>
+          </div>${action("Exporter la balance", "export-trial-balance", "", "outline", "download")}</header>
+          ${balanceTable(balances, summary)}
+        </section>
+        <section class="panel" id="accounting-entries" aria-labelledby="accounting-title">
+          <header class="panel-header"><h2 id="accounting-title">Journal en partie double</h2>
+          ${action("Exporter les écritures", "export-accounting", "", "outline", "download")}</header>
+          <div class="filters"><select id="accounting-account" aria-label="Compte comptable">
+            ${option("", "Tous les comptes", accountingAccount)}${accountOptions}
+          </select></div>
+          ${accountingTable(visible)}
+        </section>
+      </div>`;
+  }
+
+  function balanceTable(balances, summary) {
+    const columns = [["Compte"], ["Intitulé"], ["Mouvements débit", true], ["Mouvements crédit", true],
+      ["Solde débiteur", true], ["Solde créditeur", true]];
+    const rows = balances.map(({ code, debit, credit }) =>
+      `<tr><td>${code}</td><td class="label-cell">${accountNames[code]}</td>${amountCell(debit)}${amountCell(credit)}
+      ${amountCell(Math.max(debit - credit, 0))}${amountCell(Math.max(credit - debit, 0))}</tr>`).join("");
+    const footer = `<tfoot><tr><td colspan="2">Total</td>${amountCell(summary.debit)}${amountCell(summary.credit)}
+      ${amountCell(summary.debitBalance)}${amountCell(summary.creditBalance)}</tr></tfoot>`;
+    return dataTable(columns, rows, "Balance des comptes", footer);
+  }
+
+  function accountingTable(lines) {
+    const columns = [["Date"], ["Journal"], ["Libellé"], ["Compte"], ["Débit", true], ["Crédit", true]];
+    const rows = lines.map((line, index) => {
+      const previous = lines[index - 1];
+      const groupStart = line.id !== previous?.id;
+      const groupEnd = line.id !== lines[index + 1]?.id;
+      const reference = line.reference ? `<span class="secondary-value">Pièce ${escapeHtml(line.reference)}</span>` : "";
+      return `<tr${groupEnd ? ' class="account-line-end"' : ""}>
+        <td>${groupStart ? dateLabel(line.date) : `<span class="visually-hidden">${dateLabel(line.date)}</span>`}</td>
+        <td title="${movementNames[line.journal]}">${line.journal}</td>
+        <td class="label-cell">${groupStart ? `${escapeHtml(line.label)}${reference}` : `<span class="visually-hidden">${escapeHtml(line.label)}</span>`}</td>
+        <td>${line.account}<span class="secondary-value">${accountNames[line.account]}</span></td>
+        ${line.debit ? amountCell(line.debit) : '<td class="numeric">—</td>'}
+        ${line.credit ? amountCell(line.credit) : '<td class="numeric">—</td>'}
+      </tr>`;
+    }).join("");
+    return dataTable(columns, rows, "Écritures au débit et au crédit");
+  }
+
+  function exportAccounting() {
+    const lines = filteredAccountingLines(accountingLines(accountingMovements()));
+    downloadCsv("ecritures", [
+      ["Date", "Journal", "Identifiant", "Libellé", "Pièce", "Compte", "Intitulé du compte", "Débit EUR", "Crédit EUR"],
+      ...lines.map(line => [line.date, line.journal, line.id, line.label, line.reference, line.account,
+        accountNames[line.account], asCsvEuros(line.debit), asCsvEuros(line.credit)])
+    ]);
+  }
+
+  function exportTrialBalance() {
+    const balances = trialBalance(accountingLines(accountingMovements()));
+    downloadCsv("balance", [
+      ["Compte", "Intitulé", "Mouvements débit EUR", "Mouvements crédit EUR", "Solde débiteur EUR", "Solde créditeur EUR"],
+      ...balances.map(({ code, debit, credit }) => [code, accountNames[code], asCsvEuros(debit), asCsvEuros(credit),
+        asCsvEuros(Math.max(debit - credit, 0)), asCsvEuros(Math.max(credit - debit, 0))])
+    ]);
+  }
+
+  main.addEventListener("change", event => {
+    const target = event.target;
+    if (target.id === "invoice-kind") invoiceFilters.kind = target.value;
+    else if (target.id === "invoice-status") invoiceFilters.status = target.value;
+    else if (target.id === "accounting-account") accountingAccount = target.value;
+    else return;
+    render();
+    document.getElementById(target.id)?.focus();
+  });
+
+
+  const financeWrites = new Set([
+    "entry", "invoice", "invoice-payment", "invoice-payment-edit", "dues", "transfer", "opening", "plan", "clear",
+    "bank-import", "bank-match", "bank-unmatch", "expense", "expense-review", "receipt", "close-finance"
+  ]);
+
+  function lockedFinanceYear(year = season.value) {
+    return Object.keys(bureau).sort().find(candidate => candidate >= year && bureau[candidate].closedAt);
+  }
+
+  function financeLockMessage() {
+    const locked = lockedFinanceYear();
+    return locked === season.value ? "Cette saison est clôturée. Les écritures sont en lecture seule." :
+      `Les écritures sont en lecture seule depuis la clôture de la saison ${locked}–${Number(locked) + 1}.`;
+  }
+
+  function analysisFields(analysis = {}) {
+    return `<div class="form-row">
+      ${selectField("Équipe", "analysisTeam", option("", "Sans équipe", analysis.team || "") + optionList(teams, analysis.team))}
+      ${inputField("Événement ou projet", "analysisEvent", analysis.event, "maxlength=100")}</div>
+      ${inputField("Subvention associée", "analysisGrant", analysis.grant, "maxlength=100")}`;
+  }
+
+  function readAnalysis(data) {
+    return { team: data.analysisTeam, event: data.analysisEvent.trim(), grant: data.analysisGrant.trim() };
+  }
+
+  function analysisPanel() {
+    const labels = { team: "Équipe", event: "Événement ou projet", grant: "Subvention" };
+    const charges = [
+      ...clubYear().entries.filter(entry => entry.kind === "expense" && !entry.invoiceId && !entry.transferId),
+      ...(clubYear().invoices ?? []).filter(invoice => invoice.kind === "expense")
+    ];
+    const rows = Object.entries(labels).flatMap(([key, label]) => {
+      const groups = new Map();
+      for (const charge of charges) {
+        const name = charge.analysis?.[key] || "Sans affectation";
+        const identity = normalize(name);
+        const line = groups.get(identity) || { name, amount: 0 };
+        line.amount += charge.amount;
+        groups.set(identity, line);
+      }
+      return [...groups.values()].sort((a, b) => b.amount - a.amount).map(group =>
+        `<tr><td>${label}</td><td class="label-cell">${escapeHtml(group.name)}</td>${amountCell(group.amount)}</tr>`);
+    });
+    return `<section class="panel"><header class="panel-header"><h2>Dépenses par activité</h2></header>
+      <p class="panel-note">Ce suivi inclut les factures dès leur saisie. Une dépense peut figurer dans plusieurs axes. Chaque axe se lit séparément.</p>
+      ${dataTable([["Axe"], ["Affectation"], ["Charges enregistrées", true]], rows.join(""), "Dépenses par activité")}</section>`;
+  }
+
+  const receiptTypes = { pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
+  function receiptField(required = false) {
+    return `<label class="field file-field">Justificatif
+      <input name="receipt" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp"${required ? " required" : ""}>
+      <small>PDF, JPEG, PNG ou WebP · 1 Mo maximum</small></label>`;
+  }
+
+  async function readReceipt(file, input) {
+    const suffix = file.name.split(".").pop().toLowerCase();
+    const type = receiptTypes[suffix];
+    if (!type || file.size === 0 || file.size > 1024 * 1024) {
+      invalidInput(input, "Choisis un PDF ou une image de 1 Mo maximum.");
+      return null;
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let raw = "";
+    for (let index = 0; index < bytes.length; index += 8192) {
+      raw += String.fromCharCode(...bytes.subarray(index, index + 8192));
+    }
+    return { name: file.name, type, data: btoa(raw) };
+  }
+
+  function expenseRecords(year = clubYear()) {
+    return year.expenses ?? [];
+  }
+
+  function receiptTarget(key) {
+    const [type, id] = key.split(":");
+    for (const [year, data] of Object.entries(bureau)) {
+      if (type !== "invoice" && year !== season.value) continue;
+      const items = type === "entry" ? data.entries : type === "expense" ? expenseRecords(data) : data.invoices ?? [];
+      const item = items.find(row => row.id === id);
+      if (!item) continue;
+      const source = type === "invoice" && item.expenseId ?
+        expenseRecords(data).find(row => row.id === item.expenseId) : item;
+      return { year, item: source || item };
+    }
+    return null;
+  }
+
+  function receiptActions(type, id) {
+    const key = `${type}:${id}`;
+    const target = receiptTarget(key);
+    if (!target) return "";
+    const download = target.item.receipt ? action("Pièce", "receipt-download", key) : "";
+    const attach = !lockedFinanceYear(target.year) && !target.item.receipt && role.value === "treasurer" ?
+      action("Joindre une pièce", "receipt", key) : "";
+    return download + attach;
+  }
+
+  function persistReceiptChange(undo) {
+    if (remote) return;
+    try {
+      localStorage.setItem(moduleKey, JSON.stringify(bureau));
+    } catch {
+      undo();
+      throw new Error("L’espace de stockage du navigateur est plein ou inaccessible. Essaie un fichier plus léger.");
+    }
+  }
+
+  function attachReceipt(key) {
+    const target = receiptTarget(key);
+    if (!target || lockedFinanceYear(target.year)) return;
+    openModuleDialog("Joindre un justificatif", receiptField(true), async (data, editor) => {
+      const receipt = await readReceipt(data.receipt, editor.elements.receipt);
+      if (!receipt) return "";
+      const previous = target.item.receipt;
+      target.item.receipt = receipt;
+      persistReceiptChange(() => { target.item.receipt = previous; });
+      return "Justificatif ajouté.";
+    });
+  }
+
+  async function downloadReceipt(key) {
+    const receipt = receiptTarget(key)?.item.receipt;
+    if (!receipt) return;
+    if (remote && receipt.id) {
+      try {
+        const response = await fetch(`api.php?role=${encodeURIComponent(remote.role)}&attachment=${encodeURIComponent(receipt.id)}`,
+          { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = await response.blob();
+        downloadFile(receipt.name, [data], receipt.type);
+      } catch {
+        notify("Téléchargement indisponible. Actualise la page et réessaie.");
+      }
+      return;
+    }
+    const bytes = Uint8Array.from(atob(receipt.data), character => character.charCodeAt(0));
+    downloadFile(receipt.name, [bytes], receipt.type);
+  }
+
+  function expenseClaimsPage() {
+    const rows = expenseRecords().slice().sort((a, b) => b.date.localeCompare(a.date)).map(expense => {
+      const invoice = expense.invoiceId ? findInvoice(expense.invoiceId) : null;
+      const state = invoice ? (settledAmount(invoice) >= invoice.amount ? "Remboursée" : "Validée · à rembourser") : expense.status;
+      const open = expense.status === "Déposée" && !invoice;
+      const canReview = open && role.value === "treasurer";
+      const controls = (open && (!remote || role.value === "treasurer" || expense.submittedBy === remote.userId)
+        ? action("Modifier", "expense", expense.id) : "") +
+        (canReview ? action("Examiner", "expense-review", expense.id, "primary") : "");
+      const details = [expense.analysis.team, expense.analysis.event, expense.analysis.grant].filter(Boolean).join(" · ");
+      return `<tr><td>${dateLabel(expense.date)}</td><td class="label-cell"><strong>${escapeHtml(expense.label)}</strong>
+        <span class="secondary-value">${escapeHtml(details)}</span></td><td>${escapeHtml(expense.party || "—")}</td>${amountCell(expense.amount)}
+        <td>${badge(state, !invoice || state !== "Remboursée")}${expense.reviewNote ? `<span class="secondary-value">${escapeHtml(expense.reviewNote)}</span>` : ""}</td>
+        <td><span class="row-actions">${receiptActions("expense", expense.id)}${controls}</span></td></tr>`;
+    });
+    return `<section class="panel"><header class="panel-header"><h2>Demandes de remboursement</h2>
+      ${action("Déposer une note", "expense", "", "primary", "plus")}</header>
+      <p class="panel-note">Une note validée crée une somme à rembourser. Après paiement, saisis le règlement dans Factures.</p>
+      ${dataTable([["Date"], ["Motif"], ["Bénévole"], ["Montant", true], ["Statut"], ["Actions"]], rows.join(""), "Notes de frais")}</section>`;
+  }
+
+  function expenseDialog(id) {
+    const existing = expenseRecords().find(item => item.id === id);
+    if (existing && existing.status !== "Déposée") return;
+    const fields = `${inputField("Nom du bénévole", "party", existing?.party, "maxlength=120 required")}
+      ${inputField("Motif de la dépense", "label", existing?.label, "maxlength=120 required")}
+      <div class="form-row">${dateField("Date de la dépense", existing?.date || defaultDate())}
+      ${amountField("Montant (€)", "amount", existing?.amount, 0.01)}</div>
+      ${selectField("Catégorie", "category", optionList(categories.expense, existing?.category || "Remboursements"))}
+      ${analysisFields(existing?.analysis)}
+      ${receiptField(!existing)}`;
+    openModuleDialog(existing ? "Modifier la note de frais" : "Déposer une note de frais", fields, async (data, editor) => {
+      const receipt = data.receipt.size ? await readReceipt(data.receipt, editor.elements.receipt) : existing?.receipt;
+      if (!receipt) return "";
+      const year = clubYear();
+      const prior = expenseRecords(year);
+      year.expenses = [...prior];
+      saveItem(year.expenses, { id: id || newId(), date: data.date,
+        party: data.party.trim(), label: data.label.trim(), amount: cents(data.amount), category: data.category,
+        analysis: readAnalysis(data), receipt, status: "Déposée" });
+      persistReceiptChange(() => { year.expenses = prior; });
+      return "Note de frais déposée.";
+    });
+  }
+
+  function reviewExpense(id) {
+    if (role.value !== "treasurer") return;
+    const year = clubYear();
+    const expense = expenseRecords(year).find(item => item.id === id && item.status === "Déposée");
+    if (!expense) return;
+    const fields = `<p class="meeting-meta">${escapeHtml(expense.party)} · ${escapeHtml(expense.label)} · <strong>${money(expense.amount)}</strong></p>
+      ${selectField("Décision", "decision", choices({ approve: "Valider et préparer le remboursement", refuse: "Refuser la note" }))}
+      ${textarea("Commentaire", "note")}`;
+    openModuleDialog("Examiner la note de frais", fields, data => {
+      expense.reviewNote = data.note.trim();
+      if (data.decision === "refuse") {
+        expense.status = "Refusée";
+        return "Note de frais refusée.";
+      }
+      const invoiceId = newId();
+      expense.status = "Validée";
+      expense.invoiceId = invoiceId;
+      year.invoices ??= [];
+      year.invoices.push({ id: invoiceId, expenseId: expense.id, kind: "expense",
+        reference: `NDF-${expense.id.slice(0, 8).toUpperCase()}`, party: expense.party, label: expense.label,
+        date: expense.date, due: expense.date, category: expense.category, amount: expense.amount, analysis: expense.analysis });
+      return "Note validée. Le remboursement peut être saisi dans Factures.";
+    });
+  }
+
+  function csvRows(source, delimiter) {
+    const rows = [];
+    let row = [];
+    let field = "";
+    let quoted = false;
+    for (let index = 0; index < source.length; index += 1) {
+      const character = source[index];
+      if (character === '"') {
+        if (quoted && source[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          quoted = !quoted;
+        }
+      } else if (!quoted && character === delimiter) {
+        row.push(field);
+        field = "";
+      } else if (!quoted && (character === "\r" || character === "\n")) {
+        row.push(field);
+        if (row.some(cell => cell.trim())) rows.push(row);
+        row = [];
+        field = "";
+        if (character === "\r" && source[index + 1] === "\n") index += 1;
+      } else {
+        field += character;
+      }
+    }
+    if (quoted) throw new Error("Un champ du CSV contient des guillemets non fermés.");
+    row.push(field);
+    if (row.some(cell => cell.trim())) rows.push(row);
+    return rows;
+  }
+
+  function statementDate(value) {
+    const parts = value.trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+    const date = parts ? `${parts[3]}-${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}` : value.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return "";
+    const check = new Date(`${date}T00:00:00Z`);
+    return Number.isFinite(check.valueOf()) && check.toISOString().startsWith(date) ? date : "";
+  }
+
+  function statementAmount(value) {
+    let number = value.trim().replace(/[\s€]/g, "").replace(/−/g, "-");
+    if (!number) return 0;
+    if (number.includes(",")) number = number.replace(/\./g, "").replace(",", ".");
+    if (!/^[+-]?\d+(?:\.\d{1,2})?$/.test(number)) return NaN;
+    const amount = cents(number);
+    return Number.isSafeInteger(amount) && Math.abs(amount) <= 99999999900 ? amount : NaN;
+  }
+
+  function delimitedFile(content) {
+    const source = content.replace(/^\uFEFF/, "").trim();
+    const header = source.split(/\r?\n/, 1)[0].replace(/"[^"]*"/g, '""');
+    const delimiter = [";", "\t", ","].sort((a, b) => header.split(b).length - header.split(a).length)[0];
+    return csvRows(source, delimiter);
+  }
+
+  async function readCsvFile(file) {
+    const buffer = await file.arrayBuffer();
+    const utf8 = new TextDecoder().decode(buffer);
+    return utf8.includes("\uFFFD") ? new TextDecoder("windows-1252").decode(buffer) : utf8;
+  }
+
+  function parseBankFile(content) {
+    const [rawColumns = [], ...data] = delimitedFile(content);
+    const columns = rawColumns.map(cell => normalize(cell).replace(/[’']/g, " ").replace(/\s+/g, " ").trim());
+    const position = names => names.map(name => columns.indexOf(name)).find(index => index >= 0) ?? -1;
+    const dateColumn = position(["date d operation", "date operation", "date de l operation", "date comptable", "date"]);
+    const labelColumn = position(["libelle", "libelle operation", "description", "operation"]);
+    const amountColumn = position(["montant", "montant signe", "montant eur", "montant (eur)", "montant (€)"]);
+    const debitColumn = position(["debit", "debit eur", "debit (eur)", "debit (€)"]);
+    const creditColumn = position(["credit", "credit eur", "credit (eur)", "credit (€)"]);
+    const idColumn = position(["identifiant", "identifiant bancaire", "id", "id transaction"]);
+    const referenceColumn = position(["reference", "reference operation"]);
+    if (dateColumn < 0 || labelColumn < 0 || (amountColumn < 0 && (debitColumn < 0 || creditColumn < 0))) {
+      throw new Error("Le CSV doit contenir Date, Libellé et Montant, ou les colonnes Débit et Crédit.");
+    }
+    if (data.length < 1 || data.length > 5000) throw new Error("Le CSV doit contenir entre 1 et 5 000 opérations.");
+    const { start, end } = seasonDates();
+    const counts = new Map();
+    const lines = [];
+    let outside = 0;
+    for (const [index, cells] of data.entries()) {
+      const date = statementDate(cells[dateColumn] || "");
+      const label = (cells[labelColumn] || "").trim().replace(/\s+/g, " ");
+      const bankId = (cells[idColumn] || "").trim();
+      const reference = (cells[referenceColumn] || bankId).trim();
+      const amount = amountColumn >= 0 ? statementAmount(cells[amountColumn] || "") :
+        Math.abs(statementAmount(cells[creditColumn] || "")) - Math.abs(statementAmount(cells[debitColumn] || ""));
+      if (!date || !label || !Number.isFinite(amount) || amount === 0) {
+        throw new Error(`Date, libellé ou montant invalide à l’opération ${index + 1} du CSV.`);
+      }
+      if (date < start || date > end) {
+        outside += 1;
+        continue;
+      }
+      const signature = JSON.stringify([date, normalize(label), amount, normalize(reference)]);
+      const count = (counts.get(signature) ?? 0) + 1;
+      counts.set(signature, count);
+      const fingerprint = bankId ? `id:${bankId}` : `line:${signature}:${count}`;
+      lines.push({ date, label, amount, reference, fingerprint });
+    }
+    return { lines, outside };
+  }
+
+  function bankLines() { return clubYear().bankLines ?? []; }
+
+  function importBankDialog() {
+    const previous = clubYear().statement;
+    const fields = `<p class="meeting-meta">Colonnes attendues&nbsp;: Date, Libellé, Montant signé, ou Débit et Crédit. L’identifiant bancaire est facultatif.</p>
+      <label class="field">Relevé CSV <input type="file" name="statementCsv" accept=".csv,.tsv,text/csv" required></label>
+      <div class="form-row">${dateField("Date du solde du relevé", previous?.date || "", false)}
+      ${amountField("Solde du relevé (€)", "balance", previous?.balance, -999999999, false)}</div>`;
+    openModuleDialog("Importer un relevé bancaire", fields, async (data, editor) => {
+      const file = data.statementCsv;
+      if (file.size > 2 * 1024 * 1024) return invalidInput(editor.elements.statementCsv, "Choisis un relevé de 2 Mo maximum.");
+      if (Boolean(data.date) !== (data.balance !== "")) {
+        notify("Renseigne ensemble la date et le solde du relevé.");
+        return "";
+      }
+      const { lines, outside } = parseBankFile(await readCsvFile(file));
+      const saved = bankLines();
+      const known = new Set(saved.map(line => line.fingerprint));
+      const additions = [];
+      for (const line of lines) {
+        if (known.has(line.fingerprint)) continue;
+        known.add(line.fingerprint);
+        additions.push({ id: newId(), ...line });
+      }
+      clubYear().bankLines = [...saved, ...additions];
+      if (data.date && (!previous || previous.date <= data.date)) {
+        clubYear().statement = { date: data.date, balance: cents(data.balance) };
+      }
+      return `${additions.length} ajoutée(s) · ${lines.length - additions.length} déjà importée(s) · ${outside} hors saison.`;
+    });
+  }
+
+  function signedEntry(entry) { return entry.amount * (entry.kind === "income" ? 1 : -1); }
+
+  function dayDistance(first, second) {
+    return Math.abs(Date.parse(first) - Date.parse(second)) / 86400000;
+  }
+
+  function bankCandidates(line) {
+    return clubYear().entries.filter(entry => entry.account === "bank" && !entry.bankLineId && signedEntry(entry) === line.amount)
+      .sort((first, second) => dayDistance(first.date, line.date) - dayDistance(second.date, line.date));
+  }
+
+  function matchedBankEntries() {
+    return new Map(clubYear().entries.filter(entry => entry.bankLineId).map(entry => [entry.bankLineId, entry]));
+  }
+
+  function statementDifference() {
+    const { statement, opening, entries } = clubYear();
+    if (!statement) return null;
+    const imported = new Map(bankLines().map(line => [line.id, line]));
+    const expected = entries.filter(entry => entry.account === "bank" && entry.cleared &&
+      (imported.get(entry.bankLineId)?.date || entry.date) <= statement.date)
+      .reduce((amount, entry) => amount + signedEntry(entry), opening.bank);
+    return { ...statement, expected, difference: statement.balance - expected };
+  }
+
+  function reconciliationPage() {
+    const matched = matchedBankEntries();
+    const lines = bankLines();
+    const pending = lines.filter(line => !matched.has(line.id)).length;
+    const pendingEntries = clubYear().entries.filter(entry => entry.account === "bank" && !entry.cleared).length;
+    const difference = statementDifference();
+    const rows = [...lines].sort((a, b) => b.date.localeCompare(a.date)).map(line => {
+      const entry = matched.get(line.id);
+      const candidates = entry ? [] : bankCandidates(line);
+      const suggested = candidates[0] && dayDistance(line.date, candidates[0].date) <= 5 ? candidates[0] : null;
+      const status = entry ? `Rapprochée · ${entry.label}` : suggested ? `Proposition · ${suggested.label}` : "À examiner";
+      const controls = entry ? action("Annuler le rapprochement", "bank-unmatch", line.id) :
+        candidates.length ? action("Rapprocher", "bank-match", line.id, "primary") : "";
+      return `<tr><td>${dateLabel(line.date)}</td><td class="label-cell"><strong>${escapeHtml(line.label)}</strong>
+        <span class="secondary-value">${escapeHtml(line.reference)}</span></td>${amountCell(line.amount, true)}
+        <td class="label-cell">${escapeHtml(status)}</td><td>${controls}</td></tr>`;
+    });
+    const differenceLabel = difference ? money(difference.difference) : "—";
+    return `<section class="overview money-overview" aria-label="Indicateurs de rapprochement">
+      ${stat("Lignes à examiner", pending, "bank")}
+      ${stat("Écritures à pointer", pendingEntries, "ledger")}
+      ${stat("Écart avec le relevé", differenceLabel, "accounting", "", true)}
+      </section><section class="panel"><header class="panel-header"><h2>Relevé bancaire</h2>
+      ${action("Importer un CSV", "bank-import", "", "primary", "plus")}</header>
+      <p class="panel-note">Les propositions associent le même montant et des dates proches. Ouvre la ligne pour choisir l’écriture et confirmer.</p>
+      ${difference ? `<p class="panel-note">Au ${dateLabel(difference.date)}, relevé à <strong>${money(difference.balance)}</strong> et solde pointé à <strong>${money(difference.expected)}</strong>.</p>` : ""}
+      ${dataTable([["Date"], ["Libellé du relevé"], ["Montant", true], ["Correspondance"], ["Actions"]], rows.join(""), "Relevé bancaire importé")}</section>`;
+  }
+
+  function matchBankDialog(id) {
+    const line = bankLines().find(item => item.id === id);
+    if (!line || matchedBankEntries().has(id)) return;
+    const candidates = bankCandidates(line);
+    if (!candidates.length) return;
+    const sameDay = candidates.filter(entry => entry.date === line.date);
+    const selected = sameDay.length === 1 ? sameDay[0].id : "";
+    const options = option("", "Choisir une écriture", selected) + candidates.map(entry =>
+      option(entry.id, `${dateLabel(entry.date)} · ${entry.label}${entry.cleared ? " (déjà pointée)" : ""}`, selected)).join("");
+    const fields = `<p class="meeting-meta">${dateLabel(line.date)} · ${escapeHtml(line.label)} · <strong>${money(line.amount)}</strong></p>
+      ${selectField("Écriture à rapprocher", "entryId", options)}`;
+    openModuleDialog("Confirmer le rapprochement", fields, (data, editor) => {
+      const entry = candidates.find(item => item.id === data.entryId && !item.bankLineId);
+      if (!entry) return invalidInput(editor.elements.entryId, "Choisis une écriture.");
+      entry.wasPointed = entry.cleared;
+      entry.cleared = true;
+      entry.bankLineId = id;
+      return "Rapprochement enregistré.";
+    });
+  }
+
+  function unmatchBank(id) {
+    const entry = matchedBankEntries().get(id);
+    if (!entry) return;
+    entry.cleared = Boolean(entry.wasPointed);
+    delete entry.wasPointed;
+    delete entry.bankLineId;
+    saveBureau("Rapprochement annulé.");
+    render();
+  }
+
+  function closingChecks() {
+    const year = clubYear();
+    const matched = matchedBankEntries();
+    const difference = statementDifference();
+    const openNotes = expenseRecords().filter(expense => expense.status === "Déposée").length;
+    const outstanding = invoicesForSeason();
+    const missingEntries = year.entries.filter(entry => entry.kind === "expense" && !entry.invoiceId &&
+      !entry.transferId && !entry.receipt).length;
+    const missingInvoices = (year.invoices ?? []).filter(invoice => invoice.kind === "expense" &&
+      !receiptTarget(`invoice:${invoice.id}`)?.item.receipt).length;
+    const reviewRows = [
+      ["Écritures bancaires à pointer", year.entries.filter(entry => entry.account === "bank" && !entry.cleared).length],
+      ["Lignes du relevé à examiner", bankLines().filter(line => !matched.has(line.id)).length],
+      ["Dépenses sans fichier justificatif", missingEntries + missingInvoices],
+      ["Notes de frais à examiner", openNotes],
+      ["Factures ou remboursements encore ouverts", outstanding.filter(invoice => invoice.remaining).length]
+    ];
+    return { reviewRows, difference };
+  }
+
+  function financialReportData() {
+    const year = clubYear();
+    if (year.report) return year.report;
+    const totals = financialTotals(year.entries);
+    const summary = balanceSummary(trialBalance(accountingLines(accountingMovements())));
+    const open = invoiceTotals();
+    const { start, end } = seasonDates();
+    const lines = [
+      ["Encaissements de la saison", totals.income],
+      ["Décaissements de la saison", totals.expense],
+      [year.closedAt ? "Trésorerie de fin de saison" : "Trésorerie au journal",
+        year.opening.bank + year.opening.cash + totals.income - totals.expense],
+      ["Produits enregistrés", summary.income],
+      ["Charges enregistrées", summary.expenses],
+      ["Solde produits − charges", summary.income - summary.expenses],
+      ["Sommes restant à encaisser", open.income],
+      ["Sommes restant à payer", open.expense]
+    ];
+    const budget = Object.entries(directions).map(([kind, label]) => {
+      const plans = budgetRows(kind);
+      const planned = plans.reduce((amount, item) => amount + item.planned, 0);
+      return [label + "s", planned, totals[kind]];
+    });
+    return { start, end, lines, budget };
+  }
+
+  function closingPage() {
+    const year = clubYear();
+    const { reviewRows, difference } = closingChecks();
+    const { start, end, lines, budget } = financialReportData();
+    const report = lines.map(([label, amount]) => `<tr><td>${label}</td>${amountCell(amount)}</tr>`).join("");
+    const budgetLines = budget.map(([label, planned, realized]) =>
+      `<tr><td>${label}</td>${amountCell(planned)}${amountCell(realized)}${amountCell(realized - planned)}</tr>`).join("");
+    const lockedText = lockedFinanceYear() ? financeLockMessage() : "Rapport provisoire";
+    return `<div class="closing-report stack">
+      <section class="panel">
+        <header class="panel-header"><div><h2 class="report-title">Rapport financier · ${escapeHtml(clubName)}</h2>
+          <p class="meeting-meta">Du ${dateLabel(start)} au ${dateLabel(end)}</p></div>
+          <div class="actions">${action("Imprimer ou enregistrer en PDF", "print-report", "", "outline", "download")}
+          ${lockedFinanceYear() ? "" : action("Clôturer la saison", "close-finance", "", "primary")}</div></header>
+        <p class="panel-note">${year.closedAt ? `Saison clôturée le ${dateLabel(year.closedAt)}.` : lockedText}</p>
+        ${dataTable([["Indicateur"], ["Montant", true]], report, "Rapport financier de la saison")}
+      </section>
+      <section class="panel"><header class="panel-header"><h2>Budget de trésorerie</h2></header>
+        ${dataTable([["Mouvement"], ["Prévu", true], ["Réalisé", true], ["Écart", true]], budgetLines, "Budget de la saison")}</section>
+      <section class="panel no-print"><header class="panel-header"><h2>Points de contrôle</h2></header>
+        <div class="report-details"><ul>${reviewRows.map(([label, count]) => `<li>${label} <strong>${count}</strong></li>`).join("")}
+        <li>Écart bancaire <strong>${difference ? money(difference.difference) : "Solde de relevé non saisi"}</strong></li></ul></div>
+      </section>
+      ${analysisPanel()}
+    </div>`;
+  }
+
+  function closeFinance() {
+    const year = clubYear();
+    const { start, end } = seasonDates();
+    const fields = `<p class="meeting-meta">La clôture conserve les données du ${dateLabel(start)} au ${dateLabel(end)} en lecture seule.
+      Les saisons précédentes sont également verrouillées pour préserver les reports. Les dettes et créances ouvertes restent réglables dans une saison suivante.</p>
+      <label class="field"><span>Confirmation</span><span><input type="checkbox" name="confirm" required style="width:auto; min-height:auto"> J’ai revu les points de contrôle du rapport.</span></label>`;
+    openModuleDialog("Clôturer la saison", fields, data => {
+      if (!data.confirm || lockedFinanceYear()) return "";
+      year.closedAt = todayIso();
+      persistReceiptChange(() => { delete year.closedAt; });
+      return "Saison clôturée. Les écritures sont en lecture seule.";
+    });
+  }
+
+
+  const memberFileStates = ["À vérifier", "Incomplet", "Complet"];
+
+  function fileStatus(member) {
+    return member?.fileStatus || "À vérifier";
+  }
+
+  function memberIdentity(member) {
+    const clean = part => normalize(part.trim()).replace(/\s+/g, " ");
+    return `${clean(member.first)}\u0001${clean(member.last)}`;
+  }
+
+  function priorSeason() {
+    return String(Number(season.value) - 1);
+  }
+
+  function renewalRoster() {
+    const previous = records[priorSeason()] || [];
+    const current = getMembers();
+    const linked = new Map(current.filter(member => member.renewal?.year === priorSeason())
+      .map(member => [member.renewal.id, member]));
+    const byName = new Map(current.map(member => [memberIdentity(member), member]));
+    return previous.map(member => ({ previous: member, current: linked.get(member.id) || byName.get(memberIdentity(member)) }));
+  }
+
+  function renewalSummary() {
+    const roster = renewalRoster();
+    if (!roster.length) return "Le registre de la saison précédente est vide.";
+    return `${roster.filter(item => item.current).length} sur ${roster.length} adhérents de la saison précédente repris.`;
+  }
+
+  function renewalsPage() {
+    const roster = renewalRoster();
+    const added = roster.filter(item => item.current).length;
+    const pending = getMembers().filter(member => fileStatus(member) !== "Complet").length;
+    const body = roster.map(({ previous, current }) => `<tr>
+      <td class="label-cell">${escapeHtml(`${previous.first} ${previous.last}`)}</td><td>${escapeHtml(current?.team || previous.team)}</td>
+      <td>${badge(current ? "Au registre" : "À renouveler", !current)}</td>
+      <td>${current ? escapeHtml(fileStatus(current)) : "—"}</td><td>${current ? (hasPaid(current) ? "Réglée" : "En attente") : "—"}</td></tr>`).join("");
+    return `<section class="overview" aria-label="Suivi des renouvellements">
+      ${stat("Repris au registre", added, "members", `sur ${roster.length}`)}
+      ${stat("À renouveler", roster.length - added, "meetings")}
+      ${stat("Dossiers à vérifier ou incomplets", pending, "tasks", "", true)}
+      </section><section class="panel">
+      <header class="panel-header"><h2>Saison précédente</h2><div class="actions">
+      ${roster.some(item => !item.current) ? action("Reprendre des adhérents", "renew-members", "", "primary") : ""}
+      ${action("Importer un CSV", "import-members")}
+      <button type="button" class="button outline" data-nav="members">Ouvrir le registre</button></div></header>
+      <p class="panel-note">La reprise crée une adhésion pour la saison sélectionnée, avec une cotisation en attente et un dossier à vérifier.</p>
+      ${dataTable([["Adhérent"], ["Équipe"], ["Renouvellement"], ["Dossier"], ["Cotisation"]], body, "Adhérents de la saison précédente")}</section>`;
+  }
+
+  function addMembers(newMembers) {
+    const current = getMembers();
+    records[season.value] = [...newMembers, ...current];
+    if (remote) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(records));
+    } catch (error) {
+      records[season.value] = current;
+      throw new Error("Le navigateur n’a pas pu enregistrer les adhésions.");
+    }
+  }
+
+  function renewMembersDialog() {
+    const candidates = renewalRoster().filter(item => !item.current).map(item => item.previous);
+    const choices = candidates.map(member => `<label><input type="checkbox" name="memberId" value="${escapeHtml(member.id)}">
+      ${escapeHtml(`${member.first} ${member.last} · ${member.team}`)}</label>`).join("");
+    const fields = selectionFields("Adhérents à reprendre", choices);
+    const editor = openModuleDialog("Reprendre des adhérents", fields, (_data, editor) => {
+      const selected = new Set(new FormData(editor).getAll("memberId"));
+      const known = new Set(getMembers().map(memberIdentity));
+      const renewed = [];
+      for (const { previous, current } of renewalRoster()) {
+        if (current || !selected.has(previous.id) || known.has(memberIdentity(previous))) continue;
+        known.add(memberIdentity(previous));
+        renewed.push({ id: newId(), first: previous.first, last: previous.last, team: previous.team,
+          paid: false, fileStatus: "À vérifier", renewal: { year: priorSeason(), id: previous.id } });
+      }
+      if (!renewed.length) {
+        notify("Sélectionne au moins un adhérent à reprendre.");
+        return "";
+      }
+      addMembers(renewed);
+      return renewed.length === 1 ? "Adhésion reprise." : `${renewed.length} adhésions reprises.`;
+    }, remote ? saveBureau : notify);
+    bindSelectAll(editor);
+  }
+
+  function parseMemberImport(content) {
+    const [header = [], ...data] = delimitedFile(content);
+    const columns = header.map(name => normalize(name.trim()));
+    const first = columns.indexOf("prenom");
+    const last = columns.indexOf("nom");
+    const team = columns.indexOf("equipe");
+    if ([first, last, team].includes(-1)) throw new Error("Le CSV doit contenir les colonnes Prénom, Nom et Équipe.");
+    if (!data.length || data.length > 1500) throw new Error("Le CSV doit contenir entre 1 et 1 500 adhérents.");
+    const known = new Set(getMembers().map(memberIdentity));
+    return data.map((cells, index) => {
+      const candidate = { first: (cells[first] || "").trim(), last: (cells[last] || "").trim(),
+        team: teams.find(name => normalize(name) === normalize((cells[team] || "").trim())) };
+      let status = "À importer";
+      if (!candidate.first || !candidate.last || candidate.first.length > 60 || candidate.last.length > 60) status = "Prénom ou nom invalide";
+      else if (!candidate.team) status = "Équipe inconnue";
+      else if (known.has(memberIdentity(candidate))) status = "Doublon possible";
+      else known.add(memberIdentity(candidate));
+      return { ...candidate, index: index + 1, status };
+    });
+  }
+
+  function importMembersDialog() {
+    let content;
+    const fields = `<p class="meeting-meta">Colonnes Prénom, Nom et Équipe. Équipes disponibles&nbsp;: ${teams.join(", ")}.</p>
+      <label class="field">Fichier des adhérents <input type="file" name="membersCsv" accept=".csv,.tsv,text/csv" required></label>
+      <div id="member-import-preview" aria-live="polite"></div>`;
+    const editor = openModuleDialog("Importer des adhérents", fields, async (data, form) => {
+      const button = form.querySelector('button[type="submit"]');
+      if (content === undefined) {
+        if (data.membersCsv.size > 1024 * 1024) return invalidInput(form.elements.membersCsv, "Choisis un CSV de 1 Mo maximum.");
+        const next = await readCsvFile(data.membersCsv);
+        const parsed = parseMemberImport(next);
+        content = next;
+        const count = parsed.filter(row => row.status === "À importer").length;
+        const rows = parsed.map(row => `<tr><td>${row.index}</td><td>${escapeHtml(`${row.first} ${row.last}`)}</td>
+          <td>${escapeHtml(row.team || "—")}</td><td>${escapeHtml(row.status)}</td></tr>`).join("");
+        form.querySelector("#member-import-preview").innerHTML =
+          `<p class="meeting-meta">${count} à importer · ${parsed.length - count} ignorée(s)</p>
+          <div class="import-preview">${dataTable([["Ligne"], ["Adhérent"], ["Équipe"], ["Résultat"]], rows, "Aperçu de l’import")}</div>`;
+        button.textContent = count ? `Importer ${count} adhésion${count === 1 ? "" : "s"}` : "Revoir le fichier";
+        return "";
+      }
+      const candidates = parseMemberImport(content).filter(row => row.status === "À importer");
+      if (!candidates.length) {
+        notify("Vérifie les lignes signalées ou choisis un autre fichier.");
+        return "";
+      }
+      addMembers(candidates.map(({ first, last, team }) =>
+        ({ id: newId(), first, last, team, paid: false, fileStatus: "À vérifier" })));
+      return candidates.length === 1 ? "Une adhésion importée." : `${candidates.length} adhésions importées.`;
+    }, remote ? saveBureau : notify);
+    const previewButton = editor.querySelector('button[type="submit"]');
+    previewButton.textContent = "Afficher l’aperçu";
+    editor.elements.membersCsv.addEventListener("change", () => {
+      content = undefined;
+      editor.querySelector("#member-import-preview").replaceChildren();
+      previewButton.textContent = "Afficher l’aperçu";
+    });
+  }
+
+  function directorOverview() {
+    const roster = renewalRoster();
+    const current = getMembers();
+    const rows = teams.map(team => {
+      const previous = roster.filter(item => item.previous.team === team);
+      const renewed = previous.filter(item => item.current).length;
+      const count = current.filter(item => item.team === team).length;
+      return `<tr><td>${escapeHtml(team)}</td><td>${count}</td><td>${renewed} sur ${previous.length}</td></tr>`;
+    }).join("");
+    const upcoming = [
+      ...clubYear().meetings.filter(item => item.status === "À venir").map(item => ({ ...item, go: "meetings" })),
+      ...clubYear().tasks.filter(item => item.date && item.status !== "Terminée").map(item => ({ ...item, go: "tasks" })),
+      ...(clubYear().volunteers ?? []).filter(item => item.date && !item.owner).map(item => ({ ...item, go: "volunteers" }))
+    ].sort((a, b) => a.date.localeCompare(b.date));
+    const deadlines = upcoming.slice(0, 6).map(item => `<tr><td>${dateLabel(item.date)}</td>
+      <td class="label-cell">${escapeHtml(item.title)}</td><td><button type="button" class="link-button" data-nav="${item.go}"
+      ${item.go === "meetings" ? 'data-role="secretary"' : ""}>Voir</button></td></tr>`).join("");
+    const vacant = (clubYear().volunteers ?? []).filter(item => !item.owner).length;
+    return `<div class="stack">
+      <section class="panel"><header class="panel-header"><h2>Effectifs et renouvellements</h2>
+      <button type="button" class="button outline" data-nav="renewals" data-role="secretary">Suivre la rentrée</button></header>
+      ${dataTable([["Équipe"], ["Adhérents"], ["Repris de la saison précédente"]], rows, "Effectifs et renouvellements")}</section>
+      <section class="panel"><header class="panel-header"><h2>Échéances du club</h2></header>
+      ${dataTable([["Date"], ["Échéance"], ["Accès"]], deadlines, "Échéances du club")}</section>
+      <div class="quick-grid">
+      ${quickCard("Décisions du bureau", "Retrouver le suivi des décisions, des actions et des remboursements.", "Ouvrir les décisions", "decisions")}
+      ${quickCard("Bénévoles", `${vacant} poste${vacant === 1 ? "" : "s"} à pourvoir.`, "Voir les postes", "volunteers")}
+      </div></div>`;
+  }
+
+  function volunteersPage() {
+    const rows = (clubYear().volunteers ?? []).map(item =>
+      `<tr><td class="label-cell">${escapeHtml(item.title)}</td><td>${escapeHtml(item.team || "Club")}</td>
+      <td>${dateLabel(item.date)}</td><td>${item.owner ? escapeHtml(item.owner) : badge("À pourvoir", true)}</td>
+      <td>${action("Modifier", "volunteer", item.id)}</td></tr>`).join("");
+    return `<section class="panel"><header class="panel-header"><h2>Postes bénévoles</h2>${action("Ajouter un poste", "volunteer", "", "primary")}</header>
+      ${dataTable([["Poste"], ["Équipe"], ["Échéance"], ["Bénévole"], ["Actions"]], rows, "Postes bénévoles")}</section>`;
+  }
+
+  function editVolunteer(item) {
+    const fields = `${inputField("Poste ou mission", "title", item?.title, "maxlength=120 required")}
+      ${selectField("Équipe", "team", option("", "Tout le club", item?.team || "") + optionList(teams, item?.team))}
+      ${dateField("Échéance", item?.date || "", false)}
+      ${inputField("Bénévole affecté", "owner", item?.owner, "maxlength=120")}`;
+    openModuleDialog(item ? "Modifier le poste" : "Ajouter un poste bénévole", fields, data => {
+      clubYear().volunteers ??= [];
+      saveItem(clubYear().volunteers, { id: item?.id ?? newId(), ...data, title: data.title.trim(), owner: data.owner.trim() });
+      return "Poste enregistré.";
+    });
+  }
+
+  const decisionStates = ["À décider", "Adoptée", "Écartée"];
+  const attendanceStates = ["À confirmer", "Présent", "Absent", "Représenté"];
+  const voteOutcomes = ["Adoptée", "Rejetée", "Reportée"];
+
+  function decisionsPage() {
+    const year = clubYear();
+    const rows = (year.decisions ?? []).slice().sort((a, b) => b.date.localeCompare(a.date)).map(decision => {
+      const meeting = year.meetings.find(item => item.id === decision.meetingId);
+      const task = year.tasks.find(item => item.id === decision.taskId);
+      const expense = expenseRecords().find(item => item.id === decision.expenseId);
+      const invoice = expense?.invoiceId ? findInvoice(expense.invoiceId) : undefined;
+      const expenseStatus = invoice ? (settledAmount(invoice) >= invoice.amount ? "Remboursée" : "À rembourser") : expense?.status;
+      const taskLabel = task ? [task.title, task.owner, task.date ? dateLabel(task.date) : "", task.status].filter(Boolean).join(" · ") : "—";
+      return `<tr><td class="label-cell"><strong>${escapeHtml(decision.title)}</strong>
+        <span class="secondary-value">${dateLabel(decision.date)}${meeting ? ` · ${escapeHtml(meeting.title)}` : ""}</span></td>
+        <td>${badge(decision.status, decision.status !== "Adoptée")}</td><td class="label-cell">${escapeHtml(taskLabel)}</td>
+        <td class="label-cell">${expense ? `${escapeHtml(expense.label)}<span class="secondary-value">${escapeHtml(expenseStatus)} · ${money(expense.amount)}</span>` : "—"}</td>
+        <td><span class="row-actions">${action("Modifier", "decision", decision.id)}
+        ${action(task ? "Modifier l’action" : "Créer l’action", "decision-task", decision.id)}</span></td></tr>`;
+    }).join("");
+    return `<section class="panel"><header class="panel-header"><h2>Registre des décisions</h2>
+      ${action("Nouvelle décision", "decision", "", "primary", "plus")}</header>
+      ${dataTable([["Décision"], ["Statut"], ["Action et échéance"], ["Note de frais"], ["Actions"]], rows, "Registre des décisions")}</section>`;
+  }
+
+  function editDecision(item) {
+    const year = clubYear();
+    const meetingsOptions = option("", "Aucune réunion", item?.meetingId || "") + year.meetings.map(meeting =>
+      option(meeting.id, `${dateLabel(meeting.date)} · ${meeting.title}`, item?.meetingId)).join("");
+    const expenses = option("", "Aucune note liée", item?.expenseId || "") + expenseRecords().map(expense =>
+      option(expense.id, `${expense.label} · ${money(expense.amount)}`, item?.expenseId)).join("");
+    const fields = `${inputField("Décision", "title", item?.title, "maxlength=140 required")}
+      <div class="form-row">${dateField("Date", item?.date || defaultDate())}
+      ${selectField("Statut", "status", optionList(decisionStates, item?.status))}</div>
+      ${selectField("Réunion d’origine", "meetingId", meetingsOptions)}
+      ${selectField("Note de frais liée", "expenseId", expenses)}`;
+    openModuleDialog(item ? "Modifier la décision" : "Nouvelle décision", fields, data => {
+      year.decisions ??= [];
+      saveItem(year.decisions, { ...item, id: item?.id ?? newId(), ...data, title: data.title.trim() });
+      return "Décision enregistrée.";
+    });
+  }
+
+  function isAssembly(meeting) {
+    return meeting?.type === "Assemblée générale";
+  }
+
+  function activeAssembly() {
+    return clubYear().meetings.find(meeting => meeting.id === selectedAssemblyId && isAssembly(meeting));
+  }
+
+  function openAssembly(id) {
+    selectedAssemblyId = id;
+    if (!activeAssembly()) return;
+    page = "assembly";
+    render();
+    const heading = elements["page-title"];
+    heading.tabIndex = -1;
+    heading.focus();
+  }
+
+  function assemblyParticipants(meeting) { return meeting.participants ?? []; }
+
+  function participantSummary(participants) {
+    return attendanceStates.map(state => [state, participants.filter(item => item.status === state).length]);
+  }
+
+  function assemblyPage() {
+    const meeting = activeAssembly();
+    if (!meeting) return meetings();
+    const participants = assemblyParticipants(meeting);
+    const counts = Object.fromEntries(participantSummary(participants));
+    const names = new Map(participants.map(item => [item.id, item.name]));
+    const attendees = participants.map(item => `<tr><td class="label-cell">${escapeHtml(item.name)}</td>
+      <td>${escapeHtml(item.team)}</td><td>${badge(item.status, item.status === "À confirmer")}</td>
+      <td>${escapeHtml(names.get(item.proxyId) || "—")}</td><td>${action("Saisir la présence", "assembly-attendee", item.id)}</td></tr>`).join("");
+    const votes = (meeting.votes ?? []).map(vote => {
+      const decision = clubYear().decisions?.find(item => item.voteId === vote.id && item.meetingId === meeting.id);
+      const next = decision ? '<span class="secondary-value">Consignée dans les décisions du bureau</span>' :
+        vote.outcome === "Adoptée" ? action("Consigner la décision", "assembly-vote-decision", vote.id) : "";
+      return `<tr><td class="label-cell">${escapeHtml(vote.title)}</td><td>${vote.forVotes}</td><td>${vote.against}</td><td>${vote.abstain}</td>
+        <td>${badge(vote.outcome, vote.outcome !== "Adoptée")}${next}</td><td>${action("Modifier", "assembly-vote", vote.id)}</td></tr>`;
+    }).join("");
+    const report = meeting.financialReport;
+    return `<div class="stack">
+      <section class="panel"><header class="panel-header"><div><h2>${escapeHtml(meeting.title)}</h2>
+      <p class="meeting-meta">${dateLabel(meeting.date)}${meeting.place ? ` · ${escapeHtml(meeting.place)}` : ""}</p></div>
+      <div class="actions">${action("Projet de convocation", "invitation", meeting.id)}
+      ${action("Télécharger le PV", "minutes", meeting.id, "outline", "download")}</div></header></section>
+      <section class="overview" aria-label="Participants à l’assemblée">
+      ${stat("Sur la liste de convocation", participants.length, "members")}
+      ${stat("Présents", counts.Présent, "meetings")}
+      ${stat("Représentés", counts.Représenté, "tasks", "", true)}
+      </section>
+      <section class="panel"><header class="panel-header"><h2>Convocations, présences et procurations</h2><div class="actions">
+      ${action("Choisir les adhérents", "assembly-list", "", "primary")}${action("Exporter la liste", "assembly-export", "", "outline", "download")}</div></header>
+      ${dataTable([["Adhérent"], ["Équipe"], ["Présence"], ["Représenté par"], ["Actions"]], attendees, "Participants à l’assemblée")}</section>
+      <section class="panel"><header class="panel-header"><h2>Votes</h2>
+      ${action("Ajouter un vote", "assembly-vote", "", "primary")}</header>
+      ${dataTable([["Résolution"], ["Pour"], ["Contre"], ["Abstentions"], ["Résultat"], ["Actions"]], votes, "Votes de l’assemblée")}</section>
+      <section class="panel"><header class="panel-header"><h2>Rapport financier joint au PV</h2>
+      ${action(report ? "Actualiser le rapport joint" : "Joindre le rapport de la saison", "assembly-report")}</header>
+      <p class="panel-note">${report ? `${report.closed ? "Rapport de saison clôturée" : "Rapport provisoire"} · Copie du ${dateLabel(report.savedAt)}` :
+        "Une copie du rapport financier de la saison peut être intégrée au PV téléchargé."}</p></section>
+      </div>`;
+  }
+
+  function editAssemblyList() {
+    const meeting = activeAssembly();
+    if (!meeting) return;
+    const previous = new Map(assemblyParticipants(meeting).map(item => [item.id, item]));
+    const current = new Map(getMembers().map(item => [item.id, { id: item.id, name: `${item.first} ${item.last}`, team: item.team }]));
+    const candidates = new Map([...previous, ...current]);
+    const options = [...candidates.values()].sort((a, b) => a.name.localeCompare(b.name, "fr")).map(item =>
+      `<label><input type="checkbox" name="participant" value="${escapeHtml(item.id)}"${previous.has(item.id) ? " checked" : ""}>
+      ${escapeHtml(`${item.name} · ${item.team}`)}</label>`).join("");
+    const fields = selectionFields("Adhérents à convoquer", options);
+    const editor = openModuleDialog("Choisir les adhérents à convoquer", fields, (_data, form) => {
+      const ids = new Set(new FormData(form).getAll("participant"));
+      if ([...ids].some(id => previous.get(id)?.proxyId && !ids.has(previous.get(id).proxyId))) {
+        notify("Retire la procuration avant de retirer la personne qui la détient.");
+        return "";
+      }
+      meeting.participants = [...ids].filter(id => candidates.has(id)).map(id =>
+        previous.get(id) || { ...candidates.get(id), status: "À confirmer", proxyId: "" });
+      return "Liste de convocation mise à jour.";
+    });
+    bindSelectAll(editor);
+  }
+
+  function selectionFields(title, items) {
+    return `<fieldset class="field"><legend>${title}</legend>
+      <label class="selection-list-control"><input type="checkbox" data-select-all> Tout sélectionner</label>
+      <div class="selection-list">${items}</div></fieldset>`;
+  }
+
+  function bindSelectAll(editor) {
+    const control = editor.querySelector("[data-select-all]");
+    const items = [...editor.querySelectorAll(".selection-list input")];
+    const sync = () => {
+      const checked = items.filter(item => item.checked).length;
+      control.disabled = !items.length;
+      control.checked = checked > 0 && checked === items.length;
+      control.indeterminate = checked > 0 && checked < items.length;
+    };
+    control.addEventListener("change", () => {
+      for (const item of items) item.checked = control.checked;
+    });
+    for (const item of items) item.addEventListener("change", sync);
+    sync();
+  }
+
+  function editAssemblyAttendee(id) {
+    const meeting = activeAssembly();
+    const participants = meeting ? assemblyParticipants(meeting) : [];
+    const person = participants.find(item => item.id === id);
+    if (!person) return;
+    const proxies = participants.filter(item => item.id !== id && item.status === "Présent");
+    const options = option("", "Choisir une personne présente", person.proxyId) +
+      proxies.map(item => option(item.id, item.name, person.proxyId)).join("");
+    const fields = `<p class="meeting-meta">${escapeHtml(person.name)}</p>
+      ${selectField("Présence", "status", optionList(attendanceStates, person.status))}
+      ${selectField("Représenté par", "proxyId", options)}`;
+    const editor = openModuleDialog("Enregistrer la présence", fields, (data, form) => {
+      if (data.status === "Représenté" && !proxies.some(item => item.id === data.proxyId)) {
+        return invalidInput(form.elements.proxyId, "Choisis une personne présente pour la procuration.");
+      }
+      if (data.status !== "Présent" && participants.some(item => item.proxyId === id)) {
+        return invalidInput(form.elements.status, "Réattribue les procurations confiées à cette personne avant de changer sa présence.");
+      }
+      person.status = data.status;
+      person.proxyId = data.status === "Représenté" ? data.proxyId : "";
+      return "Présence enregistrée.";
+    });
+    const updateProxy = () => {
+      editor.elements.proxyId.closest("label").hidden = editor.elements.status.value !== "Représenté";
+      editor.elements.proxyId.setCustomValidity("");
+    };
+    editor.elements.status.addEventListener("change", updateProxy);
+    updateProxy();
+  }
+
+  function editAssemblyVote(id) {
+    const meeting = activeAssembly();
+    if (!meeting) return;
+    const vote = meeting.votes?.find(item => item.id === id);
+    const voteCount = (label, name) => inputField(label, name, vote?.[name] ?? 0, 'type="number" min="0" max="10000" step="1" required');
+    const fields = `${inputField("Résolution", "title", vote?.title, "maxlength=220 required")}
+      <div class="form-row">${voteCount("Pour", "forVotes")}${voteCount("Contre", "against")}</div>
+      ${voteCount("Abstentions", "abstain")}${selectField("Résultat constaté", "outcome", optionList(voteOutcomes, vote?.outcome))}`;
+    openModuleDialog(vote ? "Modifier le vote" : "Consigner un vote", fields, data => {
+      meeting.votes ??= [];
+      saveItem(meeting.votes, { id: vote?.id ?? newId(), title: data.title.trim(),
+        forVotes: Number(data.forVotes), against: Number(data.against), abstain: Number(data.abstain), outcome: data.outcome });
+      return "Vote enregistré.";
+    });
+  }
+
+  function recordVoteDecision(id) {
+    const meeting = activeAssembly();
+    const vote = meeting?.votes?.find(item => item.id === id);
+    if (vote?.outcome !== "Adoptée") return;
+    const year = clubYear();
+    year.decisions ??= [];
+    if (year.decisions.some(item => item.voteId === id && item.meetingId === meeting.id)) return;
+    year.decisions.push({ id: newId(), voteId: id, meetingId: meeting.id, title: vote.title, status: "Adoptée", date: meeting.date });
+    saveBureau("Décision ajoutée au registre du dirigeant.");
+    render();
+  }
+
+  function attachAssemblyReport() {
+    const meeting = activeAssembly();
+    if (!meeting) return;
+    meeting.financialReport = { ...financialReportData(), closed: Boolean(clubYear().closedAt), savedAt: todayIso() };
+    saveBureau("Copie du rapport financier jointe au PV.");
+    render();
+  }
+
+  function exportAssemblyList() {
+    const meeting = activeAssembly();
+    if (!meeting) return;
+    const participants = assemblyParticipants(meeting);
+    const names = new Map(participants.map(item => [item.id, item.name]));
+    downloadCsv(`convocations-${meeting.date}`, [["Adhérent", "Équipe", "Présence", "Représenté par"],
+      ...participants.map(item => [item.name, item.team, item.status, names.get(item.proxyId) || ""])]);
+  }
+
+  function assemblyExportLines(meeting, minutes) {
+    if (!isAssembly(meeting)) return [];
+    const participants = assemblyParticipants(meeting);
+    const names = new Map(participants.map(item => [item.id, item.name]));
+    const lines = ["", minutes ? "Feuille de présence" : "Liste des adhérents à convoquer"];
+    if (minutes) lines.push(participantSummary(participants).map(([state, count]) => `${state} ${count}`).join(" · "));
+    for (const item of participants) {
+      const proxy = names.get(item.proxyId);
+      const attendance = minutes ? ` · ${item.status}${proxy ? ` par ${proxy}` : ""}` : "";
+      lines.push(`${item.name} · ${item.team}${attendance}`);
+    }
+    if (minutes && meeting.votes?.length) {
+      lines.push("", "Votes");
+      for (const vote of meeting.votes) lines.push(`${vote.title} — Pour ${vote.forVotes}, contre ${vote.against}, abstentions ${vote.abstain} — ${vote.outcome}`);
+    }
+    if (minutes && meeting.financialReport) {
+      const report = meeting.financialReport;
+      lines.push("", `Rapport financier joint · ${report.closed ? "Saison clôturée" : "Provisoire"}`,
+        `Du ${dateLabel(report.start)} au ${dateLabel(report.end)} · copie du ${dateLabel(report.savedAt)}`);
+      for (const [label, amount] of report.lines) lines.push(`${label} — ${money(amount)}`);
+      lines.push("", "Budget de trésorerie");
+      for (const [label, planned, realized] of report.budget) {
+        lines.push(`${label} — Prévu ${money(planned)}, réalisé ${money(realized)}, écart ${money(realized - planned)}`);
+      }
+    }
+    return lines;
+  }
+
+
+  elements["brand-icon"].innerHTML = icon("logo");
+  elements["close-dialog"].innerHTML = icon("close");
+  elements["member-team"].innerHTML = teams.map(team => option(team, team, "")).join("");
+  document.addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    if (remoteBusy) {
+      event.preventDefault();
+      return;
+    }
+    if (button.dataset.moduleAction) {
+      handleModuleAction(button);
+    } else if (button.dataset.nav) {
+      const nested = !nav.contains(button);
+      if (remote && button.dataset.role && button.dataset.role !== remote.role) {
+        if (!remote.roles.includes(button.dataset.role)) return;
+        role.value = button.dataset.role;
+        page = button.dataset.nav;
+        filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "" };
+        syncRemote("", false);
+        return;
+      }
+      if (button.dataset.role) role.value = button.dataset.role;
+      page = button.dataset.nav;
+      filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "" };
+      render();
+      if (nested) {
+        const heading = elements["page-title"];
+        heading.tabIndex = -1;
+        heading.focus();
+      }
+    } else if (button.hasAttribute("data-add")) {
+      openMember();
+    } else if (button.hasAttribute("data-edit")) {
+      const member = getMembers().find(item => item.id === button.dataset.edit);
+      if (member) openMember(member);
+    } else if (button.hasAttribute("data-export")) {
+      exportCsv();
+    } else if (button.hasAttribute("data-close")) {
+      dialog.close();
+    }
+  });
+
+  role.addEventListener("change", () => {
+    page = "dashboard";
+    if (remote) syncRemote("", false);
+    else render();
+  });
+  season.addEventListener("change", () => {
+    ledgerFilters.kind = "";
+    ledgerFilters.account = "";
+    invoiceFilters.kind = "";
+    invoiceFilters.status = "";
+    accountingAccount = "";
+    if (page === "assembly") page = "meetings";
+    render();
+  });
+  main.addEventListener("input", event => {
+    const key = event.target.dataset.filter;
+    if (!key) return;
+    filters[key] = event.target.value;
+    main.querySelector("#member-rows").innerHTML = rows(filteredMembers());
+  });
+
+  for (const input of [form.elements.first, form.elements.last]) {
+    input.addEventListener("input", () => input.setCustomValidity(""));
+  }
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    if (remoteBusy) return;
+    const members = getMembers();
+    const first = form.elements.first.value.trim();
+    const last = form.elements.last.value.trim();
+    if (!first || !last) {
+      const input = first ? form.elements.last : form.elements.first;
+      input.setCustomValidity("Renseignez ce champ.");
+      input.reportValidity();
+      return;
+    }
+    const existing = members.find(item => item.id === editingId);
+    const member = {
+      ...existing,
+      id: editingId ?? (globalThis.crypto?.randomUUID?.() || String(Date.now())),
+      first, last,
+      team: form.elements.team.value,
+      fileStatus: form.elements.fileStatus.value,
+      fileNote: form.elements.fileNote.value.trim(),
+      paid: form.elements.paid.disabled ? Boolean(existing?.paid) : form.elements.paid.value === "true"
+    };
+    const index = members.findIndex(item => item.id === editingId);
+    if (index < 0) members.unshift(member);
+    else members[index] = member;
+
+    let saved = true;
+    try {
+      if (!remote) localStorage.setItem(storageKey, JSON.stringify(records));
+    } catch {
+      saved = false;
+    }
+    dialog.close();
+    render();
+    const focusTarget = Array.from(main.querySelectorAll("[data-edit]")).find(button => button.dataset.edit === member.id)
+      || main.querySelector("[data-add], [data-filter]");
+    focusTarget?.focus();
+    const message = index < 0 ? "Adhérent ajouté." : "Modifications enregistrées.";
+    if (remote) saveBureau(message);
+    else notify(saved ? message : "Modifications disponibles jusqu’à la fermeture de cette page.");
+  });
+
+  function applyRemoteState(state, activeRole) {
+    remote.state = state;
+    remote.role = activeRole;
+    role.value = activeRole;
+    const selected = season.value;
+    season.replaceChildren(...Object.keys(state.records).sort().reverse()
+      .map(year => new Option(`${year}–${Number(year) + 1}`, year)));
+    if (state.records[selected]) season.value = selected;
+    for (const [local, updated] of [[records, state.records], [bureau, state.bureau]]) {
+      for (const year of Object.keys(local)) delete local[year];
+      Object.assign(local, structuredClone(updated));
+    }
+  }
+
+  async function syncRemote(message, write = true) {
+    if (remoteBusy) return;
+    remoteBusy = true;
+    main.setAttribute("aria-busy", "true");
+    role.disabled = true;
+    season.disabled = true;
+    document.getElementById("storage-mode").textContent = "Synchronisation…";
+    const activeRole = role.value;
+    const endpoint = `api.php?role=${encodeURIComponent(activeRole)}`;
+    try {
+      const options = { cache: "no-store" };
+      if (write) {
+        options.method = "POST";
+        options.headers = { "Content-Type": "application/json", "X-CSRF-Token": remote.csrf };
+        options.body = JSON.stringify({ revision: remote.state.revision, records, bureau });
+      }
+      const response = await fetch(endpoint, options);
+      if (response.status === 401) {
+        window.location.reload();
+        return;
+      }
+      const data = await response.json();
+      if (data.state) applyRemoteState(data.state, activeRole);
+      if (!response.ok) throw new Error(data.error);
+      applyRemoteState(data, activeRole);
+      if (message) notify(message);
+    } catch (error) {
+      applyRemoteState(remote.state, remote.role);
+      if (!workspaces[role.value].includes(page) && page !== "assembly") page = "dashboard";
+      notify(error.message || "Synchronisation interrompue. Actualise le tableau de bord avant de réessayer.");
+    } finally {
+      remoteBusy = false;
+      role.disabled = false;
+      season.disabled = false;
+      main.removeAttribute("aria-busy");
+      document.getElementById("storage-mode").textContent = "Données partagées";
+      render();
+    }
+  }
+
+  if (remote) {
+    document.getElementById("online-refresh").addEventListener("click", () => syncRemote("Données actualisées.", false));
+  } else {
+    document.getElementById("local-export").addEventListener("click", () =>
+      downloadFile("sauvegarde-locale.json",
+        [JSON.stringify({ format: "gestclub-state-v1", records, bureau }, null, 2)], "application/json"));
+  }
+  render();
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+/config.php
+/.env
+/.env.*
+/backups/
+/gestclub-sauvegarde-*
+/.DS_Store
