@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gestclub
+          POSTGRES_PASSWORD: gestclub
+          POSTGRES_DB: gestclub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gestclub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql
+      - name: Lancer les tests
+        env:
+          GESTCLUB_TEST_DSN: pgsql:host=127.0.0.1;port=5432;dbname=gestclub_test
+          GESTCLUB_TEST_USER: gestclub
+          GESTCLUB_TEST_PASSWORD: gestclub
+        run: php tests/run.php

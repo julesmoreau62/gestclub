@@ -48,7 +48,7 @@ try {
     }
     $connection->beginTransaction();
     $state = fetchState($connection, true);
-    if ($state['revision'] !== $payload['revision']) {
+    if (staleDomains($state, $role, $payload['revision'])) {
         $connection->rollBack();
         respond(['error' => 'Le club a été modifié sur un autre appareil. Les données ont été rechargées. Reprends ta modification.',
             'state' => scopedState($state, $role, (string) $user['id'])], 409);
@@ -56,9 +56,12 @@ try {
     $next = persistAttachments($connection, $state, mergeState($state, $payload, $role, (string) $user['id']));
     $update = $connection->prepare(
         'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-         revision = revision + 1, updated_at = now(), updated_by = ? WHERE id = true RETURNING revision'
+         revision = revision + 1, updated_at = now(), updated_by = ?,
+         records_revision = ?, finance_revision = ?, office_revision = ? WHERE id = true RETURNING revision'
     );
-    $update->execute([jsonEncode($next['records']), jsonEncode($next['bureau']), $user['id']]);
+    $domains = nextDomains($state, $next);
+    $update->execute([jsonEncode($next['records']), jsonEncode($next['bureau']), $user['id'],
+        $domains['records'], $domains['finance'], $domains['office']]);
     $next['revision'] = (int) $update->fetchColumn();
     if ($next['revision'] % 50 === 0) $connection->exec('SELECT gestclub_prune()');
     $connection->commit();

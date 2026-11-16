@@ -66,8 +66,19 @@ Le guide de la version publiée détaille la configuration d’un hébergement W
 | [`sql/002-historique.sql`](sql/002-historique.sql) | Historique des révisions, nettoyage des justificatifs et contrôle des rôles |
 | [`config.example.php`](config.example.php) | Modèle de configuration à copier et à renseigner sur l’hébergement du club |
 | [`bin/gestclub.php`](bin/gestclub.php) | Initialisation et mises à jour du schéma, comptes et saisons, import et export, historique et restauration |
+| [`sql/003-revisions-par-domaine.sql`](sql/003-revisions-par-domaine.sql) | Enregistrement indépendant du registre, des finances et de la vie du bureau |
+| [`tests/run.php`](tests/run.php) | Tests de bout en bout sur une base PostgreSQL de test |
 | [`docs/installation-ovh.md`](docs/installation-ovh.md) | Installation, reprise des données et sauvegardes |
 
 Fair Gestion est au **stade pilote**. Le schéma, les contrôles d’accès et la gestion des modifications concurrentes ont été vérifiés localement. La mise en service complète sur OVHcloud reste à valider sur une instance pilote.
+
+## Lancer les tests
+
+Les tests installent le schéma, pilotent l’application en HTTP avec trois comptes et vérifient les droits, les conflits, les justificatifs, l’historique et la restauration. Ils demandent PHP avec `pdo_pgsql` et une base PostgreSQL **vide et dédiée aux tests**.
+
+```sh
+GESTCLUB_TEST_DSN='pgsql:host=127.0.0.1;port=5432;dbname=gestclub_test' \
+GESTCLUB_TEST_USER=utilisateur GESTCLUB_TEST_PASSWORD=mot-de-passe php tests/run.php
+```
 
 Pour signaler un problème ou proposer une amélioration, [ouvre une issue](https://github.com/julesmoreau62/gestclub/issues). Le code est sous [licence MIT](LICENSE).

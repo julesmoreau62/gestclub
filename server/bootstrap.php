@@ -21,7 +21,8 @@ function db(): PDO
 function config(): array
 {
     static $configuration;
-    return $configuration ??= require dirname(__DIR__) . '/config.php';
+    // GESTCLUB_CONFIG sert aux tests : une installation utilise le config.php placé à côté de index.html.
+    return $configuration ??= require (getenv('GESTCLUB_CONFIG') ?: dirname(__DIR__) . '/config.php');
 }
 
 function jsonEncode(mixed $value, int $flags = 0): string
@@ -107,8 +108,10 @@ function login(string $email, string $password): bool
 
 function fetchState(PDO $connection, bool $lock = false): array
 {
-    $row = $connection->query('SELECT revision, records, bureau FROM gestclub_state WHERE id = true' .
-        ($lock ? ' FOR UPDATE' : ''))->fetch();
+    $row = $connection->query('SELECT revision, records, bureau, records_revision, finance_revision, office_revision
+        FROM gestclub_state WHERE id = true' . ($lock ? ' FOR UPDATE' : ''))->fetch();
     if (!$row) throw new RuntimeException('Base à initialiser avec bin/gestclub.php.');
-    return ['revision' => (int) $row['revision'], 'records' => jsonDecode($row['records']), 'bureau' => jsonDecode($row['bureau'])];
+    return ['revision' => (int) $row['revision'], 'records' => jsonDecode($row['records']), 'bureau' => jsonDecode($row['bureau']),
+        'domains' => ['records' => (int) $row['records_revision'], 'finance' => (int) $row['finance_revision'],
+            'office' => (int) $row['office_revision']]];
 }

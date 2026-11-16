@@ -77,7 +77,8 @@ try {
                 $state['bureau'][$year] = emptySeason();
                 $query = $database->prepare(
                     'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-                     revision = revision + 1, updated_at = now(), updated_by = NULL WHERE id = true'
+                     revision = revision + 1, updated_at = now(), updated_by = NULL,
+                     records_revision = revision + 1, finance_revision = revision + 1, office_revision = revision + 1 WHERE id = true'
                 );
                 $query->execute([jsonEncode($state['records']), jsonEncode($state['bureau'])]);
             }
@@ -135,7 +136,8 @@ try {
             $payload = persistAttachments($database, ['bureau' => []], $payload);
             $query = $database->prepare(
                 'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-                 revision = revision + 1, updated_at = now() WHERE id = true'
+                 revision = revision + 1, updated_at = now(),
+                 records_revision = revision + 1, finance_revision = revision + 1, office_revision = revision + 1 WHERE id = true'
             );
             $query->execute([jsonEncode($payload['records']), jsonEncode($payload['bureau'])]);
             $database->commit();
@@ -163,7 +165,8 @@ try {
             // L'état remplacé rejoint lui-même l'historique : une restauration peut être annulée.
             $query = $database->prepare(
                 'UPDATE gestclub_state s SET records = h.records, bureau = h.bureau, revision = s.revision + 1,
-                 updated_at = now(), updated_by = NULL FROM gestclub_state_history h WHERE h.revision = ? RETURNING s.revision'
+                 updated_at = now(), updated_by = NULL, records_revision = s.revision + 1, finance_revision = s.revision + 1,
+                 office_revision = s.revision + 1 FROM gestclub_state_history h WHERE h.revision = ? RETURNING s.revision'
             );
             $query->execute([$revision]);
             $current = $query->fetchColumn();

@@ -5,7 +5,7 @@ Chaque club ouvre son propre compte OVHcloud, choisit son domaine et invite son 
 ## 1. Préparer les services OVHcloud
 
 1. Prends un **hébergement Web Pro ou supérieur** pour disposer de SSH. Active **PHP 8.4**, profil **Stable64**. Gest’club utilise le pilote PHP `pdo_pgsql`. Configure le domaine ou sous-domaine du club et active le certificat HTTPS.
-2. Crée une instance **Web Cloud Databases** et choisis **PostgreSQL**. Sélectionne la localisation française souhaitée parmi celles proposées par OVHcloud, et vérifie la localisation du service et de ses sauvegardes dans les conditions de l’offre. Dans l’espace client, crée une base dédiée à Gest’club et un utilisateur ayant le droit de créer les tables dans cette base.
+2. Crée une instance **Web Cloud Databases** et choisis **PostgreSQL, version 12 ou supérieure**. Sélectionne la localisation française souhaitée parmi celles proposées par OVHcloud, et vérifie la localisation du service et de ses sauvegardes dans les conditions de l’offre. Dans l’espace client, crée une base dédiée à Gest’club et un utilisateur ayant le droit de créer les tables dans cette base.
 3. Sur **Web Cloud Databases → IPs autorisées**, active l’accès depuis les hébergements Web OVHcloud. Relève le nom d’hôte PostgreSQL, le port, le nom de la base et les identifiants. Utilise le port indiqué dans l’espace client.
 
 [SSH sur l’hébergement Web](https://docs.ovhcloud.com/fr/guides/web-cloud/web-hosting/ssh-on-webhosting) · [Configuration PHP](https://docs.ovhcloud.com/fr/guides/web-cloud/web-hosting/configure-your-web-hosting) · [Premiers pas PostgreSQL](https://docs.ovhcloud.com/fr/guides/web-cloud/databases/db-getting-started-postgresql) · [Configuration des accès à la base](https://docs.ovhcloud.com/fr/guides/web-cloud/databases/db-configure-optimise-database-server)
@@ -48,7 +48,7 @@ Chaque commande `account` génère un mot de passe et l’affiche une fois dans 
 1. Ouvre l’adresse HTTPS du club sur ordinateur avec le compte secrétaire. Ajoute une adhésion de test.
 2. Ouvre la même adresse en navigation privée ou sur téléphone avec le compte trésorier. Dans **Cotisations**, vérifie que l’adhésion est disponible.
 3. Fais un essai dans le compte dirigeant. Il voit les effectifs et les synthèses. Le trésorier accède aux écritures et aux justificatifs financiers. Le secrétaire gère le registre et les réunions et peut joindre la synthèse financière au PV.
-4. Pour un écran resté ouvert, utilise **Actualiser**. Si deux personnes modifient le même état depuis une version ancienne, Gest’club recharge la dernière version et demande de reprendre la modification.
+4. Pour un écran resté ouvert, utilise **Actualiser**. Le registre, les finances et la vie du bureau s’enregistrent indépendamment : le secrétaire peut ajouter une adhésion pendant que le trésorier saisit une écriture. Si deux personnes modifient le même domaine depuis une version ancienne, Gest’club recharge la dernière version et demande de reprendre la modification.
 5. Vérifie qu’une visite en navigation privée sur le site affiche la connexion et que `/config.php`, `/server/state.php` et `/sql/001-install.sql` répondent par une erreur 404.
 
 ## 5. Reprendre la démo ou créer une saison

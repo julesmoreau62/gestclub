@@ -6,9 +6,50 @@ require_once __DIR__ . '/bootstrap.php';
 const FINANCE_FIELDS = ['opening', 'entries', 'invoices', 'plan', 'expenses', 'bankLines', 'statement', 'closedAt'];
 const OFFICE_FIELDS = ['meetings', 'tasks', 'decisions', 'volunteers'];
 
+// Domaines que chaque rôle peut écraser. Le dépôt d'une note de frais par le dirigeant est absent de la liste :
+// mergeDirectorExpenses ajoute à l'état du serveur sans rien retirer, une lecture ancienne des finances est sans effet.
+const ROLE_DOMAINS = ['treasurer' => ['finance'], 'secretary' => ['records', 'office'], 'director' => ['records', 'office']];
+
 function picked(array $source, array $keys): array
 {
     return array_intersect_key($source, array_flip($keys));
+}
+
+function canonical(mixed $value): mixed
+{
+    if (!is_array($value)) return $value;
+    if (!array_is_list($value)) ksort($value, SORT_STRING);
+    return array_map(canonical(...), $value);
+}
+
+function domainContent(array $state): array
+{
+    $content = ['records' => $state['records'], 'finance' => [], 'office' => []];
+    foreach ($state['bureau'] as $year => $data) {
+        $content['finance'][$year] = picked($data, FINANCE_FIELDS);
+        $content['office'][$year] = picked($data, OFFICE_FIELDS);
+    }
+    return array_map(fn(array $domain): string => jsonEncode(canonical($domain)), $content);
+}
+
+// Révision de chaque domaine après une sauvegarde : seuls les domaines réellement modifiés avancent.
+function nextDomains(array $state, array $next): array
+{
+    $before = domainContent($state);
+    $domains = $state['domains'];
+    foreach (domainContent($next) as $domain => $content) {
+        if ($content !== $before[$domain]) $domains[$domain] = $state['revision'] + 1;
+    }
+    return $domains;
+}
+
+function staleDomains(array $state, string $role, int $baseRevision): bool
+{
+    if ($baseRevision > $state['revision']) return true;
+    foreach (ROLE_DOMAINS[$role] as $domain) {
+        if ($state['domains'][$domain] > $baseRevision) return true;
+    }
+    return false;
 }
 
 function financeReport(array $state, int $year): array
@@ -57,6 +98,7 @@ function financeReport(array $state, int $year): array
 function scopedState(array $state, string $role, string $userId): array
 {
     $projected = $state;
+    unset($projected['domains']);
     $expenseInvoiceIds = [];
     if ($role === 'director') {
         foreach ($state['bureau'] as $period) {
