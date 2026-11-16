@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Prototype de Gest’club, l’outil de gestion des clubs sportifs amateurs.">
   <title>Gest’club — Tableau de bord</title>
   <style>
@@ -73,7 +73,7 @@
     main { width: 100%; max-width: 1480px; margin-inline: auto; padding: 32px clamp(22px, 4vw, 64px) 44px; }
     .page-header, .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
     .page-header { margin-bottom: 24px; }
-    h1 { font-size: clamp(28px, 3.4vw, 39px); font-weight: 780; letter-spacing: -.055em; line-height: 1.1; }
+    h1 { font-size: clamp(24px, 2.6vw, 30px); font-weight: 760; letter-spacing: -.035em; line-height: 1.15; }
     h2 { font-size: 18px; font-weight: 750; letter-spacing: -.025em; }
     h3 { font-size: 16px; }
     .season { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
@@ -82,32 +82,6 @@
       min-height: 39px; border: 1px solid #dbe1d9; border-radius: 8px; color: var(--ink); background: var(--white);
       padding: 7px 9px; font-weight: 650;
     }
-    .hero {
-      position: relative; isolation: isolate; overflow: hidden; color: #fff; background: #153e2d;
-      border-radius: 15px; min-height: 215px; display: flex; align-items: center; padding: 29px 34px;
-    }
-    .hero::before {
-      content: ""; position: absolute; inset: 0; z-index: -2;
-      background: linear-gradient(110deg, #153e2d 33%, #20543a 74%, #2b6548);
-    }
-    .hero-copy { max-width: 535px; }
-    .hero-kicker { display: flex; align-items: center; gap: 8px; color: #dfeddb; font-size: 13px; font-weight: 650; }
-    .hero-kicker::before { content: ""; width: 15px; height: 2px; border-radius: 3px; background: #efac85; }
-    .hero h2 { margin: 8px 0 14px; font-size: clamp(29px, 4vw, 47px); line-height: 1.06; letter-spacing: -.06em; }
-    .pitch {
-      --line: #a2c4a48a;
-      position: absolute; z-index: -1; width: 410px; height: 246px; right: -3%; top: 51%;
-      transform: translateY(-50%) rotate(-18deg); opacity: .76;
-      border: 2px solid var(--line); border-radius: 3px;
-      background: repeating-linear-gradient(90deg, #71ad8329 0 39px, transparent 39px 80px);
-    }
-    .pitch::before, .pitch::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); }
-    .pitch::before { height: 100%; border-left: 2px solid var(--line); }
-    .pitch::after { width: 72px; height: 72px; top: calc(50% - 36px); border: 2px solid var(--line); border-radius: 50%; }
-    .pitch-box { position: absolute; top: 25%; width: 16%; height: 50%; border: 2px solid var(--line); }
-    .pitch-box::after { content: ""; position: absolute; top: 25%; width: 45%; height: 50%; border: 2px solid var(--line); }
-    .pitch-left, .pitch-left::after { left: -2px; }
-    .pitch-right, .pitch-right::after { right: -2px; }
     .button {
       display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px;
       padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; font-weight: 700; font-size: 13px;
@@ -123,7 +97,12 @@
     .link-button:hover { text-decoration: underline; }
     .link-button .icon { width: 15px; height: 15px; margin-left: 4px; }
     .overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 17px 0 20px; }
-    .stat { padding: 15px 17px; border: 1px solid var(--rule); border-radius: 12px; background: #fff; }
+    .stat { position: relative; display: block; width: 100%; text-align: left; padding: 15px 17px; border: 1px solid var(--rule); border-radius: 12px; background: #fff; }
+    .stat-link:hover { border-color: #b9c9bc; background: #fcfdfb; }
+    .stat-link > .icon { position: absolute; top: 17px; right: 15px; width: 16px; height: 16px; color: var(--muted); }
+    .stat-value { display: block; }
+    .meter { display: block; height: 6px; margin-top: 11px; border-radius: 6px; background: #e9ede7; overflow: hidden; }
+    .meter i { display: block; height: 100%; border-radius: 6px; background: #347456; }
     .stat-label { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; color: var(--muted); }
     .tile { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--green); background: var(--soft-green); }
     .tile.warm { color: var(--orange); background: var(--soft-orange); }
@@ -131,7 +110,6 @@
     .stat-value { margin: 9px 0 0; font-size: 31px; line-height: 1.1; letter-spacing: -.045em; font-weight: 780; font-variant-numeric: tabular-nums; }
     .stat-value span { font-size: 14px; color: var(--muted); font-weight: 550; letter-spacing: 0; margin-left: 6px; }
 
-    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(245px, .43fr); gap: 16px; align-items: start; }
     .panel { background: #fff; border: 1px solid var(--rule); border-radius: 12px; min-width: 0; }
     .panel-header { padding: 17px 18px; }
     .table-wrap { overflow-x: auto; }
@@ -153,20 +131,6 @@
     .row-action { border: 0; background: transparent; width: 30px; height: 30px; border-radius: 7px; color: var(--muted); }
     .row-action:hover { background: var(--soft-green); color: var(--green); }
     .row-action .icon { width: 15px; height: 15px; }
-    .empty { text-align: left !important; color: var(--muted); padding: 24px 18px; white-space: normal; }
-    .payment-panel { padding: 17px 18px; }
-    .payment-panel h2 { margin-bottom: 17px; }
-    .payment-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
-    .ring {
-      width: 83px; height: 83px; flex: none; display: grid; place-items: center; border-radius: 50%;
-      background: conic-gradient(#347456 var(--progress), #e9ede7 0);
-    }
-    .ring span { width: 66px; height: 66px; display: grid; place-items: center; background: #fff; border-radius: 50%; font-size: 21px; font-weight: 780; letter-spacing: -.045em; }
-    .payment-summary dl { margin: 0; display: grid; gap: 9px; flex: 1; font-size: 12px; }
-    .payment-summary dl div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .payment-summary dt { color: var(--muted); white-space: nowrap; }
-    .payment-summary dd { margin: 0; font-weight: 750; }
-    .payment-panel .link-button { display: block; margin-top: 16px; padding: 12px 0 0; border-top: 1px solid var(--rule); width: 100%; text-align: left; }
     .filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 18px 14px; }
     .search { display: flex; align-items: center; gap: 6px; min-height: 39px; padding: 0 10px; border: 1px solid #dbe1d9; border-radius: 8px; flex: 1 1 195px; max-width: 320px; }
     .search:focus-within { outline: 2px solid #a54b33; outline-offset: 2px; }
@@ -188,17 +152,51 @@
     .field input, .field select, .field textarea { width: 100%; min-height: 40px; padding: 8px 10px; border-radius: 7px; border: 1px solid #dbe1d9; color: var(--ink); background: #fff; }
     .field textarea { resize: vertical; min-height: 68px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .toast { position: fixed; z-index: 2; right: 18px; bottom: 18px; max-width: calc(100% - 36px); padding: 12px 16px; border-radius: 9px; box-shadow: 0 4px 18px #143c2a30; background: #143c2a; color: #fff; font-weight: 650; }
-    .module-hero { min-height: 171px; }
-    .module-hero::after { content: ""; position: absolute; z-index: -1; right: 8%; top: -45px; width: 238px; height: 238px; border-radius: 50%; border: 1px solid #ffffff45; box-shadow: 0 0 0 35px #ffffff14, 0 0 0 69px #ffffff12, 0 0 0 104px #ffffff0d; }
-    .module-hero h2 { font-size: clamp(28px, 3.8vw, 43px); }
-    .module-hero.secretary { background: #243b48; }
-    .module-hero.secretary::before { background: linear-gradient(105deg, #263d4a 32%, #365c6c); }
-    .module-hero.secretary .hero-kicker { color: #dfedf1; }
-    .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin: 0 0 16px; }
-    .quick-card { padding: 17px; display: grid; justify-items: start; align-content: start; gap: 10px; }
-    .quick-card p, .panel-note, .meeting-meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .toast { position: fixed; z-index: 5; right: 18px; bottom: 18px; max-width: calc(100% - 36px); padding: 12px 16px; border-radius: 9px; box-shadow: 0 4px 18px #143c2a30; background: #143c2a; color: #fff; font-weight: 650; }
+    .panel-note, .meeting-meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .dash-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: -12px 0 18px; }
+    .dash-head p { color: var(--muted); font-size: 13px; }
+    .dash-head strong { color: var(--ink); }
+    .attention { margin-bottom: 0; }
+    .attention .panel-header { justify-content: flex-start; gap: 9px; padding-bottom: 12px; }
+    .count-pill { min-width: 22px; padding: 2px 7px; border-radius: 20px; background: var(--soft-orange); color: var(--orange); font-size: 12px; font-weight: 750; text-align: center; }
+    .todo-list { list-style: none; margin: 0; padding: 0 12px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 8px; }
+    .todo { width: 100%; height: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 12px; text-align: left; background: #fbfcfa; border: 1px solid var(--rule); border-radius: 10px; }
+    .todo:hover { background: var(--soft-green); border-color: #cfe0d2; }
+    .todo-count { flex: none; min-width: 34px; height: 34px; padding: 0 8px; display: grid; place-items: center; border-radius: 9px; background: var(--soft-orange); color: var(--orange); font-weight: 780; font-variant-numeric: tabular-nums; }
+    .todo-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+    .todo-text small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .todo > .icon { width: 16px; height: 16px; color: var(--muted); }
+    .all-clear { display: flex; align-items: center; gap: 12px; padding: 15px 17px; }
+    .all-clear p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .split-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+    .empty-state { font-weight: 400; font-size: 13px; display: grid; justify-items: center; gap: 6px; padding: 26px 16px; text-align: center; color: var(--muted); line-height: 1.5; white-space: normal; }
+    .empty-state strong { color: var(--ink); font-size: 14px; margin-top: 4px; }
+    .empty-state span:last-child { max-width: 46ch; }
+    td.empty { text-align: center !important; padding: 0; }
+    .result-count { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 0 18px 12px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .search-trigger { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 39px; margin-top: 12px; padding: 6px 9px; border: 1px solid #dbe1d9; border-radius: 8px; background: #fff; color: var(--muted); font-weight: 600; text-align: left; }
+    .search-trigger:hover { border-color: #b9c9bc; color: var(--ink); }
+    .search-trigger .icon { width: 16px; height: 16px; }
+    .search-trigger kbd { margin-left: auto; padding: 1px 6px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); font: inherit; font-size: 11px; }
+    .nav-more, .tab-label { display: none; }
+    #palette { width: min(560px, calc(100% - 26px)); padding: 0; margin-top: 12vh; overflow: hidden; }
+    .palette-field { display: flex; align-items: center; gap: 9px; padding: 13px 16px; border-bottom: 1px solid var(--rule); }
+    .palette-field .icon { color: var(--muted); }
+    .palette-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 16px; }
+    .palette-results { list-style: none; margin: 0; padding: 6px; max-height: min(52vh, 380px); overflow-y: auto; }
+    .palette-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; text-align: left; font-weight: 620; }
+    .palette-item .icon { width: 17px; height: 17px; color: var(--muted); }
+    .palette-item small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .palette-item[aria-selected="true"], .palette-item:hover { background: var(--soft-green); color: var(--green); }
+    .palette-empty { padding: 20px 16px; color: var(--muted); }
+    .palette-hint { padding: 8px 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 11px; }
+    #more-sheet { padding: 16px; }
+    #more-sheet h2 { margin-bottom: 10px; }
+    #more-pages { display: grid; gap: 2px; }
+    #more-sheet .sidebar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 12px 2px 0; }
     .stack { display: grid; gap: 16px; }
+    .stack > * { min-width: 0; }
     .panel-note { padding: 0 18px 14px; }
     .ledger-table td.numeric, .ledger-table th.numeric { text-align: right; font-variant-numeric: tabular-nums; }
     .ledger-table td:first-child { white-space: normal; }
@@ -245,50 +243,86 @@
     @media (max-width: 1050px) {
       :root { --sidebar: 193px; }
       main { padding-inline: 24px; }
-      .pitch { right: -13%; }
-      .dashboard-grid { grid-template-columns: minmax(0, 1fr) minmax(215px, .43fr); }
       th, td { padding-inline: 10px; }
     }
     @media (max-width: 865px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-      .payment-summary { max-width: 285px; }
+      .split-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 680px) {
+      :root { font-size: 15px; }
       .shell { display: block; }
-      .sidebar { position: static; height: auto; border: 0; border-bottom: 1px solid var(--rule); padding: 13px 15px 8px; }
-      .brand { margin: 0; font-size: 21px; }
+      /* Barre supérieure compacte : marque, recherche, espace de travail. */
+      .sidebar { position: sticky; top: 0; z-index: 3; height: auto; flex-direction: row; align-items: center; gap: 8px; border: 0; border-bottom: 1px solid var(--rule); padding: 9px 15px; }
+      .brand { margin: 0 auto 0 0; font-size: 20px; }
       .brand-mark { width: 29px; height: 29px; }
-      .sidebar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 7px; padding: 7px 0 0; }
-      #online-controls, #local-export { margin-top: 0; }
-      .club { display: none; }
-      .workspace { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
-      .workspace label { padding: 0; }
-      .workspace select { width: auto; min-height: 32px; }
-      .navigation { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 8px; }
-      .navigation[data-workspace="treasurer"], .navigation[data-workspace="secretary"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .nav-button { flex-direction: column; justify-content: flex-start; white-space: normal; padding: 7px 2px; gap: 4px; font-size: 11px; text-align: center; }
-      .nav-button .icon { width: 15px; height: 15px; }
-      main { padding: 21px 15px 26px; }
+      .club, .workspace label, .sidebar > .sidebar-footer, .search-trigger span, .search-trigger kbd { display: none; }
+      .search-trigger { width: 44px; min-height: 44px; margin: 0; justify-content: center; }
+      .search-trigger .icon { width: 19px; height: 19px; }
+      .workspace { margin: 0; }
+      .workspace select { width: auto; min-height: 44px; }
+      /* Barre d’onglets fixe en bas : quatre rubriques et « Plus ». */
+      .navigation { position: fixed; z-index: 3; left: 0; right: 0; bottom: 0; margin: 0; gap: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #fdfdfa; border-top: 1px solid var(--rule); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
+      .navigation .nav-button { flex-direction: column; justify-content: center; gap: 3px; min-height: 52px; padding: 5px 2px; font-size: 11px; line-height: 1.15; text-align: center; white-space: nowrap; overflow: hidden; }
+      .navigation .nav-button .icon { width: 21px; height: 21px; }
+      .navigation .nav-button:nth-child(n+5):not(.nav-more) { display: none; }
+      .nav-more { display: flex; }
+      .navigation .tab-label { display: inline; }
+      .navigation .nav-label:has(+ .tab-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      #more-pages .nav-button { min-height: 48px; font-size: 15px; }
+      main { padding: 18px 15px calc(84px + env(safe-area-inset-bottom)); }
       .page-header { margin-bottom: 15px; }
       .season label { display: none; }
-      .hero { padding: 23px 19px; min-height: 173px; }
-      .pitch { right: -32%; opacity: .42; width: 315px; height: 195px; }
-      .overview { gap: 6px; margin: 12px 0; }
-      .stat { padding: 10px 7px; }
-      .stat-label { align-items: flex-start; flex-direction: column; gap: 5px; font-size: 11px; }
-      .tile { width: 26px; height: 26px; }
-      .stat-value { font-size: 25px; }
-      .stat-value span { font-size: 11px; margin-left: 3px; }
-      .money-overview .stat-value { font-size: clamp(13px, 4vw, 17px); }
-      .panel-header { flex-wrap: wrap; padding: 14px 11px; }
-      .filters { padding-inline: 11px; }
-      th, td { padding-inline: 7px; }
-      th:first-child, td:first-child { padding-left: 10px; }
-      .identity { gap: 5px; }
-      .avatar { width: 24px; height: 24px; font-size: 9px; }
-      .quick-grid { grid-template-columns: 1fr; gap: 10px; }
+      .dash-head { margin: -4px 0 14px; }
+      .dash-head .button { flex: 1 1 100%; }
+      .button, .season select, .filters select, .text-button { min-height: 44px; }
+      .row-action { width: 44px; height: 44px; }
+      .row-action .icon { width: 18px; height: 18px; }
+      input, select, textarea { font-size: 16px; }
+      .overview { grid-template-columns: 1fr; gap: 6px; margin: 12px 0; }
+      .stat { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 11px 12px; }
+      .stat-link > .icon { display: none; }
+      .stat-label { gap: 9px; }
+      .tile { width: 28px; height: 28px; }
+      .stat-value, .money-overview .stat-value { margin: 0; font-size: 20px; }
+      .stat-value span { font-size: 12px; }
+      .meter { flex: 1 1 100%; margin-top: 5px; }
+      .panel-header { flex-wrap: wrap; padding: 14px 12px; }
+      .filters { padding-inline: 12px; }
+      .filters .search { flex-basis: 100%; max-width: none; min-height: 44px; }
+      .filters select { flex: 1 1 130px; min-width: 0; }
+      .result-count, .meeting-grid, .panel-note { padding-inline: 12px; }
+      .todo-list { padding: 0 10px 10px; }
       .page-description { margin-top: -5px; }
-      .meeting-grid, .panel-note { padding-inline: 11px; }
+      .toast { left: 15px; right: 15px; bottom: calc(72px + env(safe-area-inset-bottom)); text-align: center; }
+      /* Les tableaux deviennent des fiches : une ligne par enregistrement, chaque valeur avec son intitulé. */
+      main .table-wrap { overflow: visible; }
+      main table, main tbody, main tfoot, main tr, main td { display: block; }
+      main table { white-space: normal; font-size: 14px; }
+      main thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      main tr { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px 12px; padding: 12px; border-top: 1px solid #edf0eb; }
+      main td, main th:first-child, main td:first-child { padding: 0; border: 0; }
+      main td, main td:last-child, .ledger-table td.numeric { display: block; text-align: left; overflow-wrap: anywhere; }
+      main td::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted); font-size: 11px; font-weight: 600; }
+      main td.cell-primary { grid-column: 1 / -1; order: -1; font-size: 15px; font-weight: 700; }
+      main td.cell-primary::before, main td.cell-actions::before, main td.empty::before { content: none; }
+      main td.cell-actions { grid-column: 1 / -1; }
+      main td.cell-actions .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      main td.cell-icons { position: absolute; top: 3px; right: 4px; }
+      main tr:has(.cell-icons) .cell-primary { padding-right: 44px; }
+      main td.cell-void { display: none; }
+      main td.empty { text-align: center !important; }
+      main tfoot tr { background: #f8f9f6; }
+      .ledger-table td.label-cell { min-width: 0; }
+      main .identity { gap: 9px; }
+      /* Les fenêtres de saisie s’ouvrent en feuille depuis le bas de l’écran. */
+      dialog, .module-dialog, #palette { width: 100%; max-width: 100%; max-height: 92dvh; margin: auto 0 0; border-radius: 18px 18px 0 0; border-width: 1px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+      #palette { margin: 0 0 auto; border-radius: 0 0 18px 18px; padding-bottom: 0; }
+      .palette-hint { display: none; }
+      .form-row { grid-template-columns: 1fr; }
+      dialog footer .button { flex: 1; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .button, .nav-button, .todo, .stat, .text-button, .row-action { transition: background-color .12s, border-color .12s, color .12s; }
     }
   </style>
 </head>
@@ -303,6 +337,9 @@
         <span class="club-mark" aria-hidden="true">AS</span>
         <div><strong id="club-name">AS des Tilleuls</strong><small id="club-subtitle">Club de football</small></div>
       </div>
+      <button type="button" class="search-trigger" id="open-search" data-search aria-label="Rechercher une page ou un adhérent" aria-keyshortcuts="Control+K Meta+K">
+        <span id="search-trigger-label">Rechercher</span><kbd id="search-shortcut">Ctrl K</kbd>
+      </button>
       <div class="workspace">
         <label for="workspace-role">Espace de travail</label>
         <select id="workspace-role">
@@ -312,7 +349,7 @@
         </select>
       </div>
       <nav class="navigation" aria-label="Menu principal" id="navigation"></nav>
-      <div class="sidebar-footer"><span class="demo-label" id="storage-mode">Mode démo</span>
+      <div class="sidebar-footer" id="sidebar-footer"><span class="demo-label" id="storage-mode">Mode démo</span>
         <button type="button" class="text-button" id="local-export">Exporter les données locales</button>
         <div class="actions" id="online-controls" hidden>
           <button type="button" class="text-button" id="online-refresh">Actualiser</button>
@@ -362,6 +399,19 @@
     </form>
   </dialog>
   <dialog class="module-dialog" id="module-dialog" aria-labelledby="module-dialog-title"></dialog>
+  <dialog id="palette" aria-label="Recherche">
+    <label class="palette-field"><span class="visually-hidden">Rechercher une page ou un adhérent</span>
+      <input type="search" id="palette-input" placeholder="Rechercher une page ou un adhérent" autocomplete="off"
+        role="combobox" aria-expanded="true" aria-controls="palette-results" aria-autocomplete="list">
+    </label>
+    <ul class="palette-results" id="palette-results" role="listbox" aria-label="Résultats"></ul>
+    <p class="palette-hint" aria-hidden="true">↑ ↓ pour parcourir · Entrée pour ouvrir · Échap pour fermer</p>
+  </dialog>
+  <dialog id="more-sheet" aria-labelledby="more-title">
+    <header><h2 id="more-title">Plus</h2>
+      <button type="button" class="row-action" data-more-close aria-label="Fermer" id="more-close"></button></header>
+    <nav id="more-pages" aria-label="Autres rubriques"></nav>
+  </dialog>
   <div class="toast" id="toast" role="status" hidden></div>
   <script>
     (function () {
@@ -387,7 +437,11 @@
     pencil: '<path d="m15 5 4 4M4 20l4.5-1 12-12a2.8 2.8 0 0 0-4-4l-12 12L4 20Z"/>',
     search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
     download: '<path d="M12 3v12m-4-4 4 4 4-4M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
-    close: '<path d="m6 6 12 12M18 6 6 18"/>'
+    close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    check: '<path d="m5 12 5 5 9-10"/>',
+    chevron: '<path d="m9 6 6 6-6 6"/>',
+    inbox: '<path d="M4 13 6.5 5h11L20 13v6H4v-6Zm0 0h5a3 3 0 0 0 6 0h5"/>',
+    more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'
   };
 
   function icon(name) {
@@ -409,6 +463,8 @@
   };
   const menuLabels = { ledger: "Trésorerie", budget: "Budget", invoices: "Factures", accounting: "Comptabilité",
     bank: "Rapprochement", closing: "Clôture", renewals: "Renouvellement", decisions: "Décisions" };
+  // Libellés courts pour la barre d’onglets du téléphone.
+  const tabLabels = { dashboard: "Accueil", bank: "Banque", renewals: "Rentrée", meetings: "Réunions" };
   const pageIcons = { renewals: "members", decisions: "tasks", volunteers: "teams", assembly: "meetings" };
   const teams = ["Seniors", "U17", "U15"];
   const examples = [
@@ -438,6 +494,14 @@
   const form = elements["member-form"];
   const role = elements["workspace-role"];
   const moduleDialog = elements["module-dialog"];
+  const palette = document.getElementById("palette");
+  const paletteInput = document.getElementById("palette-input");
+  const paletteResults = document.getElementById("palette-results");
+  const moreSheet = document.getElementById("more-sheet");
+  const morePages = document.getElementById("more-pages");
+  const sidebarFooter = document.getElementById("sidebar-footer");
+  const compactLayout = window.matchMedia("(max-width: 680px)");
+  const tabCount = 4;
   const remote = window.gestclubRemote || null;
   const clubName = remote?.clubName || "AS des Tilleuls";
   let remoteBusy = false;
@@ -512,15 +576,59 @@
     return `${[...member.first][0] || ""}${[...member.last][0] || ""}`.toLocaleUpperCase("fr");
   }
 
-  function stat(label, value, symbol, secondary = "", warm = false) {
-    return `<article class="stat">
-      <p class="stat-label"><span class="tile${warm ? " warm" : ""}">${icon(symbol)}</span>${label}</p>
-      <p class="stat-value">${value}${secondary ? `<span>${secondary}</span>` : ""}</p>
-    </article>`;
+  // Les raccourcis vers une rubrique d’un autre rôle ne s’affichent que si le compte possède ce rôle.
+  function canReach(workspace) {
+    return !workspace || !remote || remote.roles.includes(workspace);
+  }
+
+  function navAttributes(target) {
+    return `data-nav="${target.page}" data-role="${target.role || ""}" data-payment="${target.payment || ""}" data-file-status="${target.fileStatus || ""}"`;
+  }
+
+  function stat(label, value, symbol, secondary = "", warm = false, target = null, progress = null) {
+    const body = `<span class="stat-label"><span class="tile${warm ? " warm" : ""}">${icon(symbol)}</span>${label}</span>
+      <span class="stat-value">${value}${secondary ? `<span>${secondary}</span>` : ""}</span>
+      ${progress === null ? "" : `<span class="meter" aria-hidden="true"><i style="width: ${progress}%"></i></span>`}`;
+    if (target && canReach(target.role)) {
+      return `<button type="button" class="stat stat-link" ${navAttributes(target)}>${body}${icon("arrow")}</button>`;
+    }
+    return `<article class="stat">${body}</article>`;
+  }
+
+  function emptyState(title, hint = "") {
+    return `<div class="empty-state"><span class="tile">${icon("inbox")}</span><strong>${title}</strong>${hint ? `<span>${hint}</span>` : ""}</div>`;
+  }
+
+  // « À traiter » : ce qui attend une action, avec un accès direct à la bonne rubrique.
+  function attention(items) {
+    const visible = items.filter(item => item.count > 0 && canReach(item.role));
+    if (!visible.length) {
+      return `<section class="panel all-clear" aria-label="À traiter"><span class="tile">${icon("check")}</span>
+        <div><h2>Tout est à jour</h2><p>Rien n’attend ton intervention pour cette saison.</p></div></section>`;
+    }
+    return `<section class="panel attention" aria-labelledby="attention-title">
+      <header class="panel-header"><h2 id="attention-title">À traiter</h2><span class="count-pill">${visible.length}</span></header>
+      <ul class="todo-list">${visible.map(item => `<li><button type="button" class="todo" ${navAttributes(item)}>
+        <span class="todo-count">${item.count}</span>
+        <span class="todo-text"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.hint)}</small></span>
+        ${icon("chevron")}</button></li>`).join("")}</ul></section>`;
+  }
+
+  function dashHead(workspace, primary) {
+    return `<div class="dash-head"><p><strong>${escapeHtml(clubName)}</strong> · ${workspace}</p>${primary}</div>`;
+  }
+
+  function plural(count, one, many) {
+    return count === 1 ? one : many;
   }
 
   function rows(members) {
-    if (!members.length) return `<tr><td colspan="${page === "members" ? 5 : 4}" class="empty">Aucun adhérent à afficher.</td></tr>`;
+    if (!members.length) {
+      const message = getMembers().length
+        ? emptyState("Aucun adhérent ne correspond", "Modifie la recherche ou réinitialise les filtres.")
+        : emptyState("Aucun adhérent pour cette saison", "Ajoute un premier adhérent ou reprends ceux de la saison précédente.");
+      return `<tr><td colspan="${page === "members" ? 5 : 4}" class="empty">${message}</td></tr>`;
+    }
     const avatarColors = ["sage", "peach", "blue", "gold"];
     return members.map((member, index) => {
       const name = escapeHtml(`${member.first} ${member.last}`);
@@ -552,40 +660,36 @@
     const paid = members.filter(hasPaid).length;
     const unpaid = members.length - paid;
     const percent = members.length ? Math.round((paid / members.length) * 100) : 0;
+    const year = clubYear();
+    const toCheck = members.filter(member => fileStatus(member) !== "Complet").length;
+    const openTasks = year.tasks.filter(task => task.status !== "Terminée").length;
+    const vacant = (year.volunteers ?? []).filter(item => !item.owner).length;
     return `
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="pitch" aria-hidden="true"><i class="pitch-box pitch-left"></i><i class="pitch-box pitch-right"></i></div>
-        <div class="hero-copy">
-          <p class="hero-kicker">${escapeHtml(clubName)} · Espace dirigeant</p>
-          <h2 id="hero-title">La saison en un coup d’œil.</h2>
-          <button type="button" class="button light" data-add>${icon("plus")} Ajouter un adhérent</button>
-        </div>
-      </section>
+      ${dashHead("Espace dirigeant", `<button type="button" class="button primary" data-add>${icon("plus")} Ajouter un adhérent</button>`)}
+      ${attention([
+        { count: unpaid, label: plural(unpaid, "Cotisation en attente", "Cotisations en attente"),
+          hint: "Relancer les adhérents ou encaisser les règlements.", page: "payments", role: "treasurer", payment: "unpaid" },
+        { count: toCheck, label: plural(toCheck, "Dossier à compléter", "Dossiers à compléter"),
+          hint: "Vérifier les pièces et les informations manquantes.", page: "members" },
+        { count: openTasks, label: plural(openTasks, "Action ouverte", "Actions ouvertes"),
+          hint: "Suivre le plan d’action du bureau.", page: "tasks" },
+        { count: vacant, label: plural(vacant, "Poste bénévole à pourvoir", "Postes bénévoles à pourvoir"),
+          hint: "Trouver un bénévole avant l’échéance.", page: "volunteers" }
+      ])}
       <section class="overview" aria-label="Chiffres de la saison">
-        ${stat("Adhérents", members.length, "members")}
-        ${stat("Équipes", teams.length, "teams", "", true)}
-        ${stat("Cotisations réglées", paid, "payments", `sur ${members.length}`)}
+        ${stat("Adhérents", members.length, "members", plural(teams.length, "en 1 équipe", `en ${teams.length} équipes`), false, { page: "members" })}
+        ${stat("Cotisations réglées", paid, "payments", `sur ${members.length} · ${percent}&nbsp;%`, false, { page: "payments", role: "treasurer" }, percent)}
+        ${stat("Solde de trésorerie", budgetSummary().ending, "bank", "", true, { page: "budget", role: "treasurer" })}
       </section>
-      <div class="dashboard-grid">
+      <div class="stack">
         <section class="panel" aria-labelledby="recent-title">
           <header class="panel-header"><h2 id="recent-title">Derniers adhérents</h2>
             <button type="button" class="link-button" data-nav="members">Voir la liste ${icon("arrow")}</button>
           </header>
           ${table(members.slice(0, 5))}
         </section>
-        <section class="panel payment-panel" aria-labelledby="fees-title">
-          <h2 id="fees-title">Suivi des cotisations</h2>
-          <div class="payment-summary">
-            <div class="ring" style="--progress: ${percent}%"><span aria-label="${percent} % de cotisations réglées">${percent}&nbsp;%</span></div>
-            <dl><div><dt>Réglées</dt><dd>${paid}</dd></div><div><dt>En attente</dt><dd>${unpaid}</dd></div></dl>
-          </div>
-          <button type="button" class="link-button" data-nav="payments" data-role="treasurer" data-payment="${unpaid ? "unpaid" : ""}">${unpaid ? `Voir les ${unpaid} en attente` : "Voir les cotisations"} ${icon("arrow")}</button>
-        </section>
-      </div>
-      <div class="quick-grid" style="margin-top: 16px">
-        ${quickCard("Trésorerie du club", budgetSummary().ending + " de solde dans le journal de la saison.", "Ouvrir le budget", "budget", "treasurer")}
-        ${quickCard("Vie du club", actionSummary(), "Ouvrir le plan d’action", "tasks")}
-      </div>${directorOverview()}`;
+        ${directorOverview()}
+      </div>`;
   }
 
   function normalize(value) {
@@ -635,8 +739,17 @@
           ${option("unpaid", "En attente", filters.payment)}
         </select>
       </div>
+      <p class="result-count" id="member-count" aria-live="polite">${memberCount()}</p>
       ${table(filteredMembers())}
     </section>`;
+  }
+
+  function memberCount() {
+    const total = getMembers().length;
+    const shown = filteredMembers().length;
+    if (!Object.values(filters).some(Boolean)) return `${total} ${plural(total, "adhérent", "adhérents")}`;
+    return `${shown} sur ${total} ${plural(total, "adhérent", "adhérents")}
+      <button type="button" class="link-button" data-reset-filters>Réinitialiser les filtres</button>`;
   }
 
   function teamCards() {
@@ -653,14 +766,22 @@
   function render() {
     const available = workspaces[role.value];
     if (nav.dataset.workspace !== role.value) {
-      nav.innerHTML = available.map(key =>
-        `<button type="button" class="nav-button" data-nav="${key}">${icon(pageIcons[key] || key)}${menuLabels[key] || pages[key]}</button>`
-      ).join("");
+      const link = key =>
+        `<button type="button" class="nav-button" data-nav="${key}">${icon(pageIcons[key] || key)}<span class="nav-label">${menuLabels[key] || pages[key]}</span>${
+          tabLabels[key] ? `<span class="tab-label" aria-hidden="true">${tabLabels[key]}</span>` : ""}</button>`;
+      nav.innerHTML = available.map(link).join("") +
+        `<button type="button" class="nav-button nav-more" data-more aria-haspopup="dialog">${icon("more")}<span>Plus</span></button>`;
+      morePages.innerHTML = available.slice(tabCount).map(link).join("");
       nav.dataset.workspace = role.value;
     }
-    for (const button of nav.querySelectorAll("button")) {
-      if (button.dataset.nav === (page === "assembly" ? "meetings" : page)) button.setAttribute("aria-current", "page");
+    const current = page === "assembly" ? "meetings" : page;
+    for (const button of [...nav.querySelectorAll("button"), ...morePages.querySelectorAll("button")]) {
+      if (button.dataset.nav === current) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
+    }
+    // Sur téléphone, « Plus » reste actif quand la rubrique ouverte n’a pas d’onglet.
+    if (available.indexOf(current) >= tabCount && compactLayout.matches) {
+      nav.querySelector(".nav-more").setAttribute("aria-current", "page");
     }
     elements["page-title"].textContent = pages[page];
     document.title = `Gest’club — ${pages[page]}`;
@@ -835,11 +956,6 @@
     return `<button type="button" class="button ${style}" data-module-action="${command}" data-value="${escapeHtml(value)}">${symbol ? icon(symbol) : ""}${text}</button>`;
   }
 
-  function quickCard(title, text, label, target, workspace = "") {
-    return `<article class="panel quick-card"><h2>${title}</h2><p>${escapeHtml(text)}</p>
-      <button type="button" class="link-button" data-nav="${target}" data-role="${workspace}">${label}${icon("arrow")}</button></article>`;
-  }
-
   function financialTotals(entries, includeTransfers = false) {
     return entries.reduce((totals, entry) => {
       if (includeTransfers || !entry.transferId) totals[entry.kind] += entry.amount;
@@ -858,34 +974,50 @@
     const year = clubYear();
     const totals = financialTotals(year.entries);
     const toCheck = year.entries.filter(entry => entry.account === "bank" && !entry.cleared).length;
-    const pending = toCheck === 0 ? "Toutes les opérations bancaires sont pointées." :
-      toCheck === 1 ? "1 opération bancaire à pointer." : `${toCheck} opérations bancaires à pointer.`;
-    return `<section class="hero module-hero"><div class="hero-copy">
-      <p class="hero-kicker">Espace trésorier</p><h2>Trésorerie de la saison</h2>
-      ${action("Nouvelle opération", "entry", "", "light", "plus")}
-      </div></section>
+    const invoices = invoicesForSeason();
+    const toPay = invoices.filter(invoice => invoice.kind === "expense" && invoice.remaining > 0);
+    const toCollect = invoices.filter(invoice => invoice.kind === "income" && invoice.remaining > 0);
+    const due = list => money(list.reduce((sum, invoice) => sum + invoice.remaining, 0));
+    const claims = expenseRecords().filter(expense => expense.status === "Déposée" && !expense.invoiceId).length;
+    const unpaid = getMembers().filter(member => !hasPaid(member)).length;
+    return `${dashHead("Espace trésorier", action("Nouvelle opération", "entry", "", "primary", "plus"))}
+      ${attention([
+        { count: toPay.length, label: plural(toPay.length, "Facture à payer", "Factures à payer"),
+          hint: `${due(toPay)} restent à régler.`, page: "invoices" },
+        { count: toCollect.length, label: plural(toCollect.length, "Facture à encaisser", "Factures à encaisser"),
+          hint: `${due(toCollect)} restent à recevoir.`, page: "invoices" },
+        { count: toCheck, label: plural(toCheck, "Opération bancaire à pointer", "Opérations bancaires à pointer"),
+          hint: "Comparer le journal au relevé de banque.", page: "ledger" },
+        { count: claims, label: plural(claims, "Note de frais à examiner", "Notes de frais à examiner"),
+          hint: "Valider ou refuser les demandes déposées.", page: "expenses" },
+        { count: unpaid, label: plural(unpaid, "Cotisation en attente", "Cotisations en attente"),
+          hint: "Encaisser les règlements reçus.", page: "payments", payment: "unpaid" }
+      ])}
       <section class="overview money-overview" aria-label="Chiffres de trésorerie">
-        ${stat("Solde suivi", budgetSummary(totals).ending, "payments")}
-        ${stat("Encaissements", money(totals.income), "ledger")}
-        ${stat("Décaissements", money(totals.expense), "budget", "", true)}
+        ${stat("Solde suivi", budgetSummary(totals).ending, "payments", "", false, { page: "budget" })}
+        ${stat("Encaissements", money(totals.income), "ledger", "", false, { page: "ledger" })}
+        ${stat("Décaissements", money(totals.expense), "budget", "", true, { page: "ledger" })}
       </section>
-      <div class="stack">
-        ${accountSummary()}
-        <div class="quick-grid">
-          ${quickCard("Factures et échéances", invoiceSummary(), "Voir les factures", "invoices")}
-          ${quickCard("Comptabilité", "Consulter les écritures au débit et au crédit et la balance des comptes.", "Ouvrir la comptabilité", "accounting")}
-          ${quickCard("Journal de trésorerie", pending, "Ouvrir le journal", "ledger")}
-          ${quickCard("Rapprochement bancaire", "Comparer le relevé importé aux écritures de banque.", "Ouvrir le rapprochement", "bank")}
-          ${quickCard("Budget prévisionnel", "Comparer les montants prévus aux encaissements et décaissements saisis.", "Voir le budget", "budget")}
-        </div>
-      </div>`;
+      ${accountSummary()}`;
   }
+
+  const emptyTables = {
+    "Registre des décisions": ["Aucune décision enregistrée", "Note ce que le bureau décide, puis relie chaque décision à une action ou à une note de frais."],
+    "Notes de frais": ["Aucune note de frais", "Un bénévole dépose sa demande ici. Le trésorier la valide, puis la rembourse."],
+    "Plan d’action de la saison": ["Aucune action en cours", "Ajoute une action avec un responsable et une échéance pour suivre le travail du bureau."],
+    "Postes bénévoles": ["Aucun poste bénévole", "Liste les missions à pourvoir pour savoir qui s’en charge."],
+    "Échéances du club": ["Aucune échéance à venir", "Les réunions, les actions datées et les postes à pourvoir apparaîtront ici."],
+    "Factures de la saison": ["Aucune facture", "Enregistre les factures à payer et à encaisser pour suivre leurs échéances."],
+    "Journal de trésorerie": ["Aucune opération", "Saisis une recette ou une dépense pour démarrer le journal."],
+    "Relevé bancaire importé": ["Aucun relevé importé", "Importe le relevé de la banque pour le comparer au journal."],
+    "Adhérents de la saison précédente": ["Aucun adhérent la saison précédente", "Le registre de la saison précédente est vide."]
+  };
 
   function dataTable(columns, rows, title, footer = "") {
     const headings = columns.map(([text, numeric]) => `<th scope="col"${numeric ? ' class="numeric"' : ""}>${text}</th>`).join("");
     return `<div class="table-wrap" tabindex="0" role="region" aria-label="${title}">
       <table class="ledger-table"><thead><tr>${headings}</tr></thead>
-      <tbody>${rows || `<tr><td colspan="${columns.length}" class="empty">Aucun élément à afficher.</td></tr>`}</tbody>${footer}
+      <tbody>${rows || `<tr><td colspan="${columns.length}" class="empty">${emptyState(...(emptyTables[title] || ["Rien à afficher pour le moment"]))}</td></tr>`}</tbody>${footer}
       </table></div>`;
   }
 
@@ -992,20 +1124,26 @@
     const scheduled = year.meetings.filter(meeting => meeting.status === "À venir").sort((a, b) => a.date.localeCompare(b.date));
     const draftCount = year.meetings.filter(meeting => meeting.status === "Tenue").length;
     const next = scheduled[0];
-    return `<section class="hero module-hero secretary"><div class="hero-copy">
-      <p class="hero-kicker">Espace secrétaire</p><h2>Vie administrative du club</h2>
-      ${action("Planifier une réunion", "meeting", "", "light", "plus")}
-      </div></section>
+    const roster = renewalRoster();
+    const toRenew = roster.filter(item => !item.current).length;
+    const toCheck = getMembers().filter(member => fileStatus(member) !== "Complet").length;
+    const openTasks = year.tasks.filter(task => task.status !== "Terminée").length;
+    return `${dashHead("Espace secrétaire", action("Planifier une réunion", "meeting", "", "primary", "plus"))}
+      ${attention([
+        { count: draftCount, label: plural(draftCount, "PV à approuver", "PV à approuver"),
+          hint: "Finaliser le procès-verbal des réunions tenues.", page: "meetings" },
+        { count: toCheck, label: plural(toCheck, "Dossier à compléter", "Dossiers à compléter"),
+          hint: "Vérifier les pièces et les informations manquantes.", page: "members" },
+        { count: toRenew, label: plural(toRenew, "Adhérent à renouveler", "Adhérents à renouveler"),
+          hint: `${roster.length - toRenew} sur ${roster.length} repris de la saison précédente.`, page: "renewals" },
+        { count: openTasks, label: plural(openTasks, "Action ouverte", "Actions ouvertes"),
+          hint: "Suivre le plan d’action du bureau.", page: "tasks" }
+      ])}
       <section class="overview" aria-label="Suivi du secrétariat">
-        ${stat("Adhérents", getMembers().length, "members")}
-        ${stat("Réunions à venir", scheduled.length, "meetings")}
-        ${stat("PV à approuver", draftCount, "tasks", "", true)}
-      </section>
-      <div class="quick-grid">
-        ${quickCard("Prochaine réunion", next ? `${next.title} · ${dateLabel(next.date)}` : "Aucune réunion à venir.", "Réunions et PV", "meetings")}
-        ${quickCard("Registre des adhérents", "Consulter et exporter les adhésions de la saison.", "Ouvrir le registre", "members")}
-        ${quickCard("Renouvellement", renewalSummary(), "Préparer la rentrée", "renewals")}
-      </div>`;
+        ${stat("Adhérents", getMembers().length, "members", "", false, { page: "members" })}
+        ${stat("Réunions à venir", scheduled.length, "meetings", "", false, { page: "meetings" })}
+        ${stat("Prochaine réunion", next ? dateLabel(next.date) : "—", "meetings", "", true, { page: "meetings" })}
+      </section>`;
   }
 
   function badge(text, pending) {
@@ -1027,12 +1165,6 @@
     return `<section class="panel"><header class="panel-header"><h2>Réunions de la saison</h2>
       ${action("Planifier une réunion", "meeting", "", "primary", "plus")}</header>
       ${cards ? `<div class="meeting-grid">${cards}</div>` : '<p class="empty-note">Aucune réunion enregistrée.</p>'}</section>`;
-  }
-
-  function actionSummary() {
-    const count = clubYear().tasks.filter(task => task.status !== "Terminée").length;
-    if (!count) return "Aucune action ouverte.";
-    return count === 1 ? "1 action ouverte." : `${count} actions ouvertes.`;
   }
 
   function tasks() {
@@ -1099,7 +1231,7 @@
     const similar = Array.from(main.querySelectorAll("[data-module-action]")).filter(button =>
       button.dataset.moduleAction === trigger.dataset.moduleAction);
     const target = similar.find(button => button.dataset.value === trigger.dataset.value) || similar[0] ||
-      main.querySelector(".panel-header button, .hero button");
+      main.querySelector(".panel-header button, .dash-head button");
     target?.focus();
   }
 
@@ -1400,7 +1532,7 @@
     else if (event.target.id === "ledger-account") ledgerFilters.account = event.target.value;
     else return;
     const tableBody = main.querySelector(".ledger-table tbody");
-    tableBody.innerHTML = ledgerRows() || '<tr><td colspan="6" class="empty">Aucune opération pour ces filtres.</td></tr>';
+    tableBody.innerHTML = ledgerRows() || `<tr><td colspan="6" class="empty">${emptyState("Aucune opération pour ces filtres", "Choisis un autre mouvement ou un autre compte.")}</td></tr>`;
   });
 
 
@@ -1462,11 +1594,6 @@
       if (invoice.overdue) totals.overdue += 1;
       return totals;
     }, { income: 0, expense: 0, overdue: 0 });
-  }
-
-  function invoiceSummary() {
-    const totals = invoiceTotals();
-    return `${money(totals.expense)} à payer · ${money(totals.income)} à encaisser`;
   }
 
   function visibleInvoices() {
@@ -2318,12 +2445,6 @@
     return previous.map(member => ({ previous: member, current: linked.get(member.id) || byName.get(memberIdentity(member)) }));
   }
 
-  function renewalSummary() {
-    const roster = renewalRoster();
-    if (!roster.length) return "Le registre de la saison précédente est vide.";
-    return `${roster.filter(item => item.current).length} sur ${roster.length} adhérents de la saison précédente repris.`;
-  }
-
   function renewalsPage() {
     const roster = renewalRoster();
     const added = roster.filter(item => item.current).length;
@@ -2459,17 +2580,13 @@
     const deadlines = upcoming.slice(0, 6).map(item => `<tr><td>${dateLabel(item.date)}</td>
       <td class="label-cell">${escapeHtml(item.title)}</td><td><button type="button" class="link-button" data-nav="${item.go}"
       ${item.go === "meetings" ? 'data-role="secretary"' : ""}>Voir</button></td></tr>`).join("");
-    const vacant = (clubYear().volunteers ?? []).filter(item => !item.owner).length;
-    return `<div class="stack">
+    return `<div class="split-grid">
+      <section class="panel"><header class="panel-header"><h2>Prochaines échéances</h2></header>
+      ${dataTable([["Date"], ["Échéance"], ["Accès"]], deadlines, "Échéances du club")}</section>
       <section class="panel"><header class="panel-header"><h2>Effectifs et renouvellements</h2>
       <button type="button" class="button outline" data-nav="renewals" data-role="secretary">Suivre la rentrée</button></header>
       ${dataTable([["Équipe"], ["Adhérents"], ["Repris de la saison précédente"]], rows, "Effectifs et renouvellements")}</section>
-      <section class="panel"><header class="panel-header"><h2>Échéances du club</h2></header>
-      ${dataTable([["Date"], ["Échéance"], ["Accès"]], deadlines, "Échéances du club")}</section>
-      <div class="quick-grid">
-      ${quickCard("Décisions du bureau", "Retrouver le suivi des décisions, des actions et des remboursements.", "Ouvrir les décisions", "decisions")}
-      ${quickCard("Bénévoles", `${vacant} poste${vacant === 1 ? "" : "s"} à pourvoir.`, "Voir les postes", "volunteers")}
-      </div></div>`;
+      </div>`;
   }
 
   function volunteersPage() {
@@ -2749,6 +2866,113 @@
   }
 
 
+  // Recherche globale : pages, adhérents de la saison et actions courantes.
+  const roleLabels = { director: "Dirigeant", treasurer: "Trésorier", secretary: "Secrétaire" };
+
+  function paletteEntries() {
+    const reachable = remote ? remote.roles : Object.keys(workspaces);
+    const ordered = [role.value, ...reachable.filter(value => value !== role.value)];
+    const entries = [];
+    const seen = new Set();
+    for (const workspace of ordered) {
+      for (const key of workspaces[workspace]) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+        entries.push({ text: pages[key], symbol: pageIcons[key] || key,
+          note: workspace === role.value ? "Page" : `Page · ${roleLabels[workspace]}`,
+          attributes: `data-nav="${key}" data-role="${workspace}"` });
+      }
+    }
+    if (workspaces[role.value].includes("members")) {
+      entries.push({ text: "Ajouter un adhérent", symbol: "plus", note: "Action", attributes: "data-add" });
+    }
+    for (const member of getMembers()) {
+      entries.push({ text: `${member.first} ${member.last}`, symbol: "members", note: `Adhérent · ${member.team}`,
+        attributes: `data-edit="${escapeHtml(member.id)}"`, person: true });
+    }
+    return entries;
+  }
+
+  function renderPalette() {
+    const query = normalize(paletteInput.value.trim());
+    const matches = paletteEntries().filter(entry => query ? normalize(entry.text).includes(query) : !entry.person).slice(0, 9);
+    paletteResults.innerHTML = matches.length ? matches.map((entry, index) =>
+      `<li role="presentation"><button type="button" class="palette-item" role="option" id="palette-option-${index}"
+        aria-selected="${index === 0}" tabindex="-1" ${entry.attributes}>${icon(entry.symbol)}<span>${escapeHtml(entry.text)}</span>
+        <small>${escapeHtml(entry.note)}</small></button></li>`).join("")
+      : `<li class="palette-empty">Aucun résultat pour « ${escapeHtml(paletteInput.value.trim())} ».</li>`;
+    paletteInput.setAttribute("aria-activedescendant", matches.length ? "palette-option-0" : "");
+  }
+
+  function openPalette() {
+    if (palette.open || remoteBusy || document.querySelector("dialog[open]")) return;
+    paletteInput.value = "";
+    renderPalette();
+    palette.showModal();
+    paletteInput.focus();
+  }
+
+  paletteInput.addEventListener("input", renderPalette);
+  paletteInput.addEventListener("keydown", event => {
+    const options = [...paletteResults.querySelectorAll(".palette-item")];
+    const active = options.findIndex(item => item.getAttribute("aria-selected") === "true");
+    if (event.key === "Enter") {
+      event.preventDefault();
+      options[active]?.click();
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!options.length) return;
+      const next = (active + (event.key === "ArrowDown" ? 1 : options.length - 1)) % options.length;
+      options.forEach((item, index) => item.setAttribute("aria-selected", String(index === next)));
+      options[next].scrollIntoView({ block: "nearest" });
+      paletteInput.setAttribute("aria-activedescendant", options[next].id);
+    }
+  });
+  document.addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      openPalette();
+    }
+  });
+  for (const sheet of [palette, moreSheet]) {
+    sheet.addEventListener("click", event => {
+      if (event.target === sheet) sheet.close();
+    });
+  }
+  moreSheet.addEventListener("close", () => document.querySelector(".sidebar").append(sidebarFooter));
+  compactLayout.addEventListener("change", () => {
+    if (moreSheet.open) moreSheet.close();
+    render();
+  });
+  if (/Mac|iPhone|iPad/.test(navigator.platform)) document.getElementById("search-shortcut").textContent = "⌘ K";
+  document.getElementById("open-search").insertAdjacentHTML("afterbegin", icon("search"));
+  document.getElementById("more-close").innerHTML = icon("close");
+
+  // Sur téléphone, chaque ligne de tableau s’affiche en fiche : chaque valeur reprend l’intitulé de sa colonne.
+  function labelTables() {
+    for (const grid of main.querySelectorAll("table")) {
+      const headings = [...grid.querySelectorAll("thead th")].map(cell => cell.textContent.trim());
+      for (const line of grid.querySelectorAll("tbody tr, tfoot tr")) {
+        if (line.dataset.labelled) continue;
+        line.dataset.labelled = "true";
+        const cells = [...line.children];
+        const primary = cells.find(cell => cell.classList.contains("label-cell")) || cells[0];
+        let column = 0;
+        for (const cell of cells) {
+          cell.dataset.label = headings[column] || "";
+          column += cell.colSpan;
+          if (cell === primary) cell.classList.add("cell-primary");
+          else if (cell.querySelector("button")) {
+            cell.classList.add("cell-actions");
+            if (!cell.querySelector("button:not(.row-action)")) cell.classList.add("cell-icons");
+          }
+          else if (!cell.textContent.trim()) cell.classList.add("cell-void");
+        }
+      }
+    }
+  }
+  new MutationObserver(labelTables).observe(main, { childList: true, subtree: true });
+
   elements["brand-icon"].innerHTML = icon("logo");
   elements["close-dialog"].innerHTML = icon("close");
   elements["member-team"].innerHTML = teams.map(team => option(team, team, "")).join("");
@@ -2759,21 +2983,32 @@
       event.preventDefault();
       return;
     }
+    if (palette.contains(button)) palette.close();
+    if (moreSheet.contains(button)) moreSheet.close();
     if (button.dataset.moduleAction) {
       handleModuleAction(button);
+    } else if (button.hasAttribute("data-search")) {
+      openPalette();
+    } else if (button.hasAttribute("data-more")) {
+      moreSheet.append(sidebarFooter);
+      moreSheet.showModal();
+    } else if (button.hasAttribute("data-reset-filters")) {
+      filters = { search: "", team: "", payment: "", fileStatus: "" };
+      render();
+      main.querySelector("[data-filter]")?.focus();
     } else if (button.dataset.nav) {
       const nested = !nav.contains(button);
       if (remote && button.dataset.role && button.dataset.role !== remote.role) {
         if (!remote.roles.includes(button.dataset.role)) return;
         role.value = button.dataset.role;
         page = button.dataset.nav;
-        filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "" };
+        filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "", fileStatus: button.dataset.fileStatus || "" };
         syncRemote("", false);
         return;
       }
       if (button.dataset.role) role.value = button.dataset.role;
       page = button.dataset.nav;
-      filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "" };
+      filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "", fileStatus: button.dataset.fileStatus || "" };
       render();
       if (nested) {
         const heading = elements["page-title"];
@@ -2811,6 +3046,7 @@
     if (!key) return;
     filters[key] = event.target.value;
     main.querySelector("#member-rows").innerHTML = rows(filteredMembers());
+    main.querySelector("#member-count").innerHTML = memberCount();
   });
 
   for (const input of [form.elements.first, form.elements.last]) {

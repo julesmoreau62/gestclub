@@ -50,18 +50,25 @@ try {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Connexion · Gest’club</title>
 <style>
-:root { font: 16px system-ui, sans-serif; color: #192d21; background: #f6f7f2 }
-body { margin: 0; min-height: 100dvh; display: grid; place-items: center }
-main { box-sizing: border-box; width: min(420px, calc(100% - 32px)); padding: 28px; background: white; border: 1px solid #dde4dc; border-radius: 18px }
-h1 { margin: 5px 0 20px } p { margin: 0 0 12px }
-form, label { display: grid; gap: 8px } form { gap: 15px }
-input, button { font: inherit; border: 1px solid #d5ded4; border-radius: 8px; padding: 11px }
-button { background: #245139; color: white; cursor: pointer }
-.error { color: #8e2428 }
+:root { font: 15px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #162820; background: #f7f7f2 }
+*, *::before, *::after { box-sizing: border-box }
+body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px }
+main { width: min(400px, 100%); padding: 28px; background: #fff; border: 1px solid #e4e8e1; border-radius: 15px }
+.brand { display: flex; align-items: center; gap: 10px; margin: 0 0 22px; font-size: 22px; font-weight: 780; letter-spacing: -.06em }
+.brand svg { width: 32px; height: 32px; padding: 5px; border-radius: 9px; background: #154433; color: #fff }
+h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -.03em } p { margin: 0 0 18px; color: #536359 }
+form, label { display: grid; gap: 6px } form { gap: 14px } label { font-size: 13px; font-weight: 690 }
+input, button { font: inherit; font-size: 16px; min-height: 44px; border: 1px solid #dbe1d9; border-radius: 8px; padding: 9px 11px }
+button { margin-top: 4px; border-color: transparent; background: #154433; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer }
+button:hover { background: #0d3225 }
+input:focus-visible, button:focus-visible { outline: 2px solid #a54b33; outline-offset: 3px }
+.error { padding: 10px 12px; border-radius: 8px; background: #fbece5; color: #843923; font-weight: 600 }
 </style>
+
 <main>
-<p><?= textEscape($club) ?></p>
-<h1>Connexion à Gest’club</h1>
+<div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14v10H5zM12 7v10"/><circle cx="12" cy="12" r="2"/></svg>Gest’club</div>
+<h1>Connexion</h1>
+<p>Espace du bureau · <?= textEscape($club) ?></p>
 <?php if ($error): ?><p class="error" role="alert"><?= textEscape($error) ?></p><?php endif; ?>
 <form method="post">
 <input type="hidden" name="csrf" value="<?= $csrf ?>">
