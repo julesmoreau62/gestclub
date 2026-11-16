@@ -21,7 +21,21 @@ try {
         case 'install':
             $database = db();
             $database->beginTransaction();
-            $database->exec(file_get_contents(dirname(__DIR__) . '/sql/001-install.sql'));
+            $database->exec('CREATE TABLE IF NOT EXISTS gestclub_schema_migrations (
+                version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+            $database->exec('LOCK TABLE gestclub_schema_migrations IN EXCLUSIVE MODE');
+            $applied = $database->query('SELECT version FROM gestclub_schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
+            $record = $database->prepare('INSERT INTO gestclub_schema_migrations (version) VALUES (?)');
+            $files = glob(dirname(__DIR__) . '/sql/*.sql');
+            sort($files);
+            foreach ($files as $file) {
+                // 001 est rejouable : une installation antérieure au suivi des versions le repasse sans effet.
+                $version = basename($file, '.sql');
+                if (in_array($version, $applied, true)) continue;
+                $database->exec(file_get_contents($file));
+                $record->execute([$version]);
+                echo "Schéma $version appliqué.\n";
+            }
             $now = new DateTimeImmutable('now', new DateTimeZone('Europe/Paris'));
             $year = (int) $now->format('Y') - ((int) $now->format('n') < 9 ? 1 : 0);
             $query = $database->prepare(
@@ -63,7 +77,7 @@ try {
                 $state['bureau'][$year] = emptySeason();
                 $query = $database->prepare(
                     'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-                     revision = revision + 1, updated_at = now() WHERE id = true'
+                     revision = revision + 1, updated_at = now(), updated_by = NULL WHERE id = true'
                 );
                 $query->execute([jsonEncode($state['records']), jsonEncode($state['bureau'])]);
             }
@@ -127,8 +141,46 @@ try {
             $database->commit();
             echo "Données et justificatifs importés.\n";
             break;
+        case 'history':
+            $rows = db()->query(
+                "SELECT h.revision, to_char(h.saved_at AT TIME ZONE 'Europe/Paris', 'YYYY-MM-DD HH24:MI') AS saved,
+                        coalesce(u.email, 'administration') AS author
+                 FROM (SELECT revision, updated_at AS saved_at, updated_by AS saved_by FROM gestclub_state
+                       UNION ALL SELECT revision, saved_at, saved_by FROM gestclub_state_history) h
+                 LEFT JOIN gestclub_users u ON u.id = h.saved_by ORDER BY h.revision DESC LIMIT 60"
+            )->fetchAll();
+            echo "Révision  Enregistrée le    Par\n";
+            foreach ($rows as $index => $row) {
+                printf("%8d  %s  %s%s\n", $row['revision'], $row['saved'], $row['author'], $index ? '' : '  (état actuel)');
+            }
+            break;
+        case 'restore':
+            $revision = filter_var($argv[2] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            if ($revision === false) throw new InvalidArgumentException('Indique un numéro de révision affiché par la commande history.');
+            $database = db();
+            $database->beginTransaction();
+            fetchState($database, true);
+            // L'état remplacé rejoint lui-même l'historique : une restauration peut être annulée.
+            $query = $database->prepare(
+                'UPDATE gestclub_state s SET records = h.records, bureau = h.bureau, revision = s.revision + 1,
+                 updated_at = now(), updated_by = NULL FROM gestclub_state_history h WHERE h.revision = ? RETURNING s.revision'
+            );
+            $query->execute([$revision]);
+            $current = $query->fetchColumn();
+            if ($current === false) throw new InvalidArgumentException('Révision absente de l’historique.');
+            $database->commit();
+            echo "Révision $revision restaurée. L’état actuel porte le numéro $current.\n";
+            break;
+        case 'prune':
+            $database = db();
+            $database->beginTransaction();
+            fetchState($database, true);
+            $database->exec('SELECT gestclub_prune()');
+            $database->commit();
+            echo "Historique et justificatifs nettoyés.\n";
+            break;
         default:
-            echo "Utilisation : php bin/gestclub.php install | account EMAIL RÔLES | disable EMAIL | season ANNÉE | import FICHIER | export\n";
+            echo "Utilisation : php bin/gestclub.php install | account EMAIL RÔLES | disable EMAIL | season ANNÉE | import FICHIER | export | history | restore RÉVISION | prune\n";
     }
 } catch (Throwable $failure) {
     fwrite(STDERR, ($failure instanceof InvalidArgumentException ? $failure->getMessage() :

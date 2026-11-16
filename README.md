@@ -63,8 +63,9 @@ Le guide de la version publiée détaille la configuration d’un hébergement W
 | --- | --- |
 | [`index.html`](index.html) | Interface commune à la démo et à la version hébergée |
 | [`sql/001-install.sql`](sql/001-install.sql) | Schéma PostgreSQL pour les comptes, les données de saison et les justificatifs |
+| [`sql/002-historique.sql`](sql/002-historique.sql) | Historique des révisions, nettoyage des justificatifs et contrôle des rôles |
 | [`config.example.php`](config.example.php) | Modèle de configuration à copier et à renseigner sur l’hébergement du club |
-| [`bin/gestclub.php`](bin/gestclub.php) | Initialisation, gestion des comptes et saisons, import et export |
+| [`bin/gestclub.php`](bin/gestclub.php) | Initialisation et mises à jour du schéma, comptes et saisons, import et export, historique et restauration |
 | [`docs/installation-ovh.md`](docs/installation-ovh.md) | Installation, reprise des données et sauvegardes |
 
 Fair Gestion est au **stade pilote**. Le schéma, les contrôles d’accès et la gestion des modifications concurrentes ont été vérifiés localement. La mise en service complète sur OVHcloud reste à valider sur une instance pilote.

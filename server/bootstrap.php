@@ -97,6 +97,8 @@ function login(string $email, string $password): bool
     $user = $query->fetch();
     $dummyHash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
     if (strlen($password) > 72 || !password_verify($password, $user['password_hash'] ?? $dummyHash) || !$user) return false;
+    $database->prepare('UPDATE gestclub_login_limits SET attempts = attempts - 1 WHERE key = ? AND attempts > 0')->execute([$key]);
+    $database->prepare('UPDATE gestclub_users SET last_login_at = now() WHERE id = ?')->execute([$user['id']]);
     session_regenerate_id(true);
     $_SESSION = ['user_id' => $user['id'], 'version' => $user['session_version'],
         'signed_in' => time(), 'csrf' => bin2hex(random_bytes(32))];

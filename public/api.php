@@ -56,10 +56,11 @@ try {
     $next = persistAttachments($connection, $state, mergeState($state, $payload, $role, (string) $user['id']));
     $update = $connection->prepare(
         'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-         revision = revision + 1, updated_at = now() WHERE id = true RETURNING revision'
+         revision = revision + 1, updated_at = now(), updated_by = ? WHERE id = true RETURNING revision'
     );
-    $update->execute([jsonEncode($next['records']), jsonEncode($next['bureau'])]);
+    $update->execute([jsonEncode($next['records']), jsonEncode($next['bureau']), $user['id']]);
     $next['revision'] = (int) $update->fetchColumn();
+    if ($next['revision'] % 50 === 0) $connection->exec('SELECT gestclub_prune()');
     $connection->commit();
     respond(scopedState($next, $role, (string) $user['id']));
 } catch (InvalidArgumentException | JsonException $error) {

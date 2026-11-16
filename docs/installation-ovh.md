@@ -32,7 +32,7 @@ Dans `config.php`, renseigne le nom du club, l’adresse HTTPS exacte du site da
 
 ## 3. Initialiser la base et les comptes
 
-Lance la commande suivante en SSH depuis `gestclub/`. Elle exécute le schéma SQL et initialise la saison courante et la précédente. Une nouvelle exécution conserve les données déjà créées.
+Lance la commande suivante en SSH depuis `gestclub/`. Elle applique dans l’ordre les fichiers du dossier `sql/`, note ceux qui sont passés et initialise la saison courante et la précédente. Une nouvelle exécution applique seulement les fichiers nouveaux et conserve les données déjà créées.
 
 ```sh
 php bin/gestclub.php install
@@ -66,7 +66,16 @@ L’import reprend les adhésions, la comptabilité, les données du bureau et l
 
 - **Sauvegarde complète.** Depuis **Web Cloud Databases**, télécharge régulièrement une sauvegarde PostgreSQL. Elle contient les tables, les comptes, les données et les justificatifs. Garde une copie chiffrée hors de l’hébergement Web et vérifie la restauration sur une autre base de test.
 - **Export portable.** La commande `php bin/gestclub.php export` produit un JSON des données et des pièces du club. Conserve cet export dans un emplacement privé. Crée de nouveaux comptes dans l’installation de destination.
-- **Mise à jour.** Fais une sauvegarde, remplace les fichiers du programme par la nouvelle version et conserve le `config.php` du club. Consulte les instructions de la version avant de relancer la commande d’installation.
+- **Mise à jour.** Fais une sauvegarde, remplace les fichiers du programme par la nouvelle version et conserve le `config.php` du club. Relance ensuite `php bin/gestclub.php install` : la commande applique les changements de schéma de la nouvelle version.
+- **Historique.** Chaque enregistrement conserve l’état précédent, sa date et le compte qui l’avait enregistré. Gest’club garde les 50 dernières révisions, puis la dernière de chaque jour pendant un an. Un justificatif retiré est supprimé de la base quand plus aucune révision conservée ne le cite, soit au plus tard un an après son retrait.
+
+```sh
+php bin/gestclub.php history
+php bin/gestclub.php restore 128
+php bin/gestclub.php prune
+```
+
+`history` liste les révisions disponibles. `restore` remet le club dans l’état d’une révision ; l’état remplacé rejoint l’historique, ce qui permet d’annuler la restauration. Préviens le bureau avant de restaurer : les écrans ouverts devront être actualisés. Le nettoyage se fait automatiquement toutes les 50 sauvegardes ; `prune` le lance sans attendre.
 
 [Importer ou restaurer une base Web Cloud Databases](https://docs.ovhcloud.com/fr/guides/web-cloud/databases/db-restore-import-database)
 
