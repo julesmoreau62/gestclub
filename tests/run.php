@@ -212,8 +212,9 @@ try {
     [$status] = $treasurer->save('treasurer', 'jeton-invalide');
     check('écriture sans jeton CSRF refusée', $status === 403, $status);
     foreach (['/config.php', '/server/state.php', '/sql/001-install.sql', '/bin/gestclub.php'] as $path) {
-        [$status] = $anonymous->request('GET', $path);
-        check("$path hors de la racine Web", $status === 404, $status);
+        // Le serveur de développement de PHP répond 404 ou retombe sur la page de connexion selon sa version.
+        [$status, $body] = $anonymous->request('GET', $path);
+        check("$path n’est pas servi", $status === 404 || str_contains($body, '<title>Connexion · Gest’club</title>'), $status);
     }
 
     // ---------------------------------------------------------------------------------------------------------------
