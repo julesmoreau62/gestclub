@@ -12,7 +12,7 @@ function emptySeason(): array
 {
     return ['opening' => ['bank' => 0, 'cash' => 0], 'entries' => [], 'invoices' => [],
         'plan' => ['income' => [], 'expense' => []], 'expenses' => [], 'bankLines' => [],
-        'meetings' => [], 'tasks' => [], 'decisions' => [], 'volunteers' => []];
+        'meetings' => [], 'tasks' => [], 'decisions' => [], 'volunteers' => [], 'events' => [], 'partners' => [], 'partnerCommitments' => []];
 }
 
 try {
@@ -36,7 +36,7 @@ try {
             $email = strtolower(trim($argv[2] ?? ''));
             $roles = array_values(array_unique(explode(',', $argv[3] ?? '')));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL) || array_diff($roles, GESTCLUB_ROLES)) {
-                throw new InvalidArgumentException('Usage : account adresse@email.fr director,treasurer,secretary');
+                throw new InvalidArgumentException('Usage : account adresse@email.fr director,treasurer,secretary,equipment_manager');
             }
             $password = bin2hex(random_bytes(16));
             $query = db()->prepare(
@@ -76,17 +76,26 @@ try {
             $database->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
             $state = fetchState($database);
             $query = $database->prepare("SELECT name, mime, encode(content, 'base64') AS data FROM gestclub_attachments WHERE id = ?");
+            $exportFile = function (string $id) use ($query): array {
+                $query->execute([$id]);
+                $file = $query->fetch();
+                if (!$file) throw new RuntimeException('Pièce manquante.');
+                return ['name' => $file['name'], 'type' => $file['mime'], 'data' => $file['data']];
+            };
             foreach ($state['bureau'] as &$period) {
-                foreach (['entries', 'invoices', 'expenses'] as $field) {
+                foreach (['entries', 'invoices', 'expenses', 'partnerCommitments'] as $field) {
                     if (!isset($period[$field])) continue;
                     foreach ($period[$field] as &$item) {
                         if (!isset($item['receipt']['id'])) continue;
-                        $query->execute([$item['receipt']['id']]);
-                        $file = $query->fetch();
-                        if (!$file) throw new RuntimeException('Pièce manquante.');
-                        $item['receipt'] = ['name' => $file['name'], 'type' => $file['mime'], 'data' => $file['data']];
+                        $item['receipt'] = $exportFile($item['receipt']['id']);
                     }
                     unset($item);
+                }
+                if (isset($period['applications'])) {
+                    foreach ($period['applications'] as &$application) {
+                        $application['files'] = array_map(fn(array $file): array => $exportFile($file['id']), $application['files']);
+                    }
+                    unset($application);
                 }
             }
             unset($period);
@@ -101,23 +110,35 @@ try {
                 !is_array($payload['records'] ?? null) || !is_array($payload['bureau'] ?? null) || !$payload['records'] ||
                 array_diff(array_keys($payload['records']), array_keys($payload['bureau'])) ||
                 array_diff(array_keys($payload['bureau']), array_keys($payload['records']))) {
-                throw new InvalidArgumentException('Format de sauvegarde Gest’club invalide.');
+                throw new InvalidArgumentException('Format de sauvegarde Fair Gestion invalide.');
             }
             $database = db();
             $database->beginTransaction();
             $existing = fetchState($database, true);
             if ($existing['revision'] !== 0) throw new InvalidArgumentException('L’import doit viser une installation vide.');
+            $hasInventory = false;
             foreach ($payload['bureau'] as $year => &$period) {
                 if (!preg_match('/^\d{4}$/D', (string) $year) || !is_array($period)) throw new InvalidArgumentException('Année invalide.');
                 $period = array_replace(emptySeason(), $period);
                 validateFinance($period);
                 foreach (OFFICE_FIELDS as $field) recordList($period[$field]);
+                $period['events'] = validateClubEvents($period['events']);
+                restoreRegistrationFiles($database, $period);
+                if (array_key_exists('equipment', $period)) {
+                    if ($hasInventory) throw new InvalidArgumentException('La sauvegarde contient plusieurs inventaires.');
+                    $period['equipment'] = validateEquipment($period['equipment']);
+                    $hasInventory = true;
+                }
+                [$period['partners'], $period['partnerCommitments']] = validatePartners(
+                    $period['partners'], $period['partnerCommitments']
+                );
                 $members = recordList($payload['records'][$year]);
                 $payload['records'][$year] = mergeMemberRecords($members, $members);
                 foreach ($period['expenses'] as &$expense) unset($expense['submittedBy']);
                 unset($expense);
             }
             unset($period);
+            validateEventTokens($payload['bureau']);
             $payload = persistAttachments($database, ['bureau' => []], $payload);
             $query = $database->prepare(
                 'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),

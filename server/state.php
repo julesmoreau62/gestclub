@@ -2,8 +2,11 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/registrations.php';
+require_once __DIR__ . '/partners.php';
+require_once __DIR__ . '/equipment.php';
 
-const FINANCE_FIELDS = ['opening', 'entries', 'invoices', 'plan', 'expenses', 'bankLines', 'statement', 'closedAt'];
+const FINANCE_FIELDS = ['opening', 'entries', 'invoices', 'plan', 'expenses', 'bankLines', 'statement', 'closedAt', 'helloAssoUrl'];
 const OFFICE_FIELDS = ['meetings', 'tasks', 'decisions', 'volunteers'];
 
 function picked(array $source, array $keys): array
@@ -66,6 +69,11 @@ function scopedState(array $state, string $role, string $userId): array
         }
     }
     foreach ($state['bureau'] as $year => $data) {
+        if ($role === 'equipment_manager') {
+            $projected['bureau'][$year] = ['equipment' => $data['equipment'] ?? null];
+            $projected['records'][$year] = [];
+            continue;
+        }
         if ($role === 'treasurer') {
             $projected['bureau'][$year] = picked($data, FINANCE_FIELDS);
             $projected['records'][$year] = array_map(
@@ -76,12 +84,18 @@ function scopedState(array $state, string $role, string $userId): array
         }
         $view = picked($data, [...OFFICE_FIELDS, 'closedAt']);
         if ($role === 'director') {
+            if (isset($data['equipment'])) $view['equipment'] = $data['equipment'];
+            $view['events'] = $data['events'] ?? [];
+            $view['partners'] = $data['partners'] ?? [];
+            $view['partnerCommitments'] = $data['partnerCommitments'] ?? [];
             $view['meetings'] = array_map(
                 fn(array $meeting): array => picked($meeting, ['id', 'title', 'date', 'status']),
                 $data['meetings'] ?? []
             );
         } else {
             unset($view['volunteers']);
+            $view['registration'] = $data['registration'] ?? ['token' => '', 'instructions' => ''];
+            $view['applications'] = $data['applications'] ?? [];
             $view['decisions'] = array_map(
                 fn(array $decision): array => picked($decision, ['id', 'meetingId', 'voteId']),
                 $data['decisions'] ?? []
@@ -169,6 +183,11 @@ function mergeDirectorExpenses(array $current, mixed $input, string $userId): ar
 
 function validateFinance(array $data): void
 {
+    $helloAssoUrl = $data['helloAssoUrl'] ?? '';
+    if (!is_string($helloAssoUrl) || strlen($helloAssoUrl) > 500 ||
+        ($helloAssoUrl !== '' && !preg_match('~^https://(?:www\.)?helloasso\.com/associations/[a-z0-9_-]+/adhesions/[a-z0-9_-]+/?$~iD', $helloAssoUrl))) {
+        throw new InvalidArgumentException('Lien de campagne HelloAsso invalide.');
+    }
     $accounts = ['bank', 'cash'];
     foreach ($accounts as $account) {
         if (!is_int($data['opening'][$account] ?? null)) throw new InvalidArgumentException('Solde d’ouverture invalide.');
@@ -198,6 +217,10 @@ function mergeState(array $state, array $payload, string $role, string $userId):
         throw new InvalidArgumentException('Saisons incohérentes. Recharge la page.');
     }
     $next = $state;
+    if ($role === 'equipment_manager') {
+        $next['bureau'] = mergeEquipment($state['bureau'], $incomingBureau);
+        return $next;
+    }
     foreach ($state['bureau'] as $year => $existing) {
         $incoming = $incomingBureau[$year];
         if (!is_array($incoming)) throw new InvalidArgumentException('Saison invalide.');
@@ -218,6 +241,16 @@ function mergeState(array $state, array $payload, string $role, string $userId):
         $next['records'][$year] = mergeMemberRecords($state['records'][$year], $incomingRecords[$year]);
         $office = picked($incoming, $role === 'director' ? ['tasks', 'decisions', 'volunteers'] : ['meetings', 'tasks']);
         foreach ($office as $list) recordList($list);
+        if ($role === 'director' && array_key_exists('events', $incoming)) {
+            $office['events'] = validateClubEvents($incoming['events']);
+        }
+        if ($role === 'director' && (array_key_exists('partners', $incoming) ||
+            array_key_exists('partnerCommitments', $incoming))) {
+            [$office['partners'], $office['partnerCommitments']] = validatePartners(
+                array_key_exists('partners', $incoming) ? $incoming['partners'] : ($existing['partners'] ?? []),
+                array_key_exists('partnerCommitments', $incoming) ? $incoming['partnerCommitments'] : ($existing['partnerCommitments'] ?? [])
+            );
+        }
         if (isset($office['meetings'])) {
             $oldMeetings = array_column($existing['meetings'] ?? [], null, 'id');
             foreach ($office['meetings'] as &$meeting) {
@@ -257,16 +290,114 @@ function mergeState(array $state, array $payload, string $role, string $userId):
             $next['bureau'][$year]['expenses'] = mergeDirectorExpenses($existing['expenses'] ?? [], $incoming['expenses'] ?? [], $userId);
         }
     }
+    if ($role === 'director') $next['bureau'] = mergeEquipment($next['bureau'], $incomingBureau);
+    validateEventTokens($next['bureau']);
     return $next;
+}
+
+function eventText(mixed $value, bool $required = true): string
+{
+    if (!is_string($value) || preg_match('/[\x00-\x1f\x7f]/', $value)) {
+        throw new InvalidArgumentException('Texte invalide.');
+    }
+    $value = trim($value);
+    if (!preg_match('/^.{0,120}$/uD', $value) || ($required && $value === '')) {
+        throw new InvalidArgumentException('Renseigne un texte de 120 caractères maximum.');
+    }
+    return $value;
+}
+
+function validEventToken(mixed $token): bool
+{
+    return is_string($token) && preg_match('/^[a-f0-9]{32}$/D', $token) === 1;
+}
+
+function validateClubEvents(mixed $items): array
+{
+    $events = [];
+    foreach (recordList($items) as $item) {
+        $date = $item['date'] ?? null;
+        $token = $item['token'] ?? '';
+        if (!is_string($date) || !preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $parts) ||
+            !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])) {
+            throw new InvalidArgumentException('Date d’événement invalide.');
+        }
+        if ($token !== '' && !validEventToken($token)) {
+            throw new InvalidArgumentException('Lien d’inscription invalide.');
+        }
+        $slots = [];
+        foreach (recordList($item['slots'] ?? null) as $slot) {
+            $start = $slot['start'] ?? null;
+            $end = $slot['end'] ?? null;
+            $clock = '/^(?:[01]\d|2[0-3]):[0-5]\d$/D';
+            if (!is_string($start) || !is_string($end) || !preg_match($clock, $start) ||
+                !preg_match($clock, $end) || $start >= $end) {
+                throw new InvalidArgumentException('La fin du créneau doit être après le début.');
+            }
+            $slots[] = ['id' => $slot['id'], 'title' => eventText($slot['title'] ?? null),
+                'start' => $start, 'end' => $end, 'owner' => eventText($slot['owner'] ?? '', false)];
+        }
+        $events[] = ['id' => $item['id'], 'title' => eventText($item['title'] ?? null), 'date' => $date,
+            'place' => eventText($item['place'] ?? null), 'token' => $token, 'slots' => $slots];
+    }
+    return $events;
+}
+
+function validateEventTokens(array $bureau): void
+{
+    $seen = [];
+    foreach ($bureau as $period) {
+        foreach ($period['events'] ?? [] as $item) {
+            $token = $item['token'];
+            if ($token === '') continue;
+            if (isset($seen[$token])) throw new InvalidArgumentException('Lien d’inscription en double.');
+            $seen[$token] = true;
+        }
+    }
+}
+
+function findSharedEvent(array $bureau, string $token): ?array
+{
+    foreach ($bureau as $year => $period) {
+        foreach ($period['events'] ?? [] as $index => $item) {
+            if (hash_equals($item['token'], $token)) return [$year, $index];
+        }
+    }
+    return null;
+}
+
+function attachmentInsert(PDO $database): PDOStatement
+{
+    return $database->prepare(
+        "INSERT INTO gestclub_attachments (id, name, mime, content) VALUES (?, ?, ?, decode(?, 'base64'))"
+    );
+}
+
+function storeAttachment(PDOStatement $insert, array $receipt): array
+{
+    $encoded = $receipt['data'] ?? null;
+    $name = $receipt['name'] ?? null;
+    $mime = $receipt['type'] ?? null;
+    if (!is_string($encoded) || strlen($encoded) > 1398104 ||
+        !is_string($name) || !trim($name) || strlen($name) > 255 ||
+        !in_array($mime, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'], true)) {
+        throw new InvalidArgumentException('Justificatif invalide ou supérieur à 1 Mo.');
+    }
+    $bytes = base64_decode($encoded, true);
+    if ($bytes === false || !$bytes || strlen($bytes) > 1048576) {
+        throw new InvalidArgumentException('Justificatif illisible ou supérieur à 1 Mo.');
+    }
+    $id = bin2hex(random_bytes(16));
+    $name = str_replace(["\r", "\n", "\0"], '', $name);
+    $insert->execute([$id, $name, $mime, base64_encode($bytes)]);
+    return ['id' => $id, 'name' => $name, 'type' => $mime];
 }
 
 function persistAttachments(PDO $database, array $previous, array $next): array
 {
-    $insert = $database->prepare(
-        "INSERT INTO gestclub_attachments (id, name, mime, content) VALUES (?, ?, ?, decode(?, 'base64'))"
-    );
+    $insert = attachmentInsert($database);
     foreach ($next['bureau'] as $year => &$data) {
-        foreach (['entries', 'invoices', 'expenses'] as $field) {
+        foreach (['entries', 'invoices', 'expenses', 'partnerCommitments'] as $field) {
             if (!isset($data[$field])) continue;
             $oldItems = array_column($previous['bureau'][$year][$field] ?? [], null, 'id');
             foreach ($data[$field] as &$item) {
@@ -274,27 +405,16 @@ function persistAttachments(PDO $database, array $previous, array $next): array
                 $receipt = $item['receipt'];
                 if (!is_array($receipt)) throw new InvalidArgumentException('Justificatif invalide.');
                 if (isset($receipt['id'])) {
-                    $stored = $oldItems[$item['id']]['receipt'] ?? [];
+                    $oldItem = $oldItems[$item['id']] ?? [];
+                    $stored = $oldItem['receipt'] ?? [];
+                    if ($field === 'partnerCommitments' && ($oldItem['partnerId'] ?? null) !== $item['partnerId']) {
+                        throw new InvalidArgumentException('Cette photo appartient à un autre engagement.');
+                    }
                     if (($stored['id'] ?? null) !== $receipt['id']) throw new InvalidArgumentException('Pièce jointe inconnue.');
                     $item['receipt'] = $stored;
                     continue;
                 }
-                $encoded = $receipt['data'] ?? null;
-                $name = $receipt['name'] ?? null;
-                $mime = $receipt['type'] ?? null;
-                if (!is_string($encoded) || strlen($encoded) > 1398104 ||
-                    !is_string($name) || !trim($name) || strlen($name) > 255 ||
-                    !in_array($mime, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'], true)) {
-                    throw new InvalidArgumentException('Justificatif invalide ou supérieur à 1 Mo.');
-                }
-                $bytes = base64_decode($encoded, true);
-                if ($bytes === false || !$bytes || strlen($bytes) > 1048576) {
-                    throw new InvalidArgumentException('Justificatif illisible ou supérieur à 1 Mo.');
-                }
-                $id = bin2hex(random_bytes(16));
-                $name = str_replace(["\r", "\n", "\0"], '', $name);
-                $insert->execute([$id, $name, $mime, base64_encode($bytes)]);
-                $item['receipt'] = ['id' => $id, 'name' => $name, 'type' => $mime];
+                $item['receipt'] = storeAttachment($insert, $receipt);
             }
             unset($item);
         }
@@ -306,7 +426,12 @@ function persistAttachments(PDO $database, array $previous, array $next): array
 function canReadAttachment(array $projected, string $id): bool
 {
     foreach ($projected['bureau'] as $season) {
-        foreach (['entries', 'invoices', 'expenses'] as $field) {
+        foreach ($season['applications'] ?? [] as $item) {
+            foreach ($item['files'] as $file) {
+                if ($file['id'] === $id) return true;
+            }
+        }
+        foreach (['entries', 'invoices', 'expenses', 'partnerCommitments'] as $field) {
             foreach ($season[$field] ?? [] as $item) {
                 if (($item['receipt']['id'] ?? null) === $id) return true;
             }

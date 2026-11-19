@@ -6,18 +6,17 @@
 </p>
 
 <p align="center">
-  <a href="#captures-de-fair-gestion">Voir les captures</a> ·
   <a href="#essayer-la-démo">Essayer la démo</a> ·
   <a href="docs/installation-ovh.md">Installer chez OVHcloud</a> ·
   <a href="sql/001-install.sql">Consulter le SQL</a> ·
   <a href="LICENSE">Licence MIT</a>
 </p>
 
+![Tableau de bord de Fair Gestion pour le club fictif AS des Tilleuls](docs/images/tableau-de-bord.png)
+
 Chaque club héberge sa propre instance sur son compte OVHcloud et partage l’adresse HTTPS avec son bureau. Les membres se connectent avec leur compte et retrouvent les mêmes données depuis leurs appareils. Le dépôt GitHub contient le programme, le schéma et le guide. Les données du club sont stockées dans sa base PostgreSQL.
 
 ## Les espaces de Fair Gestion
-
-Cette section décrit la version en cours de préparation. La branche `main` distribue encore la version Gest’club avec les espaces dirigeant, secrétaire et trésorier.
 
 Dans **Bureau**, le menu affiche les rubriques autorisées pour le compte. Fair Gestion utilise automatiquement le rôle adapté à chaque rubrique.
 
@@ -39,23 +38,11 @@ Dans **Matériel**, le club garde un inventaire commun à toutes les saisons, su
 
 ## Essayer la démo
 
-[Télécharge le dépôt](https://github.com/julesmoreau62/gestclub/archive/refs/heads/main.zip), décompresse-le et ouvre **`index.html`** dans ton navigateur. Dans la version actuellement publiée, sélectionne un rôle dans **Espace de travail**.
-
-Dans la nouvelle interface de Fair Gestion, choisis **Bureau**, **Matchs et événements**, **Inscriptions**, **Partenaires** ou **Matériel** depuis l’accueil. Le logo **Fair Gestion**, dans la barre de gauche, permet de revenir à l’accueil. Sur une instance hébergée, les cartes affichées dépendent des rôles du compte. Dans les deux versions, la démo contient un club fictif et conserve les modifications dans le navigateur. **Exporter les données locales** permet de récupérer une sauvegarde pour une future installation.
-
-## Captures de Fair Gestion
-
-La nouvelle interface est illustrée avec les données du club fictif AS des Tilleuls. Clique sur une capture pour l’ouvrir en taille réelle.
-
-| | |
-| --- | --- |
-| <a href="docs/images/accueil.png"><img src="docs/images/accueil.png" alt="Accueil de Fair Gestion et ses cinq espaces"></a><br><strong>Accueil</strong> | <a href="docs/images/tableau-de-bord.png"><img src="docs/images/tableau-de-bord.png" alt="Tableau de bord du dirigeant"></a><br><strong>Bureau</strong> |
-| <a href="docs/images/matchs-evenements.png"><img src="docs/images/matchs-evenements.png" alt="Planning des matchs et créneaux bénévoles"></a><br><strong>Matchs et événements</strong> | <a href="docs/images/inscriptions.png"><img src="docs/images/inscriptions.png" alt="Formulaire de la saison et dossiers reçus"></a><br><strong>Inscriptions</strong> |
-| <a href="docs/images/partenaires.png"><img src="docs/images/partenaires.png" alt="Suivi des partenaires et de leurs engagements"></a><br><strong>Partenaires</strong> | <a href="docs/images/materiel.png"><img src="docs/images/materiel.png" alt="Inventaire et prêts en cours"></a><br><strong>Matériel</strong> |
+[Télécharge le dépôt](https://github.com/julesmoreau62/gestclub/archive/refs/heads/main.zip), décompresse-le et ouvre **`index.html`** dans ton navigateur. Choisis **Bureau**, **Matchs et événements**, **Inscriptions**, **Partenaires** ou **Matériel** depuis l’accueil. Le logo **Fair Gestion**, dans la barre de gauche, permet de revenir à l’accueil. Sur une instance hébergée, les cartes affichées dépendent des rôles du compte. La démo contient un club fictif et conserve les modifications dans le navigateur. **Exporter les données locales** permet de récupérer une sauvegarde pour une future installation.
 
 ## Installer un espace club
 
-Le guide de la version publiée détaille la configuration d’un hébergement Web OVHcloud avec **PHP 8.4** et d’une base **PostgreSQL managée**. Le club choisit son sous-domaine, initialise la base, crée les comptes du bureau puis vérifie l’accès depuis deux appareils. Le programme s’ouvre ensuite dans un navigateur.
+Le guide détaille la configuration d’un hébergement Web OVHcloud avec **PHP 8.4** et d’une base **PostgreSQL managée**. Le club choisit son sous-domaine, initialise la base, crée les comptes du bureau puis vérifie l’accès depuis deux appareils. Le programme s’ouvre ensuite dans un navigateur.
 
 **[Suivre le guide d’installation OVHcloud →](docs/installation-ovh.md)**
 

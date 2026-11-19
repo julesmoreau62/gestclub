@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const GESTCLUB_ROLES = ['director', 'treasurer', 'secretary'];
+const GESTCLUB_ROLES = ['director', 'treasurer', 'secretary', 'equipment_manager'];
 const GESTCLUB_BODY_LIMIT = 24 * 1024 * 1024;
 
 function db(): PDO
@@ -39,7 +39,7 @@ function textEscape(string $value): string
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-function beginWebRequest(): void
+function beginWebRequest(string $sessionName = 'gestclub_session'): void
 {
     header('Cache-Control: no-store');
     header('X-Content-Type-Options: nosniff');
@@ -54,7 +54,7 @@ function beginWebRequest(): void
     }
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
-    session_name('gestclub_session');
+    session_name($sessionName);
     session_set_cookie_params(['path' => parse_url($origin, PHP_URL_PATH) ?: '/', 'secure' => $isHttps,
         'httponly' => true, 'samesite' => 'Strict']);
     session_start();

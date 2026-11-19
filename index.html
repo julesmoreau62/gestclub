@@ -2,22 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Prototype de Gest’club, l’outil de gestion des clubs sportifs amateurs.">
-  <title>Gest’club — Tableau de bord</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prototype de Fair Gestion, l’outil de gestion des clubs sportifs amateurs.">
+  <link rel="icon" type="image/svg+xml" href="./public/assets/fair-icone.svg">
+  <title>Fair Gestion — Tableau de bord</title>
   <style>
     :root {
       color-scheme: light;
-      --paper: #f7f7f2;
+      --paper: #f3f5f5;
       --white: #fff;
-      --ink: #162820;
-      --muted: #536359;
-      --rule: #e4e8e1;
-      --green: #154433;
-      --soft-green: #e7f1e9;
-      --orange: #a73c25;
+      --navy: #13294b;
+      --mint: #1fb57a;
+      --ink: #182943;
+      --muted: #4e5e70;
+      --rule: #dbe2e8;
+      --green: #0f6348;
+      --soft-green: #e2f5ec;
+      --orange: #963f24;
       --soft-orange: #fbece5;
-      --sidebar: 238px;
+      --sidebar: 244px;
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-synthesis: none;
       font-size: 14px;
@@ -29,7 +32,7 @@
     button, select { cursor: pointer; }
     button { color: inherit; }
     button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
-      outline: 2px solid #a54b33;
+      outline: 2px solid #147556;
       outline-offset: 3px;
     }
     button:disabled { opacity: .54; cursor: default; }
@@ -38,42 +41,98 @@
     [hidden] { display: none !important; }
     .icon { width: 19px; height: 19px; flex: none; vertical-align: middle; }
 
-    .shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); }
+    .shell {
+      min-height: 100vh; display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr);
+    }
+    .app-workspace { min-width: 0; }
+    .spaces-bar {
+      position: sticky; top: 0; z-index: 1;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      padding: 12px clamp(15px, 4vw, 64px); background: var(--navy); border-bottom: 1px solid #395474;
+    }
+    .space-pill {
+      min-height: 36px; padding: 6px 13px; border: 1px solid #55708c; border-radius: 999px;
+      color: #e0ebf5; background: #1f3a5c; font-weight: 650;
+    }
+    .space-pill:hover { color: #fff; background: #2b496a; }
+    .space-pill:focus-visible { outline-color: #8be8bf; }
+    .space-pill[aria-current="true"] { color: #fff; background: #254567; box-shadow: inset 0 -3px 0 var(--mint); }
     .sidebar {
-      position: sticky; top: 0; height: 100dvh; background: #fdfdfa;
-      border-right: 1px solid var(--rule); display: flex; flex-direction: column; padding: 26px 15px 18px;
+      position: sticky; top: 0; height: 100dvh; overflow-y: auto;
+      background: var(--navy); color: #fff; color-scheme: dark;
+      display: flex; flex-direction: column; padding: 25px 16px 18px;
     }
-    .brand { display: flex; align-items: center; gap: 10px; margin: 0 10px 33px; font-size: 23px; font-weight: 780; letter-spacing: -.075em; }
-    .brand-mark {
-      width: 33px; height: 33px; border-radius: 9px; background: var(--green);
-      display: grid; place-items: center; color: #fff; transform: rotate(-7deg);
-    }
-    .brand-mark .icon { width: 24px; height: 24px; transform: rotate(7deg); }
-    .club { display: flex; align-items: center; gap: 10px; padding: 11px 10px; border: 1px solid var(--rule); border-radius: 11px; }
-    .club-mark, .avatar { flex: none; display: grid; place-items: center; font-weight: 750; }
-    .club-mark { width: 35px; height: 35px; border-radius: 8px; background: var(--soft-orange); color: var(--orange); font-size: 12px; }
-    .club strong { display: block; font-size: 13px; }
-    .club small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
-    .workspace { display: grid; gap: 6px; margin-top: 24px; }
-    .workspace label { padding-left: 6px; color: var(--muted); font-size: 11px; font-weight: 720; }
-    .workspace select { width: 100%; min-height: 39px; padding: 6px 9px; border: 1px solid #dbe1d9; border-radius: 8px; background: #fff; color: var(--ink); font-weight: 720; }
+    .sidebar > * { flex: none; }
+    .sidebar :focus-visible { outline-color: #8be8bf; }
+    .brand { display: flex; align-items: center; gap: 9px; margin: 0 4px 27px; }
+    .brand[data-space] { align-self: flex-start; border: 0; padding: 0; background: transparent; color: inherit; }
+    .brand-mark { display: block; flex: none; width: 34px; height: 34px; border: 1px solid #54708e; border-radius: 50%; }
+    .brand-name { font-size: 21px; font-weight: 620; letter-spacing: -.04em; white-space: nowrap; }
+    .brand-name strong { font-weight: 800; }
+    .avatar { flex: none; display: grid; place-items: center; font-weight: 750; }
+    .event-actions { padding: 0 16px 14px; }
+    .partner-details { overflow-wrap: anywhere; }
+    .partner-details .secondary-value { white-space: pre-wrap; }
+    .partner-controls { padding: 14px 18px; }
+    .partner-proof { white-space: normal; text-align: left; }
+    .inventory-details > summary { padding: 14px 18px; color: var(--navy); font-size: 14px; font-weight: 680; cursor: pointer; }
+    .inventory-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .return-details > summary { cursor: pointer; }
+    .return-details ul { margin: 5px 0 0; padding-left: 18px; text-align: left; }
+    .event-link { width: 100%; }
     .navigation { display: grid; gap: 4px; margin-top: 12px; }
     .nav-button {
-      background: transparent; border: 0; display: flex; align-items: center; gap: 11px;
-      text-align: left; border-radius: 8px; padding: 11px 10px; font-weight: 610; color: var(--muted); white-space: nowrap;
+      background: transparent; border: 0; display: flex; align-items: center; gap: 10px;
+      text-align: left; border-radius: 7px; padding: 10px; font-weight: 610; color: #d6e2ee; white-space: nowrap;
     }
-    .nav-button:hover { background: #f0f3ed; color: var(--ink); }
-    .nav-button[aria-current="page"] { background: var(--soft-green); color: var(--green); font-weight: 750; }
-    .sidebar-footer { margin-top: auto; padding: 15px 7px 1px; border-top: 1px solid var(--rule); }
+    .nav-button:hover { background: #203c60; color: #fff; }
+    .nav-button[aria-current="page"] { background: #254567; color: #fff; font-weight: 750; box-shadow: inset 3px 0 0 var(--mint); }
+    .nav-button[aria-current="page"] .icon { color: #8be8bf; }
+    .sidebar-footer { margin-top: auto; padding: 15px 2px 1px; border-top: 1px solid #395474; }
+    .sidebar-footer .text-button { background: #203c60; border-color: #55708c; color: #fff; }
+    .sidebar-footer .text-button:hover { background: #304f71; }
     #online-controls { margin-top: 7px; }
     #local-export { margin-top: 7px; }
-    .demo-label { display: inline-flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; font-weight: 650; }
-    .demo-label::before { content: ""; height: 7px; width: 7px; border-radius: 50%; background: #b9573d; }
+    .demo-label { display: inline-flex; gap: 7px; align-items: center; color: #d6e2ee; font-size: 12px; font-weight: 650; }
+    .demo-label::before { content: ""; height: 7px; width: 7px; border-radius: 50%; background: #ffc084; }
+
+    .demo-label[data-shared]::before { background: #8be8bf; }
+    .demo-controls { display: grid; gap: 6px; }
+    .demo-controls select {
+      width: 100%; min-height: 36px; padding: 6px 9px; border: 1px solid #55708c; border-radius: 8px;
+      color: #fff; background: #1f3a5c; font-weight: 650;
+    }
 
     main { width: 100%; max-width: 1480px; margin-inline: auto; padding: 32px clamp(22px, 4vw, 64px) 44px; }
     .page-header, .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-    .page-header { margin-bottom: 24px; }
-    h1 { font-size: clamp(24px, 2.6vw, 30px); font-weight: 760; letter-spacing: -.035em; line-height: 1.15; }
+    .page-header { flex-wrap: wrap; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+    .page-header h1 { color: var(--navy); }
+    #app-shell[data-page="home"] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    #app-shell[data-page="home"] .sidebar { display: none; }
+    #app-shell[data-page="home"] .app-workspace > main {
+      min-height: 100svh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding-block: clamp(24px, 5vh, 64px);
+    }
+    #app-shell[data-page="home"] .page-header { border: 0; padding: 0; justify-content: center; }
+    .home-logo { display: none; }
+    #app-shell[data-page="home"] .page-header h1 {
+      display: flex; align-items: center; gap: 12px; text-transform: uppercase; letter-spacing: -.035em;
+    }
+    #app-shell[data-page="home"] .home-logo { display: block; width: clamp(36px, 5vw, 48px); height: auto; }
+    #app-shell[data-page="home"] #content { width: 100%; max-width: 940px; }
+    .space-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+    .space-card {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 12px;
+      align-items: start; text-align: left; padding: 18px; min-height: 118px;
+      flex: 1 1 250px; max-width: 300px;
+    }
+    .space-card:hover { background: #f5faf8; border-color: #92b7a8; }
+    .space-card-name { display: block; color: var(--navy); font-size: 16px; font-weight: 750; }
+    .space-card-description { display: block; color: var(--muted); line-height: 1.5; margin-top: 5px; }
+    .space-card > .icon { color: var(--green); margin-top: 1px; }
+    h1 { font-size: clamp(29px, 3.6vw, 45px); font-weight: 790; letter-spacing: -.06em; line-height: 1.1; }
     h2 { font-size: 18px; font-weight: 750; letter-spacing: -.025em; }
     h3 { font-size: 16px; }
     .season { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
@@ -82,42 +141,56 @@
       min-height: 39px; border: 1px solid #dbe1d9; border-radius: 8px; color: var(--ink); background: var(--white);
       padding: 7px 9px; font-weight: 650;
     }
+    .dashboard-actions {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+      padding: 15px 18px; background: var(--soft-green); border: 1px solid #c0ddcf;
+      border-inline-start: 4px solid var(--mint); border-radius: 9px;
+    }
+    .dashboard-actions h2 { font-size: 15px; color: var(--navy); }
+    .dashboard-actions .button.outline { background: transparent; border-color: #aacbbc; }
+    .dashboard-actions .button.outline:hover { background: #f6fcf9; }
+    .follow-up, .list-status, .list-meta { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 14px; }
+    .list-meta { align-items: center; color: var(--muted); }
+    .list-status [aria-pressed="true"] { color: var(--green); background: var(--soft-green); border-color: #92b5a2; }
+    .skip-link { position: fixed; z-index: 3; top: 8px; left: 8px; transform: translateY(-150%); }
+    .skip-link:focus { transform: none; }
     .button {
       display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px;
       padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; font-weight: 700; font-size: 13px;
     }
     .button .icon { width: 16px; height: 16px; }
-    .button.primary { background: var(--green); color: #fff; }
-    .button.primary:hover { background: #0d3225; }
-    .button.light { background: #f8e7d7; color: #342319; }
-    .button.light:hover { background: #ffefdf; }
+    .button.primary { background: var(--navy); color: #fff; }
+    .button.primary:hover { background: #224568; }
     .button.outline { background: #fff; border-color: #dbe1d9; }
     .button.outline:hover { background: var(--paper); }
     .link-button { background: none; border: 0; padding: 5px 0; color: var(--green); font-size: 12px; font-weight: 750; white-space: nowrap; }
     .link-button:hover { text-decoration: underline; }
     .link-button .icon { width: 15px; height: 15px; margin-left: 4px; }
-    .overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 17px 0 20px; }
-    .stat { position: relative; display: block; width: 100%; text-align: left; padding: 15px 17px; border: 1px solid var(--rule); border-radius: 12px; background: #fff; }
-    .stat-link:hover { border-color: #b9c9bc; background: #fcfdfb; }
-    .stat-link > .icon { position: absolute; top: 17px; right: 15px; width: 16px; height: 16px; color: var(--muted); }
-    .stat-value { display: block; }
-    .meter { display: block; height: 6px; margin-top: 11px; border-radius: 6px; background: #e9ede7; overflow: hidden; }
-    .meter i { display: block; height: 100%; border-radius: 6px; background: #347456; }
+    .overview {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 17px 0 20px;
+      border: 1px solid var(--rule); border-radius: 11px; background: var(--white);
+    }
+    .stat { min-width: 0; padding: 16px 20px; }
+    .stat + .stat { border-inline-start: 1px solid var(--rule); }
+    .stat:first-child { background: #edf8f2; border-start-start-radius: 10px; border-end-start-radius: 10px; }
     .stat-label { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; color: var(--muted); }
     .tile { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--green); background: var(--soft-green); }
     .tile.warm { color: var(--orange); background: var(--soft-orange); }
     .tile .icon { width: 17px; height: 17px; }
-    .stat-value { margin: 9px 0 0; font-size: 31px; line-height: 1.1; letter-spacing: -.045em; font-weight: 780; font-variant-numeric: tabular-nums; }
+    .stat-value { margin: 9px 0 0; font-size: clamp(25px, 3.4vw, 42px); line-height: 1.1; letter-spacing: -.045em; font-weight: 780; font-variant-numeric: tabular-nums; }
+    .money-overview .stat-value { font-size: clamp(18px, 2.6vw, 36px); overflow-wrap: anywhere; }
     .stat-value span { font-size: 14px; color: var(--muted); font-weight: 550; letter-spacing: 0; margin-left: 6px; }
 
+    .dashboard-grid { display: grid; grid-template-columns: minmax(225px, .43fr) minmax(0, 1fr); gap: 16px; align-items: start; }
     .panel { background: #fff; border: 1px solid var(--rule); border-radius: 12px; min-width: 0; }
     .panel-header { padding: 17px 18px; }
     .table-wrap { overflow-x: auto; }
     table { text-align: left; width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
-    th { color: var(--muted); background: #f8f9f6; font-size: 11px; font-weight: 700; }
+    th { color: var(--muted); background: #edf2f6; font-size: 11px; font-weight: 700; }
     th, td { padding: 9px 16px; border-top: 1px solid #edf0eb; }
     th:first-child, td:first-child { padding-left: 18px; }
     td:last-child { text-align: right; }
+    tbody tr:hover { background: #f6f9fc; }
     .identity { display: flex; gap: 9px; align-items: center; font-weight: 690; }
     .avatar { border-radius: 50%; width: 30px; height: 30px; font-size: 10px; }
     .avatar.sage { background: #e5f0e5; color: #29583e; }
@@ -131,9 +204,20 @@
     .row-action { border: 0; background: transparent; width: 30px; height: 30px; border-radius: 7px; color: var(--muted); }
     .row-action:hover { background: var(--soft-green); color: var(--green); }
     .row-action .icon { width: 15px; height: 15px; }
+    .empty { text-align: left !important; color: var(--muted); padding: 24px 18px; white-space: normal; }
+    .payment-panel { padding: 19px 18px; background: var(--navy); color: #fff; border-color: var(--navy); }
+    .payment-panel :focus-visible { outline-color: #8be8bf; }
+    .payment-progress { margin: 14px 0; display: grid; gap: 8px; }
+    .payment-progress .percentage { font-size: 36px; line-height: 1; font-weight: 790; letter-spacing: -.045em; }
+    .payment-progress progress { width: 100%; height: 8px; accent-color: var(--mint); }
+    .payment-summary { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; }
+    .payment-summary div { display: grid; gap: 5px; }
+    .payment-summary dt { color: #c3d4e4; }
+    .payment-summary dd { margin: 0; font-size: 19px; font-weight: 750; }
+    .payment-panel .link-button { color: #8be8bf; margin-top: 15px; padding-top: 12px; border-top: 1px solid #3e5878; width: 100%; text-align: left; }
     .filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 18px 14px; }
     .search { display: flex; align-items: center; gap: 6px; min-height: 39px; padding: 0 10px; border: 1px solid #dbe1d9; border-radius: 8px; flex: 1 1 195px; max-width: 320px; }
-    .search:focus-within { outline: 2px solid #a54b33; outline-offset: 2px; }
+    .search:focus-within { outline: 2px solid #147556; outline-offset: 2px; }
     .search .icon { color: var(--muted); width: 16px; height: 16px; }
     .search input { padding: 8px 0; background: transparent; border: 0; outline: 0; width: 100%; min-width: 0; }
     .search input:focus-visible { outline: 0; }
@@ -144,7 +228,7 @@
     .team p { color: var(--muted); margin: 7px 0 12px; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     dialog { color: var(--ink); background: #fff; width: min(440px, calc(100% - 30px)); border: 1px solid var(--rule); border-radius: 15px; padding: 22px; }
-    dialog::backdrop { background: #13291ec0; }
+    dialog::backdrop { background: #0d203bd1; }
     dialog form { display: grid; gap: 14px; }
     dialog header, dialog footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     dialog footer { justify-content: flex-end; margin-top: 4px; }
@@ -152,51 +236,11 @@
     .field input, .field select, .field textarea { width: 100%; min-height: 40px; padding: 8px 10px; border-radius: 7px; border: 1px solid #dbe1d9; color: var(--ink); background: #fff; }
     .field textarea { resize: vertical; min-height: 68px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .toast { position: fixed; z-index: 5; right: 18px; bottom: 18px; max-width: calc(100% - 36px); padding: 12px 16px; border-radius: 9px; box-shadow: 0 4px 18px #143c2a30; background: #143c2a; color: #fff; font-weight: 650; }
-    .panel-note, .meeting-meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
-    .dash-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: -12px 0 18px; }
-    .dash-head p { color: var(--muted); font-size: 13px; }
-    .dash-head strong { color: var(--ink); }
-    .attention { margin-bottom: 0; }
-    .attention .panel-header { justify-content: flex-start; gap: 9px; padding-bottom: 12px; }
-    .count-pill { min-width: 22px; padding: 2px 7px; border-radius: 20px; background: var(--soft-orange); color: var(--orange); font-size: 12px; font-weight: 750; text-align: center; }
-    .todo-list { list-style: none; margin: 0; padding: 0 12px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 8px; }
-    .todo { width: 100%; height: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 12px; text-align: left; background: #fbfcfa; border: 1px solid var(--rule); border-radius: 10px; }
-    .todo:hover { background: var(--soft-green); border-color: #cfe0d2; }
-    .todo-count { flex: none; min-width: 34px; height: 34px; padding: 0 8px; display: grid; place-items: center; border-radius: 9px; background: var(--soft-orange); color: var(--orange); font-weight: 780; font-variant-numeric: tabular-nums; }
-    .todo-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-    .todo-text small { color: var(--muted); font-size: 12px; line-height: 1.4; }
-    .todo > .icon { width: 16px; height: 16px; color: var(--muted); }
-    .all-clear { display: flex; align-items: center; gap: 12px; padding: 15px 17px; }
-    .all-clear p { color: var(--muted); font-size: 13px; margin-top: 2px; }
-    .split-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-    .empty-state { font-weight: 400; font-size: 13px; display: grid; justify-items: center; gap: 6px; padding: 26px 16px; text-align: center; color: var(--muted); line-height: 1.5; white-space: normal; }
-    .empty-state strong { color: var(--ink); font-size: 14px; margin-top: 4px; }
-    .empty-state span:last-child { max-width: 46ch; }
-    td.empty { text-align: center !important; padding: 0; }
-    .result-count { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 0 18px 12px; color: var(--muted); font-size: 12px; font-weight: 600; }
-    .search-trigger { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 39px; margin-top: 12px; padding: 6px 9px; border: 1px solid #dbe1d9; border-radius: 8px; background: #fff; color: var(--muted); font-weight: 600; text-align: left; }
-    .search-trigger:hover { border-color: #b9c9bc; color: var(--ink); }
-    .search-trigger .icon { width: 16px; height: 16px; }
-    .search-trigger kbd { margin-left: auto; padding: 1px 6px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); font: inherit; font-size: 11px; }
-    .nav-more, .tab-label { display: none; }
-    #palette { width: min(560px, calc(100% - 26px)); padding: 0; margin-top: 12vh; overflow: hidden; }
-    .palette-field { display: flex; align-items: center; gap: 9px; padding: 13px 16px; border-bottom: 1px solid var(--rule); }
-    .palette-field .icon { color: var(--muted); }
-    .palette-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 16px; }
-    .palette-results { list-style: none; margin: 0; padding: 6px; max-height: min(52vh, 380px); overflow-y: auto; }
-    .palette-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; text-align: left; font-weight: 620; }
-    .palette-item .icon { width: 17px; height: 17px; color: var(--muted); }
-    .palette-item small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
-    .palette-item[aria-selected="true"], .palette-item:hover { background: var(--soft-green); color: var(--green); }
-    .palette-empty { padding: 20px 16px; color: var(--muted); }
-    .palette-hint { padding: 8px 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 11px; }
-    #more-sheet { padding: 16px; }
-    #more-sheet h2 { margin-bottom: 10px; }
-    #more-pages { display: grid; gap: 2px; }
-    #more-sheet .sidebar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 12px 2px 0; }
+    .toast { position: fixed; z-index: 2; right: 18px; bottom: 18px; max-width: calc(100% - 36px); padding: 12px 16px; border-radius: 9px; box-shadow: 0 4px 18px #143c2a30; background: var(--navy); color: #fff; font-weight: 650; }
+    .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin: 0 0 16px; }
+    .quick-card { padding: 17px; display: grid; justify-items: start; align-content: start; gap: 10px; }
+    .quick-card p, .panel-note, .meeting-meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
     .stack { display: grid; gap: 16px; }
-    .stack > * { min-width: 0; }
     .panel-note { padding: 0 18px 14px; }
     .ledger-table td.numeric, .ledger-table th.numeric { text-align: right; font-variant-numeric: tabular-nums; }
     .ledger-table td:first-child { white-space: normal; }
@@ -212,7 +256,6 @@
     .meeting-card p { white-space: pre-wrap; }
     .meeting-card .actions { margin-top: auto; }
     .row-actions { display: inline-flex; align-items: center; gap: 5px; }
-    .money-overview .stat-value { font-size: clamp(16px, 2.55vw, 31px); overflow-wrap: anywhere; }
     .account-period { color: var(--muted); white-space: nowrap; font-size: 12px; }
     .account-line-end td { border-bottom: 1px solid var(--rule); }
     .finance-state { color: var(--green); margin: 0 0 15px; }
@@ -229,7 +272,7 @@
     @media print {
       body:has(.closing-report) { background: #fff; }
       body:has(.closing-report) .shell { display: block; }
-      body:has(.closing-report) .sidebar, body:has(.closing-report) .page-header,
+      body:has(.closing-report) .sidebar, body:has(.closing-report) .spaces-bar, body:has(.closing-report) .page-header,
       body:has(.closing-report) .toast, .closing-report button, .closing-report .no-print { display: none !important; }
       body:has(.closing-report) main { padding: 0; }
       .closing-report .table-wrap { overflow: visible; }
@@ -243,113 +286,70 @@
     @media (max-width: 1050px) {
       :root { --sidebar: 193px; }
       main { padding-inline: 24px; }
+      .dashboard-grid { grid-template-columns: minmax(200px, .43fr) minmax(0, 1fr); }
       th, td { padding-inline: 10px; }
     }
-    @media (max-width: 865px) {
-      .split-grid { grid-template-columns: 1fr; }
+    @media (max-width: 940px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 680px) {
-      :root { font-size: 15px; }
-      .shell { display: block; }
-      /* Barre supérieure compacte : marque, recherche, espace de travail. */
-      .sidebar { position: sticky; top: 0; z-index: 3; height: auto; flex-direction: row; align-items: center; gap: 8px; border: 0; border-bottom: 1px solid var(--rule); padding: 9px 15px; }
-      .brand { margin: 0 auto 0 0; font-size: 20px; }
+      .shell { display: flex; flex-direction: column; }
+      .app-workspace { display: contents; }
+      .spaces-bar { order: -1; }
+      .sidebar { position: static; height: auto; border: 0; padding: 13px 15px 8px; }
+      .brand { margin: 0; }
       .brand-mark { width: 29px; height: 29px; }
-      .club, .workspace label, .sidebar > .sidebar-footer, .search-trigger span, .search-trigger kbd { display: none; }
-      .search-trigger { width: 44px; min-height: 44px; margin: 0; justify-content: center; }
-      .search-trigger .icon { width: 19px; height: 19px; }
-      .workspace { margin: 0; }
-      .workspace select { width: auto; min-height: 44px; }
-      /* Barre d’onglets fixe en bas : quatre rubriques et « Plus ». */
-      .navigation { position: fixed; z-index: 3; left: 0; right: 0; bottom: 0; margin: 0; gap: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #fdfdfa; border-top: 1px solid var(--rule); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); }
-      .navigation .nav-button { flex-direction: column; justify-content: center; gap: 3px; min-height: 52px; padding: 5px 2px; font-size: 11px; line-height: 1.15; text-align: center; white-space: nowrap; overflow: hidden; }
-      .navigation .nav-button .icon { width: 21px; height: 21px; }
-      .navigation .nav-button:nth-child(n+5):not(.nav-more) { display: none; }
-      .nav-more { display: flex; }
-      .navigation .tab-label { display: inline; }
-      .navigation .nav-label:has(+ .tab-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-      #more-pages .nav-button { min-height: 48px; font-size: 15px; }
-      main { padding: 18px 15px calc(84px + env(safe-area-inset-bottom)); }
-      .page-header { margin-bottom: 15px; }
+      .sidebar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 7px; padding: 7px 0 0; }
+      #online-controls, #local-export { margin-top: 0; }
+      .navigation { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 8px; }
+      .navigation[data-workspace="treasurer"], .navigation[data-workspace="secretary"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .nav-button { flex-direction: column; justify-content: flex-start; white-space: normal; padding: 7px 2px; gap: 4px; font-size: 11px; text-align: center; }
+      .nav-button[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--mint); }
+      .nav-button .icon { width: 15px; height: 15px; }
+      main { padding: 21px 15px 26px; }
+      .page-header { margin-bottom: 15px; padding-bottom: 12px; }
       .season label { display: none; }
-      .dash-head { margin: -4px 0 14px; }
-      .dash-head .button { flex: 1 1 100%; }
-      .button, .season select, .filters select, .text-button { min-height: 44px; }
-      .row-action { width: 44px; height: 44px; }
-      .row-action .icon { width: 18px; height: 18px; }
-      input, select, textarea { font-size: 16px; }
-      .overview { grid-template-columns: 1fr; gap: 6px; margin: 12px 0; }
-      .stat { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 11px 12px; }
-      .stat-link > .icon { display: none; }
-      .stat-label { gap: 9px; }
-      .tile { width: 28px; height: 28px; }
-      .stat-value, .money-overview .stat-value { margin: 0; font-size: 20px; }
-      .stat-value span { font-size: 12px; }
-      .meter { flex: 1 1 100%; margin-top: 5px; }
-      .panel-header { flex-wrap: wrap; padding: 14px 12px; }
-      .filters { padding-inline: 12px; }
-      .filters .search { flex-basis: 100%; max-width: none; min-height: 44px; }
-      .filters select { flex: 1 1 130px; min-width: 0; }
-      .result-count, .meeting-grid, .panel-note { padding-inline: 12px; }
-      .todo-list { padding: 0 10px 10px; }
+      .overview { margin: 12px 0; }
+      .stat { padding: 10px 8px; }
+      .stat-label { align-items: flex-start; flex-direction: column; gap: 5px; font-size: 11px; }
+      .tile { width: 26px; height: 26px; }
+      .stat-value { font-size: 25px; }
+      .stat-value span { display: block; font-size: 11px; margin: 4px 0 0; }
+      .money-overview .stat-value { font-size: clamp(13px, 4vw, 17px); }
+      .dashboard-actions { padding: 11px 12px; }
+      .panel-header { flex-wrap: wrap; padding: 14px 11px; }
+      .filters, .follow-up, .list-status, .list-meta { padding-inline: 11px; }
+      .filters .search { flex-basis: 100%; max-width: none; }
+      .dashboard-actions .button, .list-status .button, .follow-up .button { min-height: 44px; }
+      th, td { padding-inline: 7px; }
+      th:first-child, td:first-child { padding-left: 10px; }
+      .identity { gap: 5px; }
+      .avatar { width: 24px; height: 24px; font-size: 9px; }
+      .quick-grid { grid-template-columns: 1fr; gap: 10px; }
       .page-description { margin-top: -5px; }
-      .toast { left: 15px; right: 15px; bottom: calc(72px + env(safe-area-inset-bottom)); text-align: center; }
-      /* Les tableaux deviennent des fiches : une ligne par enregistrement, chaque valeur avec son intitulé. */
-      main .table-wrap { overflow: visible; }
-      main table, main tbody, main tfoot, main tr, main td { display: block; }
-      main table { white-space: normal; font-size: 14px; }
-      main thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-      main tr { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px 12px; padding: 12px; border-top: 1px solid #edf0eb; }
-      main td, main th:first-child, main td:first-child { padding: 0; border: 0; }
-      main td, main td:last-child, .ledger-table td.numeric { display: block; text-align: left; overflow-wrap: anywhere; }
-      main td::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted); font-size: 11px; font-weight: 600; }
-      main td.cell-primary { grid-column: 1 / -1; order: -1; font-size: 15px; font-weight: 700; }
-      main td.cell-primary::before, main td.cell-actions::before, main td.empty::before { content: none; }
-      main td.cell-actions { grid-column: 1 / -1; }
-      main td.cell-actions .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-      main td.cell-icons { position: absolute; top: 3px; right: 4px; }
-      main tr:has(.cell-icons) .cell-primary { padding-right: 44px; }
-      main td.cell-void { display: none; }
-      main td.empty { text-align: center !important; }
-      main tfoot tr { background: #f8f9f6; }
-      .ledger-table td.label-cell { min-width: 0; }
-      main .identity { gap: 9px; }
-      /* Les fenêtres de saisie s’ouvrent en feuille depuis le bas de l’écran. */
-      dialog, .module-dialog, #palette { width: 100%; max-width: 100%; max-height: 92dvh; margin: auto 0 0; border-radius: 18px 18px 0 0; border-width: 1px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
-      #palette { margin: 0 0 auto; border-radius: 0 0 18px 18px; padding-bottom: 0; }
-      .palette-hint { display: none; }
-      .form-row { grid-template-columns: 1fr; }
-      dialog footer .button { flex: 1; }
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      .button, .nav-button, .todo, .stat, .text-button, .row-action { transition: background-color .12s, border-color .12s, color .12s; }
+      .meeting-grid, .panel-note { padding-inline: 11px; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
+  <a class="skip-link button primary" href="#page-title">Aller au contenu</a>
+  <div class="shell" id="app-shell" data-page="home">
     <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true" id="brand-icon"></span>
-        Gest’club
-      </div>
-      <div class="club">
-        <span class="club-mark" aria-hidden="true">AS</span>
-        <div><strong id="club-name">AS des Tilleuls</strong><small id="club-subtitle">Club de football</small></div>
-      </div>
-      <button type="button" class="search-trigger" id="open-search" data-search aria-label="Rechercher une page ou un adhérent" aria-keyshortcuts="Control+K Meta+K">
-        <span id="search-trigger-label">Rechercher</span><kbd id="search-shortcut">Ctrl K</kbd>
+      <button type="button" class="brand" data-space="home" aria-label="Accueil Fair Gestion">
+        <img class="brand-mark" src="./public/assets/fair-icone.svg" width="33" height="33" alt="">
+        <span class="brand-name"><strong>Fair</strong> Gestion</span>
       </button>
-      <div class="workspace">
-        <label for="workspace-role">Espace de travail</label>
-        <select id="workspace-role">
-          <option value="director">Dirigeant</option>
-          <option value="treasurer">Trésorier</option>
-          <option value="secretary">Secrétaire</option>
-        </select>
-      </div>
       <nav class="navigation" aria-label="Menu principal" id="navigation"></nav>
-      <div class="sidebar-footer" id="sidebar-footer"><span class="demo-label" id="storage-mode">Mode démo</span>
+      <div class="sidebar-footer"><span class="demo-label" id="storage-mode" hidden>Données partagées</span>
+        <div class="demo-controls" id="demo-controls" hidden>
+          <span class="demo-label">Mode démo</span>
+          <label class="visually-hidden" for="demo-role">Rôle en mode démo</label>
+          <select id="demo-role">
+            <option value="director">Dirigeant</option>
+            <option value="secretary">Secrétaire</option>
+            <option value="treasurer">Trésorier</option>
+          </select>
+        </div>
         <button type="button" class="text-button" id="local-export">Exporter les données locales</button>
         <div class="actions" id="online-controls" hidden>
           <button type="button" class="text-button" id="online-refresh">Actualiser</button>
@@ -359,19 +359,25 @@
       </div>
     </aside>
 
-    <main>
-      <header class="page-header">
-        <h1 id="page-title">Tableau de bord</h1>
-        <div class="season">
-          <label for="season">Saison</label>
-          <select id="season" aria-label="Saison">
-            <option value="2026">2026–2027</option>
-            <option value="2025">2025–2026</option>
-          </select>
-        </div>
-      </header>
-      <div id="content"></div>
-    </main>
+    <div class="app-workspace">
+      <nav class="spaces-bar" id="spaces-bar" aria-label="Espaces de Fair Gestion" hidden></nav>
+      <main>
+        <header class="page-header">
+          <h1 id="page-title" tabindex="-1">
+            <img class="home-logo" src="./public/assets/fair-icone.svg" width="48" height="48" alt="">
+            <span id="page-title-text">Fair Gestion</span>
+          </h1>
+          <div class="season" id="season-control">
+            <label for="season">Saison</label>
+            <select id="season" aria-label="Saison">
+              <option value="2026">2026–2027</option>
+              <option value="2025">2025–2026</option>
+            </select>
+          </div>
+        </header>
+        <div id="content"></div>
+      </main>
+    </div>
   </div>
 
   <dialog id="member-dialog" aria-labelledby="dialog-title">
@@ -399,26 +405,12 @@
     </form>
   </dialog>
   <dialog class="module-dialog" id="module-dialog" aria-labelledby="module-dialog-title"></dialog>
-  <dialog id="palette" aria-label="Recherche">
-    <label class="palette-field"><span class="visually-hidden">Rechercher une page ou un adhérent</span>
-      <input type="search" id="palette-input" placeholder="Rechercher une page ou un adhérent" autocomplete="off"
-        role="combobox" aria-expanded="true" aria-controls="palette-results" aria-autocomplete="list">
-    </label>
-    <ul class="palette-results" id="palette-results" role="listbox" aria-label="Résultats"></ul>
-    <p class="palette-hint" aria-hidden="true">↑ ↓ pour parcourir · Entrée pour ouvrir · Échap pour fermer</p>
-  </dialog>
-  <dialog id="more-sheet" aria-labelledby="more-title">
-    <header><h2 id="more-title">Plus</h2>
-      <button type="button" class="row-action" data-more-close aria-label="Fermer" id="more-close"></button></header>
-    <nav id="more-pages" aria-label="Autres rubriques"></nav>
-  </dialog>
   <div class="toast" id="toast" role="status" hidden></div>
   <script>
     (function () {
   "use strict";
 
   const icons = {
-    logo: '<path d="M5 7h14v10H5zM12 7v10"/><circle cx="12" cy="12" r="2"/>',
     dashboard: '<rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/>',
     members: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m2-15a3 3 0 0 1 0 6m4 9v-2a4 4 0 0 0-3-4"/>',
     teams: '<path d="m12 22 2-4h4a3 3 0 0 0 3-3V5l-9-3-9 3v10a3 3 0 0 0 3 3h4l2 4Z"/><path d="m9 10 2 2 4-4"/>',
@@ -437,11 +429,7 @@
     pencil: '<path d="m15 5 4 4M4 20l4.5-1 12-12a2.8 2.8 0 0 0-4-4l-12 12L4 20Z"/>',
     search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
     download: '<path d="M12 3v12m-4-4 4 4 4-4M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
-    close: '<path d="m6 6 12 12M18 6 6 18"/>',
-    check: '<path d="m5 12 5 5 9-10"/>',
-    chevron: '<path d="m9 6 6 6-6 6"/>',
-    inbox: '<path d="M4 13 6.5 5h11L20 13v6H4v-6Zm0 0h5a3 3 0 0 0 6 0h5"/>',
-    more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'
+    close: '<path d="m6 6 12 12M18 6 6 18"/>'
   };
 
   function icon(name) {
@@ -450,21 +438,20 @@
   }
 
   const pages = {
-    dashboard: "Tableau de bord", members: "Adhérents", teams: "Équipes", payments: "Cotisations",
+    home: "Accueil", dashboard: "Tableau de bord", members: "Adhérents", teams: "Équipes", payments: "Cotisations",
     ledger: "Journal de trésorerie", budget: "Budget et rapport", meetings: "Réunions et PV", tasks: "Plan d’action",
     invoices: "Factures et échéances", accounting: "Écritures et balance", bank: "Rapprochement bancaire",
     expenses: "Notes de frais", closing: "Clôture et rapport d’AG", renewals: "Renouvellement des adhésions",
-    decisions: "Décisions du bureau", volunteers: "Bénévoles", assembly: "Préparation de l’AG"
+    decisions: "Décisions du bureau", volunteers: "Bénévoles", events: "Matchs et événements", registrations: "Inscriptions", partners: "Partenaires", equipment: "Matériel", assembly: "Préparation de l’AG"
   };
   const workspaces = {
     director: ["dashboard", "teams", "members", "decisions", "tasks", "volunteers", "expenses"],
     treasurer: ["dashboard", "ledger", "bank", "invoices", "expenses", "accounting", "budget", "payments", "closing"],
-    secretary: ["dashboard", "members", "renewals", "meetings", "tasks"]
+    secretary: ["dashboard", "members", "renewals", "meetings", "tasks"],
+    equipment_manager: []
   };
   const menuLabels = { ledger: "Trésorerie", budget: "Budget", invoices: "Factures", accounting: "Comptabilité",
     bank: "Rapprochement", closing: "Clôture", renewals: "Renouvellement", decisions: "Décisions" };
-  // Libellés courts pour la barre d’onglets du téléphone.
-  const tabLabels = { dashboard: "Accueil", bank: "Banque", renewals: "Rentrée", meetings: "Réunions" };
   const pageIcons = { renewals: "members", decisions: "tasks", volunteers: "teams", assembly: "meetings" };
   const teams = ["Seniors", "U17", "U15"];
   const examples = [
@@ -483,8 +470,8 @@
   ];
 
   const elements = Object.fromEntries(
-    ["brand-icon", "navigation", "page-title", "season", "content", "member-dialog", "member-form",
-      "dialog-title", "close-dialog", "member-team", "toast", "workspace-role", "module-dialog"]
+    ["navigation", "page-title", "season", "content", "member-dialog", "member-form",
+      "dialog-title", "close-dialog", "member-team", "toast", "module-dialog"]
       .map(id => [id, document.getElementById(id)])
   );
   const nav = elements.navigation;
@@ -492,37 +479,39 @@
   const main = elements.content;
   const dialog = elements["member-dialog"];
   const form = elements["member-form"];
-  const role = elements["workspace-role"];
   const moduleDialog = elements["module-dialog"];
-  const palette = document.getElementById("palette");
-  const paletteInput = document.getElementById("palette-input");
-  const paletteResults = document.getElementById("palette-results");
-  const moreSheet = document.getElementById("more-sheet");
-  const morePages = document.getElementById("more-pages");
-  const sidebarFooter = document.getElementById("sidebar-footer");
-  const compactLayout = window.matchMedia("(max-width: 680px)");
-  const tabCount = 4;
   const remote = window.gestclubRemote || null;
+  const spacesBar = document.getElementById("spaces-bar");
+  const officeRoles = (remote?.roles ?? Object.keys(workspaces)).filter(value => value !== "equipment_manager");
+  const bureauRole = officeRoles[0];
+  const demoRoleSelect = document.getElementById("demo-role");
+  let demoRole = bureauRole;
+  let activeRole = remote?.role ?? demoRole;
+  const spaceRoles = { events: "director", registrations: "secretary", partners: "director",
+    equipment: remote?.roles.includes("equipment_manager") ? "equipment_manager" : "director" };
+  function canOpenSpace(key) {
+    if (key === "home") return true;
+    if (key === "bureau") return officeRoles.length > 0;
+    return Boolean(spaceRoles[key] && (!remote || remote.roles.includes(spaceRoles[key])));
+  }
+
   const clubName = remote?.clubName || "AS des Tilleuls";
   let remoteBusy = false;
   if (remote) {
-    role.replaceChildren(...remote.roles.map(value => new Option(
-      { director: "Dirigeant", treasurer: "Trésorier", secretary: "Secrétaire" }[value], value
-    )));
-    role.value = remote.role;
     season.replaceChildren(...Object.keys(remote.state.records).sort().reverse()
       .map(year => new Option(`${year}–${Number(year) + 1}`, year)));
-    document.getElementById("club-name").textContent = clubName;
-    document.getElementById("club-subtitle").hidden = true;
-    document.getElementById("storage-mode").textContent = "Données partagées";
+    document.getElementById("storage-mode").hidden = false;
+    document.getElementById("storage-mode").dataset.shared = "";
     document.getElementById("online-controls").hidden = false;
     document.getElementById("local-export").hidden = true;
     document.getElementById("logout-token").value = remote.csrf;
+  } else {
+    document.getElementById("demo-controls").hidden = false;
   }
   const storageKey = "gestclub-demo-v1";
   const records = loadRecords();
-  let page = "dashboard";
-  let filters = { search: "", team: "", payment: "" };
+  let page = "home";
+  let filters = { search: "", team: "", payment: "", fileStatus: "" };
   let editingId = null;
   let selectedAssemblyId = "";
   let toastTimeout;
@@ -576,65 +565,21 @@
     return `${[...member.first][0] || ""}${[...member.last][0] || ""}`.toLocaleUpperCase("fr");
   }
 
-  // Les raccourcis vers une rubrique d’un autre rôle ne s’affichent que si le compte possède ce rôle.
-  function canReach(workspace) {
-    return !workspace || !remote || remote.roles.includes(workspace);
-  }
-
-  function navAttributes(target) {
-    return `data-nav="${target.page}" data-role="${target.role || ""}" data-payment="${target.payment || ""}" data-file-status="${target.fileStatus || ""}"`;
-  }
-
-  function stat(label, value, symbol, secondary = "", warm = false, target = null, progress = null) {
-    const body = `<span class="stat-label"><span class="tile${warm ? " warm" : ""}">${icon(symbol)}</span>${label}</span>
-      <span class="stat-value">${value}${secondary ? `<span>${secondary}</span>` : ""}</span>
-      ${progress === null ? "" : `<span class="meter" aria-hidden="true"><i style="width: ${progress}%"></i></span>`}`;
-    if (target && canReach(target.role)) {
-      return `<button type="button" class="stat stat-link" ${navAttributes(target)}>${body}${icon("arrow")}</button>`;
-    }
-    return `<article class="stat">${body}</article>`;
-  }
-
-  function emptyState(title, hint = "") {
-    return `<div class="empty-state"><span class="tile">${icon("inbox")}</span><strong>${title}</strong>${hint ? `<span>${hint}</span>` : ""}</div>`;
-  }
-
-  // « À traiter » : ce qui attend une action, avec un accès direct à la bonne rubrique.
-  function attention(items) {
-    const visible = items.filter(item => item.count > 0 && canReach(item.role));
-    if (!visible.length) {
-      return `<section class="panel all-clear" aria-label="À traiter"><span class="tile">${icon("check")}</span>
-        <div><h2>Tout est à jour</h2><p>Rien n’attend ton intervention pour cette saison.</p></div></section>`;
-    }
-    return `<section class="panel attention" aria-labelledby="attention-title">
-      <header class="panel-header"><h2 id="attention-title">À traiter</h2><span class="count-pill">${visible.length}</span></header>
-      <ul class="todo-list">${visible.map(item => `<li><button type="button" class="todo" ${navAttributes(item)}>
-        <span class="todo-count">${item.count}</span>
-        <span class="todo-text"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.hint)}</small></span>
-        ${icon("chevron")}</button></li>`).join("")}</ul></section>`;
-  }
-
-  function dashHead(workspace, primary) {
-    return `<div class="dash-head"><p><strong>${escapeHtml(clubName)}</strong> · ${workspace}</p>${primary}</div>`;
-  }
-
-  function plural(count, one, many) {
-    return count === 1 ? one : many;
+  function stat(label, value, symbol, secondary = "", warm = false) {
+    return `<article class="stat">
+      <p class="stat-label"><span class="tile${warm ? " warm" : ""}">${icon(symbol)}</span>${label}</p>
+      <p class="stat-value">${value}${secondary ? `<span>${secondary}</span>` : ""}</p>
+    </article>`;
   }
 
   function rows(members) {
-    if (!members.length) {
-      const message = getMembers().length
-        ? emptyState("Aucun adhérent ne correspond", "Modifie la recherche ou réinitialise les filtres.")
-        : emptyState("Aucun adhérent pour cette saison", "Ajoute un premier adhérent ou reprends ceux de la saison précédente.");
-      return `<tr><td colspan="${page === "members" ? 5 : 4}" class="empty">${message}</td></tr>`;
-    }
+    if (!members.length) return `<tr><td colspan="${page === "members" ? 5 : 4}" class="empty">${getMembers().length ? "Aucun résultat pour ces filtres." : "Aucun adhérent pour cette saison."}</td></tr>`;
     const avatarColors = ["sage", "peach", "blue", "gold"];
     return members.map((member, index) => {
       const name = escapeHtml(`${member.first} ${member.last}`);
       const isPaid = hasPaid(member);
       const paid = isPaid ? "Réglée" : "En attente";
-      const collect = page === "payments" && !isPaid ? action("Encaisser", "dues", member.id) : "";
+      const collect = page === "payments" && !isPaid && !lockedFinanceYear() ? action("Encaisser", "dues", member.id) : "";
       return `<tr>
         <td><span class="identity"><span class="avatar ${avatarColors[index % avatarColors.length]}" aria-hidden="true">${escapeHtml(initials(member))}</span>${name}</span></td>
         <td>${escapeHtml(member.team)}</td>
@@ -655,41 +600,47 @@
     </div>`;
   }
 
+  function dashboardActions(buttons) {
+    return `<section class="dashboard-actions" aria-label="Actions rapides">
+      <h2>Actions rapides</h2><div class="actions">${buttons}</div>
+    </section>`;
+  }
+
   function dashboard() {
     const members = getMembers();
     const paid = members.filter(hasPaid).length;
     const unpaid = members.length - paid;
     const percent = members.length ? Math.round((paid / members.length) * 100) : 0;
-    const year = clubYear();
-    const toCheck = members.filter(member => fileStatus(member) !== "Complet").length;
-    const openTasks = year.tasks.filter(task => task.status !== "Terminée").length;
-    const vacant = (year.volunteers ?? []).filter(item => !item.owner).length;
     return `
-      ${dashHead("Espace dirigeant", `<button type="button" class="button primary" data-add>${icon("plus")} Ajouter un adhérent</button>`)}
-      ${attention([
-        { count: unpaid, label: plural(unpaid, "Cotisation en attente", "Cotisations en attente"),
-          hint: "Relancer les adhérents ou encaisser les règlements.", page: "payments", role: "treasurer", payment: "unpaid" },
-        { count: toCheck, label: plural(toCheck, "Dossier à compléter", "Dossiers à compléter"),
-          hint: "Vérifier les pièces et les informations manquantes.", page: "members" },
-        { count: openTasks, label: plural(openTasks, "Action ouverte", "Actions ouvertes"),
-          hint: "Suivre le plan d’action du bureau.", page: "tasks" },
-        { count: vacant, label: plural(vacant, "Poste bénévole à pourvoir", "Postes bénévoles à pourvoir"),
-          hint: "Trouver un bénévole avant l’échéance.", page: "volunteers" }
-      ])}
+      ${dashboardActions(`
+        <button type="button" class="button primary" data-add>${icon("plus")} Ajouter un adhérent</button>
+        <button type="button" class="button outline" data-nav="tasks">Plan d’action</button>`)}
       <section class="overview" aria-label="Chiffres de la saison">
-        ${stat("Adhérents", members.length, "members", plural(teams.length, "en 1 équipe", `en ${teams.length} équipes`), false, { page: "members" })}
-        ${stat("Cotisations réglées", paid, "payments", `sur ${members.length} · ${percent}&nbsp;%`, false, { page: "payments", role: "treasurer" }, percent)}
-        ${stat("Solde de trésorerie", budgetSummary().ending, "bank", "", true, { page: "budget", role: "treasurer" })}
+        ${stat("Adhérents", members.length, "members")}
+        ${stat("Équipes", teams.length, "teams", "", true)}
+        ${stat("Cotisations réglées", paid, "payments", `sur ${members.length}`)}
       </section>
-      <div class="stack">
+      <div class="dashboard-grid">
+        <section class="panel payment-panel" aria-labelledby="fees-title">
+          <h2 id="fees-title">Suivi des cotisations</h2>
+          <div class="payment-progress">
+            <span class="percentage" aria-hidden="true">${percent}&nbsp;%</span>
+            <progress value="${percent}" max="100" aria-label="Cotisations réglées"></progress>
+          </div>
+          <dl class="payment-summary"><div><dt>Réglées</dt><dd>${paid}</dd></div><div><dt>En attente</dt><dd>${unpaid}</dd></div></dl>
+          <button type="button" class="link-button" data-nav="payments" data-role="treasurer" data-payment="${unpaid ? "unpaid" : ""}">${unpaid ? `Voir les ${unpaid} en attente` : "Voir les cotisations"} ${icon("arrow")}</button>
+        </section>
         <section class="panel" aria-labelledby="recent-title">
           <header class="panel-header"><h2 id="recent-title">Derniers adhérents</h2>
             <button type="button" class="link-button" data-nav="members">Voir la liste ${icon("arrow")}</button>
           </header>
           ${table(members.slice(0, 5))}
         </section>
-        ${directorOverview()}
-      </div>`;
+      </div>
+      <div class="quick-grid" style="margin-top: 16px">
+        ${quickCard("Trésorerie du club", budgetSummary().ending + " de solde dans le journal de la saison.", "Ouvrir le budget", "budget", "treasurer")}
+        ${quickCard("Vie du club", actionSummary(), "Ouvrir le plan d’action", "tasks")}
+      </div>${directorOverview()}`;
   }
 
   function normalize(value) {
@@ -703,8 +654,24 @@
         normalize(`${member.last} ${member.first}`).includes(query)) &&
       (!filters.team || member.team === filters.team) &&
       (!filters.payment || hasPaid(member) === (filters.payment === "paid")) &&
-      (!filters.fileStatus || fileStatus(member) === filters.fileStatus)
+      (!filters.fileStatus || (filters.fileStatus === "pending" ?
+        fileStatus(member) !== "Complet" : fileStatus(member) === filters.fileStatus))
     );
+  }
+
+  function memberResultCount(count) {
+    const total = getMembers().length;
+    return count === total ? `${total} adhérent${total === 1 ? "" : "s"}` : `${count} résultat${count === 1 ? "" : "s"} sur ${total}`;
+  }
+
+  function updateMemberList() {
+    const visible = filteredMembers();
+    main.querySelector("#member-rows").innerHTML = rows(visible);
+    main.querySelector("#member-count").textContent = memberResultCount(visible.length);
+    main.querySelector("[data-clear-filters]").hidden = !Object.values(filters).some(Boolean);
+    for (const button of main.querySelectorAll("[data-payment-filter]")) {
+      button.setAttribute("aria-pressed", String(button.dataset.paymentFilter === (filters.payment || "")));
+    }
   }
 
   function option(value, label, current) {
@@ -713,16 +680,23 @@
 
   function list() {
     const payments = page === "payments";
+    const visible = filteredMembers();
+    const members = getMembers();
+    const paid = payments ? members.filter(hasPaid).length : 0;
     return `<section class="panel" aria-labelledby="list-title">
       <header class="panel-header">
         <h2 id="list-title">${payments ? "Statut des cotisations" : "Liste des adhérents"}</h2>
         <div class="actions">
           <button type="button" class="button outline" data-export>${icon("download")} Export CSV</button>
-          ${role.value === "secretary" && !payments ? action("Importer un CSV", "import-members") : ""}
+          ${activeRole === "secretary" && !payments ? action("Importer un CSV", "import-members") : ""}
           ${payments ? "" : `<button type="button" class="button primary" data-add>${icon("plus")} Ajouter un adhérent</button>`}
         </div>
       </header>
-      ${payments ? '<p class="panel-note">L’action « Encaisser » inscrit le paiement au journal et marque la cotisation comme réglée.</p>' : ""}
+      ${payments ? `<div class="list-status" role="group" aria-label="Statut des cotisations">
+        ${[["", "Toutes", members.length], ["unpaid", "En attente", members.length - paid], ["paid", "Réglées", paid]]
+          .map(([value, label, count]) => `<button type="button" class="button outline" data-payment-filter="${value}"
+            aria-pressed="${(filters.payment || "") === value}">${label} ${count}</button>`).join("")}
+      </div>` : ""}
       <div class="filters">
         <label class="search">${icon("search")}<span class="visually-hidden">Rechercher un adhérent</span>
           <input type="search" placeholder="Rechercher un adhérent" data-filter="search" value="${escapeHtml(filters.search)}">
@@ -732,24 +706,56 @@
           ${teams.map(team => option(team, team, filters.team)).join("")}
         </select>
         ${payments ? "" : `<select data-filter="fileStatus" aria-label="Filtrer par état du dossier">
-          ${option("", "Tous les dossiers", filters.fileStatus)}${optionList(memberFileStates, filters.fileStatus)}</select>`}
-        <select data-filter="payment" aria-label="Filtrer par statut de cotisation">
+          ${option("", "Tous les dossiers", filters.fileStatus)}${option("pending", "Dossiers à traiter", filters.fileStatus)}${optionList(memberFileStates, filters.fileStatus)}</select>`}
+        ${payments ? "" : `<select data-filter="payment" aria-label="Filtrer par statut de cotisation">
           ${option("", "Toutes les cotisations", filters.payment)}
           ${option("paid", "Réglées", filters.payment)}
           ${option("unpaid", "En attente", filters.payment)}
-        </select>
+        </select>`}
       </div>
-      <p class="result-count" id="member-count" aria-live="polite">${memberCount()}</p>
-      ${table(filteredMembers())}
+      <div class="list-meta">
+        <p id="member-count" role="status">${memberResultCount(visible.length)}</p>
+        <button type="button" class="link-button" data-clear-filters ${Object.values(filters).some(Boolean) ? "" : "hidden"}>Effacer les filtres</button>
+      </div>
+      ${table(visible)}
+    </section>${payments ? helloAssoPanel() : ""}`;
+  }
+
+  function helloAssoPanel() {
+    const link = clubYear().helloAssoUrl;
+    return `<section class="panel" style="margin-top: 16px" aria-labelledby="helloasso-title">
+      <header class="panel-header"><h2 id="helloasso-title">Adhésions sur HelloAsso</h2><div class="actions">
+        ${link ? `<a class="button primary" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Payer sur HelloAsso</a>
+          ${action("Copier le lien", "helloasso-copy")}` : ""}
+        ${action(link ? "Modifier le lien" : "Configurer HelloAsso", "helloasso-config")}
+      </div></header>
+      <p class="panel-note">${link ? "Partage le lien de la campagne avec les adhérents. Vérifie le paiement dans HelloAsso avant de le saisir dans Fair Gestion." :
+        "Ajoute le lien public de la campagne d’adhésion du club pour cette saison."}</p>
     </section>`;
   }
 
-  function memberCount() {
-    const total = getMembers().length;
-    const shown = filteredMembers().length;
-    if (!Object.values(filters).some(Boolean)) return `${total} ${plural(total, "adhérent", "adhérents")}`;
-    return `${shown} sur ${total} ${plural(total, "adhérent", "adhérents")}
-      <button type="button" class="link-button" data-reset-filters>Réinitialiser les filtres</button>`;
+  function editHelloAsso() {
+    const fields = inputField("Lien public de la campagne", "url", clubYear().helloAssoUrl,
+      'type="url" maxlength="500" placeholder="https://www.helloasso.com/associations/mon-club/adhesions/saison"');
+    openModuleDialog("Lien HelloAsso de la saison", fields, (data, editor) => {
+      const url = data.url.trim().split(/[?#]/, 1)[0];
+      if (url && !/^https:\/\/(?:www\.)?helloasso\.com\/associations\/[a-z0-9_-]+\/adhesions\/[a-z0-9_-]+\/?$/i.test(url)) {
+        return invalidInput(editor.elements.url, "Indique le lien public d’une campagne d’adhésion HelloAsso.");
+      }
+      clubYear().helloAssoUrl = url;
+      return url ? "Lien HelloAsso enregistré." : "Lien HelloAsso retiré.";
+    });
+  }
+
+  async function copyHelloAsso() {
+    const url = clubYear().helloAssoUrl;
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      notify("Lien HelloAsso copié.");
+    } catch {
+      window.prompt("Copie le lien de la campagne", url);
+    }
   }
 
   function teamCards() {
@@ -763,31 +769,73 @@
     }).join("")}</section>`;
   }
 
-  function render() {
-    const available = workspaces[role.value];
-    if (nav.dataset.workspace !== role.value) {
-      const link = key =>
-        `<button type="button" class="nav-button" data-nav="${key}">${icon(pageIcons[key] || key)}<span class="nav-label">${menuLabels[key] || pages[key]}</span>${
-          tabLabels[key] ? `<span class="tab-label" aria-hidden="true">${tabLabels[key]}</span>` : ""}</button>`;
-      nav.innerHTML = available.map(link).join("") +
-        `<button type="button" class="nav-button nav-more" data-more aria-haspopup="dialog">${icon("more")}<span>Plus</span></button>`;
-      morePages.innerHTML = available.slice(tabCount).map(link).join("");
-      nav.dataset.workspace = role.value;
+  const spaceCards = [
+    ["bureau", "dashboard", "Bureau", "Adhésions, réunions et finances selon ton rôle."],
+    ["events", "meetings", pages.events, "Planifie les événements et les créneaux des bénévoles."],
+    ["registrations", "members", pages.registrations, "Vérifie les dossiers et les pièces déposés par les familles."],
+    ["partners", "teams", pages.partners, "Suis les sponsors, les engagements et les renouvellements."],
+    ["equipment", "tasks", pages.equipment, "Consulte l’inventaire et enregistre les prêts et les retours."]
+  ];
+
+  function homePage() {
+    return `<div class="space-grid">${spaceCards.filter(([key]) => canOpenSpace(key)).map(([key, symbol, title, description]) =>
+        `<button type="button" class="panel space-card" data-space="${key}">
+          <span class="tile" aria-hidden="true">${icon(symbol)}</span>
+          <span><span class="space-card-name">${title}</span><span class="space-card-description">${description}</span></span>
+          ${icon("arrow")}
+        </button>`).join("")}</div>`;
+  }
+
+  function bureauNavigation() {
+    const entries = new Map();
+    const roles = remote ? officeRoles : [demoRole];
+    const splitExpenses = roles.includes("director") && roles.includes("treasurer");
+    for (const officeRole of roles) {
+      for (const key of workspaces[officeRole]) {
+        if (key === "expenses" && splitExpenses) {
+          const label = officeRole === "director" ? "Déposer une note de frais" : "Valider les notes de frais";
+          entries.set(key + ":" + officeRole, {key, label, officeRole});
+        } else if (!entries.has(key) || (key === "members" && officeRole === "secretary")) {
+          entries.set(key, {key, label: menuLabels[key] || pages[key], officeRole});
+        }
+      }
     }
-    const current = page === "assembly" ? "meetings" : page;
-    for (const button of [...nav.querySelectorAll("button"), ...morePages.querySelectorAll("button")]) {
-      if (button.dataset.nav === current) button.setAttribute("aria-current", "page");
+    return [...entries.values()].map(({key, label, officeRole}) =>
+      `<button type="button" class="nav-button" data-nav="${key}" data-role="${officeRole}">
+        ${icon(pageIcons[key] || key)}${label}</button>`).join("");
+  }
+
+  function render() {
+    document.getElementById("app-shell").dataset.page = page;
+    const bureauOpen = page !== "home" && !spaceRoles[page];
+    spacesBar.hidden = page === "home";
+    const currentSpace = bureauOpen ? "bureau" : page;
+    for (const button of spacesBar.querySelectorAll("button")) {
+      if (button.dataset.space === currentSpace) button.setAttribute("aria-current", "true");
       else button.removeAttribute("aria-current");
     }
-    // Sur téléphone, « Plus » reste actif quand la rubrique ouverte n’a pas d’onglet.
-    if (available.indexOf(current) >= tabCount && compactLayout.matches) {
-      nav.querySelector(".nav-more").setAttribute("aria-current", "page");
+    nav.hidden = !bureauOpen;
+    if (!remote && bureauOpen) {
+      demoRole = activeRole;
+      demoRoleSelect.value = demoRole;
+      if (nav.dataset.workspace !== demoRole) {
+        nav.innerHTML = bureauNavigation();
+        nav.dataset.workspace = demoRole;
+      }
     }
-    elements["page-title"].textContent = pages[page];
-    document.title = `Gest’club — ${pages[page]}`;
-    if (page === "dashboard") {
-      main.innerHTML = role.value === "treasurer" ? financeDashboard() :
-        role.value === "secretary" ? secretaryDashboard() : dashboard();
+    document.getElementById("season-control").hidden = page === "home" || page === "equipment";
+    for (const button of nav.querySelectorAll("button")) {
+      const current = button.dataset.nav === (page === "assembly" ? "meetings" : page);
+      const expenseView = button.dataset.nav !== "expenses" || button.dataset.role === activeRole;
+      if (current && expenseView) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
+    document.getElementById("page-title-text").textContent = page === "home" ? "Fair Gestion" : pages[page];
+    document.title = page === "home" ? "Fair Gestion" : `Fair Gestion — ${pages[page]}`;
+    if (page === "home") main.innerHTML = homePage();
+    else if (page === "dashboard") {
+      main.innerHTML = activeRole === "treasurer" ? financeDashboard() :
+        activeRole === "secretary" ? secretaryDashboard() : dashboard();
     }
     else if (page === "teams") main.innerHTML = teamCards();
     else if (page === "ledger") main.innerHTML = ledger();
@@ -800,6 +848,10 @@
     else if (page === "meetings") main.innerHTML = meetings();
     else if (page === "renewals") main.innerHTML = renewalsPage();
     else if (page === "decisions") main.innerHTML = decisionsPage();
+    else if (page === "events") main.innerHTML = eventsPage();
+    else if (page === "registrations") main.innerHTML = registrationsPage();
+    else if (page === "partners") main.innerHTML = partnersPage();
+    else if (page === "equipment") main.innerHTML = equipmentPage();
     else if (page === "volunteers") main.innerHTML = volunteersPage();
     else if (page === "assembly") main.innerHTML = assemblyPage();
     else if (page === "tasks") main.innerHTML = tasks();
@@ -809,7 +861,7 @@
         if (control.dataset.role && !remote.roles.includes(control.dataset.role)) control.hidden = true;
       }
     }
-    if ((role.value === "treasurer" || page === "expenses") && lockedFinanceYear()) {
+    if (bureauOpen && (activeRole === "treasurer" || page === "expenses") && lockedFinanceYear()) {
       if (page !== "closing") main.insertAdjacentHTML("afterbegin", `<p class="finance-state">${financeLockMessage()}</p>`);
       for (const button of main.querySelectorAll("[data-module-action]")) {
         if (financeWrites.has(button.dataset.moduleAction)) button.hidden = true;
@@ -865,7 +917,7 @@
     const url = URL.createObjectURL(new Blob(content, { type: mime }));
     const download = document.createElement("a");
     download.href = url;
-    download.download = `gestclub-${name}`;
+    download.download = `fair-gestion-${name}`;
     document.body.append(download);
     download.click();
     download.remove();
@@ -914,6 +966,43 @@
         { id: "demo-m2", type: "Assemblée générale", title: "Assemblée générale de la saison", date: `${Number(year) + 1}-06-12`,
           place: "Salle municipale", status: "À venir", agenda: "Rapport d’activité, présentation financière et vote du budget.", attendance: "", minutes: "" }
       ],
+      ...(year === "2025" ? { equipment: {
+        items: [
+          { id: "demo-equipment-shirts", name: "Maillots bleus", category: "Tenues", location: "Vestiaire A",
+            quantity: 20, condition: "Bon état", notes: "", archived: false },
+          { id: "demo-equipment-keys", name: "Clé du local", category: "Accès", location: "Bureau",
+            quantity: 2, condition: "Bon état", notes: "", archived: false },
+          { id: "demo-equipment-pump", name: "Pompe à ballons", category: "Entraînement", location: "Local matériel",
+            quantity: 1, condition: "À réparer", notes: "Embout à remplacer.", archived: false }
+        ],
+        loans: [{ id: "demo-loan-shirts", itemId: "demo-equipment-shirts", borrower: "U17", quantity: 12,
+          date: "2026-11-08", due: "2026-11-22", returns: [{ quantity: 2, date: "2026-11-14" }] }]
+      } } : {}),
+      partners: year === "2026" ? [
+        { id: "demo-partner-cycles", name: "Cycles des Tilleuls", status: "Actif", contact: "Alex Morel",
+          email: "partenariats@example.invalid", phone: "", renewalDate: "2026-11-30", notes: "Partenaire du tournoi d’hiver." },
+        { id: "demo-partner-cafe", name: "Café de la Place", status: "Prospect", contact: "",
+          email: "", phone: "", renewalDate: "", notes: "" }
+      ] : [
+        { id: "demo-partner-previous", name: "Imprimerie du Parc", status: "Actif", contact: "",
+          email: "", phone: "", renewalDate: "2026-06-12", notes: "" }
+      ],
+      partnerCommitments: year === "2026" ? [
+        { id: "demo-partner-banner", partnerId: "demo-partner-cycles", title: "Installer la banderole au stade", due: "2026-11-21", done: true },
+        { id: "demo-partner-social", partnerId: "demo-partner-cycles", title: "Publier le visuel du tournoi", due: "2026-11-28", done: false }
+      ] : [],
+      applications: year === "2026" ? [{
+        id: "demo-application", first: "Léonie", last: "Robin", email: "famille@example.invalid",
+        date: "2026-11-10", status: "À vérifier", note: "", files: []
+      }] : [],
+      events: year === "2026" ? [{
+        id: "demo-home", title: "Matchs à domicile", date: "2026-11-21", place: "Stade des Tilleuls", token: "",
+        slots: [
+          { id: "demo-welcome", title: "Accueil des équipes", start: "13:30", end: "14:30", owner: "Camille Bernard" },
+          { id: "demo-bar", title: "Buvette", start: "14:00", end: "16:00", owner: "" },
+          { id: "demo-cleanup", title: "Rangement", start: "16:00", end: "16:30", owner: "" }
+        ]
+      }] : [],
       tasks: [
         { id: "demo-t1", title: "Faire le point sur les cotisations", owner: "Trésorerie", date: `${year}-11-30`, status: "En cours" },
         { id: "demo-t2", title: "Finaliser le PV de rentrée", owner: "Secrétariat", date: `${year}-11-25`, status: "À faire" }
@@ -956,6 +1045,11 @@
     return `<button type="button" class="button ${style}" data-module-action="${command}" data-value="${escapeHtml(value)}">${symbol ? icon(symbol) : ""}${text}</button>`;
   }
 
+  function quickCard(title, text, label, target, workspace = "") {
+    return `<article class="panel quick-card"><h2>${title}</h2><p>${escapeHtml(text)}</p>
+      <button type="button" class="link-button" data-nav="${target}" data-role="${workspace}">${label}${icon("arrow")}</button></article>`;
+  }
+
   function financialTotals(entries, includeTransfers = false) {
     return entries.reduce((totals, entry) => {
       if (includeTransfers || !entry.transferId) totals[entry.kind] += entry.amount;
@@ -973,51 +1067,45 @@
   function financeDashboard() {
     const year = clubYear();
     const totals = financialTotals(year.entries);
-    const toCheck = year.entries.filter(entry => entry.account === "bank" && !entry.cleared).length;
-    const invoices = invoicesForSeason();
-    const toPay = invoices.filter(invoice => invoice.kind === "expense" && invoice.remaining > 0);
-    const toCollect = invoices.filter(invoice => invoice.kind === "income" && invoice.remaining > 0);
-    const due = list => money(list.reduce((sum, invoice) => sum + invoice.remaining, 0));
-    const claims = expenseRecords().filter(expense => expense.status === "Déposée" && !expense.invoiceId).length;
     const unpaid = getMembers().filter(member => !hasPaid(member)).length;
-    return `${dashHead("Espace trésorier", action("Nouvelle opération", "entry", "", "primary", "plus"))}
-      ${attention([
-        { count: toPay.length, label: plural(toPay.length, "Facture à payer", "Factures à payer"),
-          hint: `${due(toPay)} restent à régler.`, page: "invoices" },
-        { count: toCollect.length, label: plural(toCollect.length, "Facture à encaisser", "Factures à encaisser"),
-          hint: `${due(toCollect)} restent à recevoir.`, page: "invoices" },
-        { count: toCheck, label: plural(toCheck, "Opération bancaire à pointer", "Opérations bancaires à pointer"),
-          hint: "Comparer le journal au relevé de banque.", page: "ledger" },
-        { count: claims, label: plural(claims, "Note de frais à examiner", "Notes de frais à examiner"),
-          hint: "Valider ou refuser les demandes déposées.", page: "expenses" },
-        { count: unpaid, label: plural(unpaid, "Cotisation en attente", "Cotisations en attente"),
-          hint: "Encaisser les règlements reçus.", page: "payments", payment: "unpaid" }
-      ])}
+    const overdue = invoiceTotals().overdue;
+    const toCheck = year.entries.filter(entry => entry.account === "bank" && !entry.cleared).length;
+    const pending = toCheck === 0 ? "Toutes les opérations bancaires sont pointées." :
+      toCheck === 1 ? "1 opération bancaire à pointer." : `${toCheck} opérations bancaires à pointer.`;
+    return `${dashboardActions(`
+      ${action("Nouvelle opération", "entry", "", "primary", "plus")}
+      <button type="button" class="button outline" data-nav="payments">Cotisations</button>
+      <button type="button" class="button outline" data-nav="invoices">Factures</button>`)}
       <section class="overview money-overview" aria-label="Chiffres de trésorerie">
-        ${stat("Solde suivi", budgetSummary(totals).ending, "payments", "", false, { page: "budget" })}
-        ${stat("Encaissements", money(totals.income), "ledger", "", false, { page: "ledger" })}
-        ${stat("Décaissements", money(totals.expense), "budget", "", true, { page: "ledger" })}
+        ${stat("Solde suivi", budgetSummary(totals).ending, "payments")}
+        ${stat("Encaissements", money(totals.income), "ledger")}
+        ${stat("Décaissements", money(totals.expense), "budget", "", true)}
       </section>
-      ${accountSummary()}`;
+      <div class="stack">
+        <section class="panel" aria-labelledby="finance-follow-up">
+          <header class="panel-header"><h2 id="finance-follow-up">À suivre</h2></header>
+          <div class="follow-up">
+            <button type="button" class="button outline" data-nav="payments" data-payment="unpaid">${unpaid} cotisation${unpaid === 1 ? "" : "s"} en attente</button>
+            <button type="button" class="button outline" data-nav="invoices" data-invoice-status="overdue">${overdue} facture${overdue === 1 ? "" : "s"} en retard</button>
+            <button type="button" class="button outline" data-nav="bank">${toCheck} opération${toCheck === 1 ? "" : "s"} à pointer</button>
+          </div>
+        </section>
+        ${accountSummary()}
+        <div class="quick-grid">
+          ${quickCard("Factures et échéances", invoiceSummary(), "Voir les factures", "invoices")}
+          ${quickCard("Comptabilité", "Consulter les écritures au débit et au crédit et la balance des comptes.", "Ouvrir la comptabilité", "accounting")}
+          ${quickCard("Journal de trésorerie", pending, "Ouvrir le journal", "ledger")}
+          ${quickCard("Rapprochement bancaire", "Comparer le relevé importé aux écritures de banque.", "Ouvrir le rapprochement", "bank")}
+          ${quickCard("Budget prévisionnel", "Comparer les montants prévus aux encaissements et décaissements saisis.", "Voir le budget", "budget")}
+        </div>
+      </div>`;
   }
-
-  const emptyTables = {
-    "Registre des décisions": ["Aucune décision enregistrée", "Note ce que le bureau décide, puis relie chaque décision à une action ou à une note de frais."],
-    "Notes de frais": ["Aucune note de frais", "Un bénévole dépose sa demande ici. Le trésorier la valide, puis la rembourse."],
-    "Plan d’action de la saison": ["Aucune action en cours", "Ajoute une action avec un responsable et une échéance pour suivre le travail du bureau."],
-    "Postes bénévoles": ["Aucun poste bénévole", "Liste les missions à pourvoir pour savoir qui s’en charge."],
-    "Échéances du club": ["Aucune échéance à venir", "Les réunions, les actions datées et les postes à pourvoir apparaîtront ici."],
-    "Factures de la saison": ["Aucune facture", "Enregistre les factures à payer et à encaisser pour suivre leurs échéances."],
-    "Journal de trésorerie": ["Aucune opération", "Saisis une recette ou une dépense pour démarrer le journal."],
-    "Relevé bancaire importé": ["Aucun relevé importé", "Importe le relevé de la banque pour le comparer au journal."],
-    "Adhérents de la saison précédente": ["Aucun adhérent la saison précédente", "Le registre de la saison précédente est vide."]
-  };
 
   function dataTable(columns, rows, title, footer = "") {
     const headings = columns.map(([text, numeric]) => `<th scope="col"${numeric ? ' class="numeric"' : ""}>${text}</th>`).join("");
     return `<div class="table-wrap" tabindex="0" role="region" aria-label="${title}">
       <table class="ledger-table"><thead><tr>${headings}</tr></thead>
-      <tbody>${rows || `<tr><td colspan="${columns.length}" class="empty">${emptyState(...(emptyTables[title] || ["Rien à afficher pour le moment"]))}</td></tr>`}</tbody>${footer}
+      <tbody>${rows || `<tr><td colspan="${columns.length}" class="empty">Aucun élément à afficher.</td></tr>`}</tbody>${footer}
       </table></div>`;
   }
 
@@ -1124,26 +1212,25 @@
     const scheduled = year.meetings.filter(meeting => meeting.status === "À venir").sort((a, b) => a.date.localeCompare(b.date));
     const draftCount = year.meetings.filter(meeting => meeting.status === "Tenue").length;
     const next = scheduled[0];
-    const roster = renewalRoster();
-    const toRenew = roster.filter(item => !item.current).length;
-    const toCheck = getMembers().filter(member => fileStatus(member) !== "Complet").length;
-    const openTasks = year.tasks.filter(task => task.status !== "Terminée").length;
-    return `${dashHead("Espace secrétaire", action("Planifier une réunion", "meeting", "", "primary", "plus"))}
-      ${attention([
-        { count: draftCount, label: plural(draftCount, "PV à approuver", "PV à approuver"),
-          hint: "Finaliser le procès-verbal des réunions tenues.", page: "meetings" },
-        { count: toCheck, label: plural(toCheck, "Dossier à compléter", "Dossiers à compléter"),
-          hint: "Vérifier les pièces et les informations manquantes.", page: "members" },
-        { count: toRenew, label: plural(toRenew, "Adhérent à renouveler", "Adhérents à renouveler"),
-          hint: `${roster.length - toRenew} sur ${roster.length} repris de la saison précédente.`, page: "renewals" },
-        { count: openTasks, label: plural(openTasks, "Action ouverte", "Actions ouvertes"),
-          hint: "Suivre le plan d’action du bureau.", page: "tasks" }
-      ])}
+    const pending = getMembers().filter(member => fileStatus(member) !== "Complet").length;
+    return `${dashboardActions(`
+      <button type="button" class="button primary" data-add>${icon("plus")} Ajouter un adhérent</button>
+      ${action("Planifier une réunion", "meeting")}`)}
       <section class="overview" aria-label="Suivi du secrétariat">
-        ${stat("Adhérents", getMembers().length, "members", "", false, { page: "members" })}
-        ${stat("Réunions à venir", scheduled.length, "meetings", "", false, { page: "meetings" })}
-        ${stat("Prochaine réunion", next ? dateLabel(next.date) : "—", "meetings", "", true, { page: "meetings" })}
-      </section>`;
+        ${stat("Adhérents", getMembers().length, "members")}
+        ${stat("Réunions à venir", scheduled.length, "meetings")}
+        ${stat("PV à approuver", draftCount, "tasks", "", true)}
+      </section>
+      <div class="quick-grid">
+        ${quickCard("Prochaine réunion", next ? `${next.title} · ${dateLabel(next.date)}` : "Aucune réunion à venir.", "Réunions et PV", "meetings")}
+        <article class="panel quick-card"><h2>Dossiers d’adhésion</h2>
+          <p>${pending} dossier${pending === 1 ? "" : "s"} à traiter.</p>
+          <button type="button" class="link-button" data-nav="members" data-file-status="${pending ? "pending" : ""}">
+            ${pending ? "Voir les dossiers à traiter" : "Ouvrir le registre"} ${icon("arrow")}
+          </button>
+        </article>
+        ${quickCard("Renouvellement", renewalSummary(), "Préparer la rentrée", "renewals")}
+      </div>`;
   }
 
   function badge(text, pending) {
@@ -1165,6 +1252,12 @@
     return `<section class="panel"><header class="panel-header"><h2>Réunions de la saison</h2>
       ${action("Planifier une réunion", "meeting", "", "primary", "plus")}</header>
       ${cards ? `<div class="meeting-grid">${cards}</div>` : '<p class="empty-note">Aucune réunion enregistrée.</p>'}</section>`;
+  }
+
+  function actionSummary() {
+    const count = clubYear().tasks.filter(task => task.status !== "Terminée").length;
+    if (!count) return "Aucune action ouverte.";
+    return count === 1 ? "1 action ouverte." : `${count} actions ouvertes.`;
   }
 
   function tasks() {
@@ -1231,7 +1324,7 @@
     const similar = Array.from(main.querySelectorAll("[data-module-action]")).filter(button =>
       button.dataset.moduleAction === trigger.dataset.moduleAction);
     const target = similar.find(button => button.dataset.value === trigger.dataset.value) || similar[0] ||
-      main.querySelector(".panel-header button, .dash-head button");
+      main.querySelector(".dashboard-actions button, .panel-header button");
     target?.focus();
   }
 
@@ -1455,6 +1548,8 @@
       return;
     }
     switch (command) {
+      case "helloasso-config": editHelloAsso(); break;
+      case "helloasso-copy": copyHelloAsso(); break;
       case "renew-members": renewMembersDialog(); break;
       case "import-members": importMembersDialog(); break;
       case "decision": editDecision(year.decisions?.find(item => item.id === value)); break;
@@ -1463,6 +1558,37 @@
         if (decision) editTask(year.tasks.find(task => task.id === decision.taskId), decision);
         break;
       }
+      case "registration-settings": editRegistrationSettings(); break;
+      case "registration-link": showRegistrationLink(); break;
+      case "registration-tracking": {
+        const url = new URL("inscriptions.php", window.location.href);
+        url.searchParams.set("dossier", value);
+        showShareLink(url, "Lien privé de suivi");
+        break;
+      }
+      case "registration-review": reviewRegistration(year.applications.find(item => item.id === value)); break;
+      case "equipment-item": editEquipmentItem(equipmentStore().items.find(item => item.id === value)); break;
+      case "equipment-loan": lendEquipment(equipmentStore().items.find(item => item.id === value)); break;
+      case "equipment-return": returnEquipment(equipmentStore().loans.find(loan => loan.id === value)); break;
+      case "equipment-loan-edit": editEquipmentLoan(equipmentStore().loans.find(loan => loan.id === value)); break;
+      case "partner": editPartner(year.partners?.find(item => item.id === value)); break;
+      case "partner-carry": carryPartners(); break;
+      case "partner-commitment": {
+        const [partnerId, commitmentId] = value.split(":");
+        const partner = year.partners.find(item => item.id === partnerId);
+        editPartnerCommitment(partner, year.partnerCommitments?.find(item => item.id === commitmentId));
+        break;
+      }
+      case "partner-photo": downloadAttachment(year.partnerCommitments?.find(item => item.id === value)?.receipt); break;
+      case "event": editClubEvent(year.events?.find(item => item.id === value)); break;
+      case "event-slot": {
+        const [eventId, slotId] = value.split(":");
+        const item = year.events.find(item => item.id === eventId);
+        editEventSlot(item, item.slots.find(slot => slot.id === slotId));
+        break;
+      }
+      case "event-share": changeEventShare(year.events.find(item => item.id === value)); break;
+      case "event-link": showEventLink(year.events.find(item => item.id === value)); break;
       case "volunteer": editVolunteer(year.volunteers?.find(item => item.id === value)); break;
       case "assembly": openAssembly(value); break;
       case "assembly-list": editAssemblyList(); break;
@@ -1532,7 +1658,7 @@
     else if (event.target.id === "ledger-account") ledgerFilters.account = event.target.value;
     else return;
     const tableBody = main.querySelector(".ledger-table tbody");
-    tableBody.innerHTML = ledgerRows() || `<tr><td colspan="6" class="empty">${emptyState("Aucune opération pour ces filtres", "Choisis un autre mouvement ou un autre compte.")}</td></tr>`;
+    tableBody.innerHTML = ledgerRows() || '<tr><td colspan="6" class="empty">Aucune opération pour ces filtres.</td></tr>';
   });
 
 
@@ -1594,6 +1720,11 @@
       if (invoice.overdue) totals.overdue += 1;
       return totals;
     }, { income: 0, expense: 0, overdue: 0 });
+  }
+
+  function invoiceSummary() {
+    const totals = invoiceTotals();
+    return `${money(totals.expense)} à payer · ${money(totals.income)} à encaisser`;
   }
 
   function visibleInvoices() {
@@ -1901,7 +2032,7 @@
 
   const financeWrites = new Set([
     "entry", "invoice", "invoice-payment", "invoice-payment-edit", "dues", "transfer", "opening", "plan", "clear",
-    "bank-import", "bank-match", "bank-unmatch", "expense", "expense-review", "receipt", "close-finance"
+    "bank-import", "bank-match", "bank-unmatch", "expense", "expense-review", "receipt", "close-finance", "helloasso-config"
   ]);
 
   function lockedFinanceYear(year = season.value) {
@@ -1994,7 +2125,7 @@
     const target = receiptTarget(key);
     if (!target) return "";
     const download = target.item.receipt ? action("Pièce", "receipt-download", key) : "";
-    const attach = !lockedFinanceYear(target.year) && !target.item.receipt && role.value === "treasurer" ?
+    const attach = !lockedFinanceYear(target.year) && !target.item.receipt && activeRole === "treasurer" ?
       action("Joindre une pièce", "receipt", key) : "";
     return download + attach;
   }
@@ -2023,7 +2154,10 @@
   }
 
   async function downloadReceipt(key) {
-    const receipt = receiptTarget(key)?.item.receipt;
+    return downloadAttachment(receiptTarget(key)?.item.receipt);
+  }
+
+  async function downloadAttachment(receipt) {
     if (!receipt) return;
     if (remote && receipt.id) {
       try {
@@ -2046,8 +2180,8 @@
       const invoice = expense.invoiceId ? findInvoice(expense.invoiceId) : null;
       const state = invoice ? (settledAmount(invoice) >= invoice.amount ? "Remboursée" : "Validée · à rembourser") : expense.status;
       const open = expense.status === "Déposée" && !invoice;
-      const canReview = open && role.value === "treasurer";
-      const controls = (open && (!remote || role.value === "treasurer" || expense.submittedBy === remote.userId)
+      const canReview = open && activeRole === "treasurer";
+      const controls = (open && (!remote || activeRole === "treasurer" || expense.submittedBy === remote.userId)
         ? action("Modifier", "expense", expense.id) : "") +
         (canReview ? action("Examiner", "expense-review", expense.id, "primary") : "");
       const details = [expense.analysis.team, expense.analysis.event, expense.analysis.grant].filter(Boolean).join(" · ");
@@ -2087,7 +2221,7 @@
   }
 
   function reviewExpense(id) {
-    if (role.value !== "treasurer") return;
+    if (activeRole !== "treasurer") return;
     const year = clubYear();
     const expense = expenseRecords(year).find(item => item.id === id && item.status === "Déposée");
     if (!expense) return;
@@ -2445,6 +2579,12 @@
     return previous.map(member => ({ previous: member, current: linked.get(member.id) || byName.get(memberIdentity(member)) }));
   }
 
+  function renewalSummary() {
+    const roster = renewalRoster();
+    if (!roster.length) return "Le registre de la saison précédente est vide.";
+    return `${roster.filter(item => item.current).length} sur ${roster.length} adhérents de la saison précédente repris.`;
+  }
+
   function renewalsPage() {
     const roster = renewalRoster();
     const added = roster.filter(item => item.current).length;
@@ -2580,13 +2720,17 @@
     const deadlines = upcoming.slice(0, 6).map(item => `<tr><td>${dateLabel(item.date)}</td>
       <td class="label-cell">${escapeHtml(item.title)}</td><td><button type="button" class="link-button" data-nav="${item.go}"
       ${item.go === "meetings" ? 'data-role="secretary"' : ""}>Voir</button></td></tr>`).join("");
-    return `<div class="split-grid">
-      <section class="panel"><header class="panel-header"><h2>Prochaines échéances</h2></header>
-      ${dataTable([["Date"], ["Échéance"], ["Accès"]], deadlines, "Échéances du club")}</section>
+    const vacant = (clubYear().volunteers ?? []).filter(item => !item.owner).length;
+    return `<div class="stack">
       <section class="panel"><header class="panel-header"><h2>Effectifs et renouvellements</h2>
       <button type="button" class="button outline" data-nav="renewals" data-role="secretary">Suivre la rentrée</button></header>
       ${dataTable([["Équipe"], ["Adhérents"], ["Repris de la saison précédente"]], rows, "Effectifs et renouvellements")}</section>
-      </div>`;
+      <section class="panel"><header class="panel-header"><h2>Échéances du club</h2></header>
+      ${dataTable([["Date"], ["Échéance"], ["Accès"]], deadlines, "Échéances du club")}</section>
+      <div class="quick-grid">
+      ${quickCard("Décisions du bureau", "Retrouver le suivi des décisions, des actions et des remboursements.", "Ouvrir les décisions", "decisions")}
+      ${quickCard("Bénévoles", `${vacant} poste${vacant === 1 ? "" : "s"} à pourvoir.`, "Voir les postes", "volunteers")}
+      </div></div>`;
   }
 
   function volunteersPage() {
@@ -2608,6 +2752,575 @@
       saveItem(clubYear().volunteers, { id: item?.id ?? newId(), ...data, title: data.title.trim(), owner: data.owner.trim() });
       return "Poste enregistré.";
     });
+  }
+
+  const equipmentConditions = ["Bon état", "À réparer", "À remplacer"];
+
+  function equipmentStore(create = false) {
+    const period = Object.values(bureau).find(year => year.equipment);
+    if (period) return period.equipment;
+    const inventory = { items: [], loans: [] };
+    if (create) bureau[Object.keys(bureau).sort()[0]].equipment = inventory;
+    return inventory;
+  }
+
+  function equipmentToday() {
+    const fields = Object.fromEntries(new Intl.DateTimeFormat("fr-FR", {
+      timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts().map(part => [part.type, part.value]));
+    return fields.year + "-" + fields.month + "-" + fields.day;
+  }
+
+  function remainingLoanUnits(loan) {
+    return loan.quantity - loan.returns.reduce((sum, entry) => sum + entry.quantity, 0);
+  }
+
+  function equipmentStock(loans) {
+    const borrowed = new Map();
+    for (const loan of loans) {
+      borrowed.set(loan.itemId, (borrowed.get(loan.itemId) ?? 0) + remainingLoanUnits(loan));
+    }
+    return borrowed;
+  }
+
+  function equipmentReturnEntries(loan) {
+    return [...loan.returns].sort((a, b) => a.date.localeCompare(b.date)).map(entry =>
+      `<li>${dateLabel(entry.date)} · ${entry.quantity} rendu${entry.quantity > 1 ? "s" : ""}</li>`).join("");
+  }
+
+  function equipmentPage() {
+    const { items, loans } = equipmentStore();
+    const borrowed = equipmentStock(loans);
+    const today = equipmentToday();
+    const catalog = new Map(items.map(item => [item.id, item]));
+    const inventoryRows = [...items].sort((a, b) => a.name.localeCompare(b.name, "fr")).map(item => {
+      const out = borrowed.get(item.id) ?? 0;
+      const available = item.condition === "Bon état" && !item.archived ? item.quantity - out : 0;
+      return [item.archived, `<tr>
+        <td class="label-cell"><strong>${escapeHtml(item.name)}</strong>
+          ${item.category ? '<span class="secondary-value">' + escapeHtml(item.category) + '</span>' : ""}
+          ${item.notes ? '<span class="secondary-value inventory-note">' + escapeHtml(item.notes) + '</span>' : ""}</td>
+        <td>${escapeHtml(item.location || "—")}</td>
+        <td>${badge(item.condition, item.condition !== "Bon état")}</td><td>${item.quantity}</td><td>${out}</td><td>${available}</td>
+        <td><div class="row-actions">${available > 0 ? action("Prêter", "equipment-loan", item.id, "primary") : ""}
+          ${action("Modifier", "equipment-item", item.id)}</div></td>
+      </tr>`];
+    });
+    const active = loans.filter(loan => remainingLoanUnits(loan) > 0)
+      .sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || b.date.localeCompare(a.date));
+    const late = active.filter(loan => loan.due && loan.due < today).length;
+    const activeRows = active.map(loan => `<tr>
+      <td class="label-cell">${escapeHtml(catalog.get(loan.itemId).name)}</td>
+      <td>${escapeHtml(loan.borrower)}</td><td>${dateLabel(loan.date)}</td>
+      <td>${remainingLoanUnits(loan)} sur ${loan.quantity}</td>
+      <td>${dateLabel(loan.due)} ${loan.due && loan.due < today ? badge("En retard", true) : ""}</td>
+      <td><div class="row-actions">${action("Enregistrer un retour", "equipment-return", loan.id, "primary")}
+        ${action("Gérer le prêt", "equipment-loan-edit", loan.id)}</div></td></tr>`).join("");
+    const completed = loans.filter(loan => remainingLoanUnits(loan) === 0)
+      .map(loan => ({ ...loan, lastReturn: loan.returns.map(entry => entry.date).sort().at(-1) }))
+      .sort((a, b) => b.lastReturn.localeCompare(a.lastReturn));
+    const completedRows = completed.map(loan => `<tr>
+      <td class="label-cell">${escapeHtml(catalog.get(loan.itemId).name)}</td>
+      <td>${escapeHtml(loan.borrower)}</td><td>${dateLabel(loan.date)}</td>
+      <td>${loan.quantity}</td><td><details class="return-details"><summary>${dateLabel(loan.lastReturn)}</summary>
+        <ul>${equipmentReturnEntries(loan)}</ul></details></td></tr>`).join("");
+    const columns = [["Matériel"], ["Rangement"], ["État"], ["Stock"], ["Prêté"], ["Disponible"], ["Actions"]];
+    const archived = inventoryRows.filter(([isArchived]) => isArchived);
+    return `<div class="stack">
+      <section class="panel"><header class="panel-header"><h2>Inventaire du club</h2>
+        ${action("Ajouter du matériel", "equipment-item", "", "primary", "plus")}</header>
+        ${dataTable(columns, inventoryRows.filter(([isArchived]) => !isArchived).map(([, row]) => row).join(""), "Inventaire du club")}
+      </section>
+      <section class="panel"><header class="panel-header"><h2>Prêts en cours</h2>
+        ${late ? badge(late + (late === 1 ? " retour en retard" : " retours en retard"), true) : ""}</header>
+        ${dataTable([["Matériel"], ["Emprunteur"], ["Prêt le"], ["À rendre"], ["Retour prévu"], ["Actions"]], activeRows, "Prêts en cours")}
+      </section>
+      ${completed.length ? `<details class="panel inventory-details"><summary>Prêts terminés (${completed.length})</summary>
+        ${dataTable([["Matériel"], ["Emprunteur"], ["Prêt le"], ["Quantité"], ["Dernier retour"]], completedRows, "Historique des prêts")}</details>` : ""}
+      ${archived.length ? `<details class="panel inventory-details"><summary>Matériel archivé (${archived.length})</summary>
+        ${dataTable(columns, archived.map(([, row]) => row).join(""), "Matériel archivé")}</details>` : ""}
+    </div>`;
+  }
+
+  function equipmentCountField(label, value, max = 10000) {
+    return inputField(label, "quantity", value, 'type="number" min="1" max="' + max + '" step="1" inputmode="numeric" required');
+  }
+
+  function editEquipmentItem(item) {
+    const fields = `${inputField("Nom du matériel", "name", item?.name, "maxlength=120 required")}
+      <div class="form-row">
+        ${inputField("Catégorie", "category", item?.category, "maxlength=120")}
+        ${inputField("Lieu de rangement", "location", item?.location, "maxlength=120")}</div>
+      <div class="form-row">${equipmentCountField("Quantité totale", item?.quantity ?? 1)}
+        ${selectField("État", "condition", optionList(equipmentConditions, item?.condition ?? "Bon état"))}</div>
+      <label class="field">Notes<textarea name="notes" maxlength="600">${escapeHtml(item?.notes ?? "")}</textarea></label>
+      ${item ? selectField("Inventaire", "archiveStatus", optionList(["En service", "Archivé"], item.archived ? "Archivé" : "En service")) : ""}`;
+    openModuleDialog(item ? "Modifier le matériel" : "Ajouter du matériel", fields, (data, form) => {
+      const inventory = equipmentStore(true);
+      const quantity = Number(data.quantity);
+      const archived = data.archiveStatus === "Archivé";
+      const borrowed = equipmentStock(inventory.loans).get(item?.id) ?? 0;
+      if (quantity < borrowed) {
+        invalidInput(form.elements.quantity, "La quantité totale doit couvrir les " + borrowed + " unités prêtées.");
+        return;
+      }
+      if (archived && borrowed > 0) {
+        invalidInput(form.elements.archiveStatus, "Enregistre les retours avant d’archiver la fiche.");
+        return;
+      }
+      saveItem(inventory.items, { id: item?.id ?? newId(), name: data.name.trim(), category: data.category.trim(),
+        location: data.location.trim(), quantity, condition: data.condition, notes: data.notes.trim(), archived });
+      return "Fiche matériel enregistrée.";
+    });
+  }
+
+  function lendEquipment(item) {
+    const inventory = equipmentStore();
+    const available = item.quantity - (equipmentStock(inventory.loans).get(item.id) ?? 0);
+    if (item.archived || item.condition !== "Bon état" || available < 1) return;
+    const today = equipmentToday();
+    const fields = `<p>${escapeHtml(item.name)}</p>
+      <label class="field">Équipe ou emprunteur
+        <input name="borrower" list="equipment-teams" maxlength="120" required>
+        <datalist id="equipment-teams">${teams.map(team => option(team, team, "")).join("")}</datalist></label>
+      ${equipmentCountField("Quantité à prêter sur " + available + " disponible" + (available > 1 ? "s" : ""), 1, available)}
+      <div class="form-row">
+        ${inputField("Date du prêt", "date", today, 'type="date" max="' + today + '" required')}
+        ${inputField("Retour prévu", "due", "", 'type="date" max="9999-12-31"')}</div>`;
+    const editor = openModuleDialog("Enregistrer un prêt", fields, (data, form) => {
+      if (data.due && data.due < data.date) {
+        invalidInput(form.elements.due, "Le retour prévu doit dater du prêt ou d’un jour ultérieur.");
+        return;
+      }
+      inventory.loans.push({ id: newId(), itemId: item.id, borrower: data.borrower.trim(),
+        quantity: Number(data.quantity), date: data.date, due: data.due, returns: [] });
+      return "Prêt enregistré.";
+    });
+    editor.elements.date.addEventListener("input", () => editor.elements.due.setCustomValidity(""));
+  }
+
+  function returnEquipment(loan) {
+    const item = equipmentStore().items.find(item => item.id === loan.itemId);
+    const remaining = remainingLoanUnits(loan);
+    if (remaining < 1) return;
+    const today = equipmentToday();
+    const fields = `<p>${escapeHtml(item.name)} · ${escapeHtml(loan.borrower)}</p>
+      ${equipmentCountField("Quantité rendue sur " + remaining + " à rendre", remaining, remaining)}
+      ${inputField("Date du retour", "date", today, 'type="date" min="' + loan.date + '" max="' + today + '" required')}`;
+    openModuleDialog("Enregistrer un retour", fields, data => {
+      loan.returns.push({ quantity: Number(data.quantity), date: data.date });
+      return "Retour enregistré.";
+    });
+  }
+
+  function editEquipmentLoan(loan) {
+    const entries = equipmentReturnEntries(loan);
+    const fields = `${inputField("Retour prévu", "due", loan.due,
+        'type="date" min="' + loan.date + '" max="9999-12-31"')}
+      ${entries ? "<div><strong>Retours enregistrés</strong><ul>" + entries + "</ul></div>" :
+        '<button type="button" class="button outline" data-cancel-loan>Annuler le prêt</button>'}`;
+    const editor = openModuleDialog("Gérer le prêt", fields, data => {
+      loan.due = data.due;
+      return "Échéance du prêt mise à jour.";
+    });
+    editor.querySelector("[data-cancel-loan]")?.addEventListener("click", () => {
+      if (!window.confirm("Annuler ce prêt et remettre les unités en stock ?")) return;
+      const inventory = equipmentStore();
+      inventory.loans = inventory.loans.filter(entry => entry.id !== loan.id);
+      moduleDialog.close();
+      saveBureau("Prêt annulé.");
+      render();
+    });
+  }
+
+  const partnerStatuses = ["Prospect", "Actif", "Terminé"];
+
+  function renewalUrgency(partner, today = todayIso()) {
+    if (partner.status !== "Actif" || !partner.renewalDate) return "";
+    const date = Date.parse(partner.renewalDate + "T00:00:00Z");
+    const start = Date.parse(today + "T00:00:00Z");
+    const days = (date - start) / 86400000;
+    if (days < 0) return "Renouvellement en retard";
+    if (days <= 30) return "Renouvellement sous 30 jours";
+    return "";
+  }
+
+  function partnersFromPreviousSeason() {
+    const key = partner => normalize(partner.name.trim()).replace(/\s+/g, " ");
+    const existing = new Set((clubYear().partners ?? []).map(key));
+    return (bureau[priorSeason()]?.partners ?? []).filter(partner => !existing.has(key(partner)));
+  }
+
+  function partnersPage() {
+    const year = clubYear();
+    const today = todayIso();
+    const partners = [...(year.partners ?? [])].sort((a, b) =>
+      Number(Boolean(renewalUrgency(b, today))) - Number(Boolean(renewalUrgency(a, today))) ||
+      (a.renewalDate || "9999").localeCompare(b.renewalDate || "9999") || a.name.localeCompare(b.name, "fr"));
+    const byPartner = new Map(partners.map(partner => [partner.id, []]));
+    for (const entry of year.partnerCommitments ?? []) byPartner.get(entry.partnerId)?.push(entry);
+    const renewals = partners.filter(partner => renewalUrgency(partner, today)).length;
+    const pending = (year.partnerCommitments ?? []).filter(item => !item.done).length;
+    const summary = `${renewals} renouvellement${renewals > 1 ? "s" : ""} à traiter · ${pending} engagement${pending > 1 ? "s" : ""} à réaliser`;
+    const cards = partners.map(partner => {
+      const urgency = renewalUrgency(partner, today);
+      const contact = [partner.contact, partner.email, partner.phone].filter(Boolean).join(" · ");
+      const commitments = byPartner.get(partner.id).sort((a, b) => Number(a.done) - Number(b.done) ||
+        (a.due || "9999").localeCompare(b.due || "9999"));
+      const rows = commitments.map(item => {
+        const status = item.done ? "Réalisé" : item.due && item.due < today ? "En retard" : "À faire";
+        return `<tr><td class="label-cell">${escapeHtml(item.title)}</td><td>${dateLabel(item.due)}</td>
+          <td>${badge(status, !item.done)}</td><td>${item.receipt ? action("Télécharger la photo", "partner-photo", item.id) : "—"}</td>
+          <td>${action("Modifier", "partner-commitment", partner.id + ":" + item.id)}</td></tr>`;
+      }).join("");
+      return `<section class="panel">
+        <header class="panel-header"><div class="partner-details">
+          <h2>${escapeHtml(partner.name)}</h2>
+          ${contact ? '<p class="secondary-value">' + escapeHtml(contact) + '</p>' : ""}
+          ${partner.renewalDate ? '<p class="secondary-value">Renouvellement le ' + dateLabel(partner.renewalDate) + '</p>' : ""}
+          ${partner.notes ? '<p class="secondary-value">' + escapeHtml(partner.notes) + '</p>' : ""}
+        </div><div class="actions">${badge(partner.status, partner.status === "Prospect")}${urgency ? badge(urgency, true) : ""}</div></header>
+        ${commitments.length ? dataTable([["Engagement"], ["Échéance"], ["État"], ["Photo"], ["Actions"]], rows, "Engagements du club") :
+          '<p class="panel-note">Aucun engagement renseigné.</p>'}
+        <div class="actions partner-controls">
+          ${action("Ajouter un engagement", "partner-commitment", partner.id, "primary", "plus")}
+          ${action("Modifier la fiche", "partner", partner.id)}
+        </div>
+      </section>`;
+    }).join("");
+    return `<div class="stack">
+      <section class="panel"><header class="panel-header"><h2>Partenaires de la saison</h2>
+        <div class="actions">${action("Nouveau partenaire", "partner", "", "primary", "plus")}
+          ${partnersFromPreviousSeason().length ? action("Reprendre des partenaires", "partner-carry") : ""}</div></header>
+        <p class="panel-note">${partners.length ? summary : "Aucun partenaire pour cette saison."}</p>
+      </section>${cards}</div>`;
+  }
+
+  function editPartner(item) {
+    const fields = `${inputField("Nom du partenaire", "name", item?.name, "maxlength=120 required")}
+      <div class="form-row">
+        ${selectField("Statut", "status", optionList(partnerStatuses, item?.status ?? "Prospect"))}
+        ${inputField("Date de renouvellement", "renewalDate", item?.renewalDate, 'type="date" max="9999-12-31"')}
+      </div>
+      ${inputField("Personne à contacter", "contact", item?.contact, "maxlength=120")}
+      <div class="form-row">
+        ${inputField("E-mail", "email", item?.email, 'type="email" maxlength="254"')}
+        ${inputField("Téléphone", "phone", item?.phone, 'type="tel" maxlength="40"')}
+      </div>
+      <label class="field">Notes<textarea name="notes" maxlength="600">${escapeHtml(item?.notes ?? "")}</textarea></label>
+      ${item ? '<button type="button" class="button outline" data-remove-partner>Supprimer la fiche</button>' : ""}`;
+    const editor = openModuleDialog(item ? "Modifier le partenaire" : "Nouveau partenaire", fields, data => {
+      const year = clubYear();
+      year.partners ??= [];
+      saveItem(year.partners, { ...Object.fromEntries(Object.entries(data).map(([key, value]) => [key, value.trim()])),
+        id: item?.id ?? newId() });
+      return "Fiche partenaire enregistrée.";
+    });
+    editor.querySelector("[data-remove-partner]")?.addEventListener("click", () => {
+      if (!window.confirm("Supprimer cette fiche, ses engagements et les photos associées ?")) return;
+      const year = clubYear();
+      year.partners = year.partners.filter(entry => entry.id !== item.id);
+      year.partnerCommitments = (year.partnerCommitments ?? []).filter(entry => entry.partnerId !== item.id);
+      moduleDialog.close();
+      saveBureau("Fiche partenaire supprimée.");
+      render();
+    });
+  }
+
+  function carryPartners() {
+    const candidates = partnersFromPreviousSeason();
+    const fields = selectionFields("Partenaires de la saison précédente", candidates.map(item =>
+      `<label><input type="checkbox" name="partnerId" value="${escapeHtml(item.id)}"> ${escapeHtml(item.name)}</label>`).join(""));
+    openModuleDialog("Reprendre des partenaires", fields, (_data, editor) => {
+      const selected = new Set(new FormData(editor).getAll("partnerId"));
+      const copies = candidates.filter(item => selected.has(item.id)).map(({ name, contact, email, phone }) =>
+        ({ id: newId(), name, contact, email, phone, status: "Prospect", renewalDate: "", notes: "" }));
+      if (!copies.length) {
+        notify("Sélectionne au moins un partenaire.");
+        return;
+      }
+      clubYear().partners = [...(clubYear().partners ?? []), ...copies];
+      return copies.length === 1 ? "Partenaire repris." : copies.length + " partenaires repris.";
+    });
+  }
+
+  function editPartnerCommitment(partner, item) {
+    const fields = `${inputField("Engagement du club", "title", item?.title, "maxlength=120 required")}
+      <div class="form-row">
+        ${inputField("Échéance", "due", item?.due, 'type="date" max="9999-12-31"')}
+        ${selectField("État", "progress", optionList(["À faire", "Réalisé"], item?.done ? "Réalisé" : "À faire"))}
+      </div>
+      <label class="field file-field">${item?.receipt ? "Remplacer la photo" : "Photo de réalisation"}
+        <input name="photo" type="file" accept=".jpg,.jpeg,.png,.webp">
+        <small>JPEG, PNG ou WebP · 1 Mo maximum</small></label>
+      ${item?.receipt ? `<label class="partner-proof"><input type="checkbox" name="removePhoto">
+        Retirer la photo « ${escapeHtml(item.receipt.name)} »</label>` : ""}
+      ${item ? '<button type="button" class="button outline" data-remove-commitment>Supprimer l’engagement</button>' : ""}`;
+    const editor = openModuleDialog(item ? "Modifier l’engagement" : "Ajouter un engagement", fields, async (data, form) => {
+      let receipt = data.removePhoto ? undefined : item?.receipt;
+      if (data.photo.size) {
+        const input = form.elements.photo;
+        if (!/\.(jpg|jpeg|png|webp)$/i.test(data.photo.name)) {
+          invalidInput(input, "Choisis une photo JPEG, PNG ou WebP.");
+          return;
+        }
+        receipt = await readReceipt(data.photo, input);
+        if (!receipt) return;
+      }
+      const year = clubYear();
+      year.partnerCommitments ??= [];
+      const entry = { id: item?.id ?? newId(), partnerId: partner.id, title: data.title.trim(),
+        due: data.due, done: data.progress === "Réalisé" };
+      if (receipt) entry.receipt = receipt;
+      saveItem(year.partnerCommitments, entry);
+      if (!remote && (receipt || item?.receipt)) {
+        persistReceiptChange(() => {
+          if (item) saveItem(year.partnerCommitments, item);
+          else year.partnerCommitments = year.partnerCommitments.filter(row => row.id !== entry.id);
+        });
+      }
+      return "Engagement enregistré.";
+    });
+    editor.querySelector("[data-remove-commitment]")?.addEventListener("click", () => {
+      if (!window.confirm("Supprimer cet engagement ?")) return;
+      const year = clubYear();
+      year.partnerCommitments = year.partnerCommitments.filter(entry => entry.id !== item.id);
+      moduleDialog.close();
+      saveBureau("Engagement supprimé.");
+      render();
+    });
+  }
+
+  function registrationsPage() {
+    const year = clubYear();
+    const applications = [...(year.applications ?? [])].reverse();
+    const pending = applications.filter(item => ["À vérifier", "Incomplet"].includes(item.status)).length;
+    const rows = applications.map(item => `<tr>
+      <td class="label-cell">${escapeHtml(item.first + " " + item.last)}</td>
+      <td>${dateLabel(item.date)}</td><td>${item.files.length}</td>
+      <td>${badge(item.status, ["À vérifier", "Incomplet"].includes(item.status))}</td>
+      <td>${action("Ouvrir", "registration-review", item.id)}</td>
+    </tr>`).join("");
+    return `<div class="stack">
+      <section class="panel"><header class="panel-header"><h2>Formulaire de la saison</h2>
+        ${badge(year.registration?.token ? "Ouvert" : "Fermé", !year.registration?.token)}</header>
+        <div class="actions event-actions">
+          ${action("Paramétrer le formulaire", "registration-settings", "", "primary")}
+          ${remote && year.registration?.token ? action("Lien à partager aux familles", "registration-link") : ""}
+        </div>
+        ${remote ? "" : '<p class="panel-note">Dossiers fictifs. Le formulaire partagé est disponible sur l’instance hébergée.</p>'}
+      </section>
+      <section class="panel"><header class="panel-header"><h2>Dossiers reçus</h2>${badge(pending + " à traiter", pending > 0)}</header>
+        ${dataTable([["Adhérent"], ["Date de dépôt"], ["Pièces"], ["État"], ["Actions"]], rows, "Dossiers d’inscription")}
+      </section></div>`;
+  }
+
+  function registrationInstructions(value) {
+    return `<label class="field">Consignes et pièces demandées
+      <textarea name="instructions" maxlength="600">${escapeHtml(value || "")}</textarea></label>`;
+  }
+
+  function editRegistrationSettings() {
+    const current = clubYear().registration;
+    const fields = selectField("Formulaire", "state", optionList(["Fermé", "Ouvert"], current?.token ? "Ouvert" : "Fermé")) +
+      registrationInstructions(current?.instructions);
+    const message = "Paramètres d’inscription enregistrés.";
+    const year = Number(season.value);
+    let command;
+    openModuleDialog("Paramétrer le formulaire", fields, data => {
+      command = { action: "settings", year, open: data.state === "Ouvert", instructions: data.instructions.trim() };
+      if (!remote) clubYear().registration = { token: command.open ? "demo" : "", instructions: command.instructions };
+      return message;
+    }, () => remote ? syncRemote(message, true, command) : saveBureau(message));
+  }
+
+  function showRegistrationLink() {
+    const url = new URL("inscriptions.php", window.location.href);
+    url.searchParams.set("saison", clubYear().registration.token);
+    showShareLink(url, "Lien du formulaire");
+  }
+
+  function reviewRegistration(item) {
+    const files = item.files.map(file =>
+      `<li><a href="api.php?role=secretary&amp;attachment=${encodeURIComponent(file.id)}">${escapeHtml(file.name)}</a></li>`).join("");
+    const closed = ["Validé", "Refusé"].includes(item.status);
+    const identity = `<div><strong>${escapeHtml(item.first + " " + item.last)}</strong><br>${escapeHtml(item.email)}</div>
+      <div><strong>Pièces reçues</strong>${files ? "<ul>" + files + "</ul>" : "<p>Aucune pièce jointe.</p>"}</div>
+      ${remote ? '<div>' + action("Retrouver le lien privé", "registration-tracking", item.id) + '</div>' : ""}`;
+    if (closed) {
+      moduleDialog.innerHTML = `<header><h2 id="module-dialog-title">Dossier · ${item.status}</h2>
+        <button type="button" class="row-action" data-module-action="close" aria-label="Fermer">${icon("close")}</button></header>
+        ${identity}${item.note ? "<p>" + escapeHtml(item.note) + "</p>" : ""}`;
+      moduleDialog.showModal();
+      return;
+    }
+    const matching = getMembers().filter(member =>
+      member.first.toLocaleLowerCase("fr") === item.first.toLocaleLowerCase("fr") &&
+      member.last.toLocaleLowerCase("fr") === item.last.toLocaleLowerCase("fr"));
+    const memberOptions = option("", matching.length ? "Choisir une adhésion" : "Créer une adhésion", "") +
+      matching.map(member => option(member.id, member.first + " " + member.last + " · " + member.team, "")).join("") +
+      (matching.length ? option("__new__", "Créer une adhésion pour un homonyme", "") : "");
+    const fields = identity +
+      selectField("Décision", "status", option("", "Choisir", "") + optionList(["Incomplet", "Validé", "Refusé"], "")) +
+      `<div class="form-row" data-registration-approval hidden>
+        ${selectField("Équipe", "team", optionList([...new Set([...teams, ...matching.map(member => member.team)])], matching.length === 1 ? matching[0].team : teams[0]))}
+        ${selectField("Adhésion", "memberId", memberOptions)}</div>
+        <label class="field">Message visible par la famille
+          <textarea name="note" maxlength="600">${escapeHtml(item.note || "")}</textarea></label>`;
+    const year = Number(season.value);
+    let command;
+    let message;
+    const editor = openModuleDialog("Vérifier le dossier", fields, (data, form) => {
+      if (!data.status) {
+        form.elements.status.setCustomValidity("Choisis une décision.");
+        form.elements.status.reportValidity();
+        return;
+      }
+      if (data.status === "Incomplet" && !data.note.trim()) {
+        form.elements.note.setCustomValidity("Indique les pièces manquantes.");
+        form.elements.note.reportValidity();
+        return;
+      }
+      if (data.status === "Validé" && matching.length && !data.memberId) {
+        form.elements.memberId.setCustomValidity("Choisis une adhésion ou indique qu’il s’agit d’un homonyme.");
+        form.elements.memberId.reportValidity();
+        return;
+      }
+      command = { action: "review", year, id: item.id, ...data, note: data.note.trim() };
+      if (!remote) {
+        if (data.status === "Validé") {
+          const member = data.memberId === "__new__" ? null : getMembers().find(member => member.id === data.memberId);
+          const fields = { team: data.team, fileStatus: "Complet", fileNote: "" };
+          if (member) {
+            const updated = getMembers().map(entry => entry.id === member.id ? { ...entry, ...fields } : entry);
+            localStorage.setItem(storageKey, JSON.stringify({ ...records, [year]: updated }));
+            records[year] = updated;
+          } else {
+            addMembers([{ ...fields, id: newId(), first: item.first, last: item.last, paid: false }]);
+          }
+        }
+        item.status = data.status;
+        item.note = command.note;
+      }
+      message = data.status === "Validé" ? "Dossier validé. Adhésion enregistrée." : "Dossier mis à jour.";
+      return message;
+    }, () => remote ? syncRemote(message, true, command) : saveBureau(message));
+    editor.elements.status.addEventListener("change", () => {
+      editor.elements.note.setCustomValidity("");
+      editor.elements.memberId.setCustomValidity("");
+      editor.querySelector("[data-registration-approval]").hidden = editor.elements.status.value !== "Validé";
+    });
+  }
+
+  function eventsPage() {
+    const events = [...(clubYear().events ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+    const sections = events.map(item => {
+      const slots = [...item.slots].sort((a, b) => a.start.localeCompare(b.start));
+      const vacant = slots.filter(slot => !slot.owner).length;
+      const rows = slots.map(slot => `<tr><td class="label-cell">${escapeHtml(slot.title)}</td>
+        <td>${escapeHtml(slot.start)}–${escapeHtml(slot.end)}</td>
+        <td>${slot.owner ? escapeHtml(slot.owner) : badge("À pourvoir", true)}</td>
+        <td>${action("Modifier", "event-slot", item.id + ":" + slot.id)}</td></tr>`).join("");
+      return `<section class="panel">
+        <header class="panel-header"><div><h2>${escapeHtml(item.title)}</h2>
+          <p>${dateLabel(item.date)} · ${escapeHtml(item.place)}</p></div>
+          ${badge(vacant + "/" + slots.length + " à pourvoir", vacant > 0)}</header>
+        ${slots.length ? dataTable([["Mission"], ["Horaire"], ["Bénévole"], ["Actions"]], rows, "Créneaux bénévoles") :
+          '<p class="panel-note">Ajoute un premier créneau bénévole.</p>'}
+        <div class="actions event-actions">
+          ${action("Ajouter un créneau", "event-slot", item.id, "primary", "plus")}
+          ${action("Modifier l’événement", "event", item.id)}
+          ${remote && item.token ? action("Lien d’inscription", "event-link", item.id) : ""}
+          ${remote && (item.token || slots.length) ? action(item.token ? "Désactiver le lien" : "Activer le lien", "event-share", item.id) : ""}
+        </div></section>`;
+    }).join("");
+    return `<div class="stack">
+      <section class="panel"><header class="panel-header"><h2>Planning de la saison</h2>
+        ${action("Nouvel événement", "event", "", "primary", "plus")}</header>
+        ${remote ? "" : '<p class="panel-note">Les liens d’inscription sont disponibles sur l’instance hébergée.</p>'}
+        ${events.length ? "" : '<p class="panel-note">Aucun événement pour cette saison.</p>'}
+      </section>${sections}</div>`;
+  }
+
+  function editClubEvent(item) {
+    const fields = `${inputField("Nom de l’événement", "title", item?.title, "maxlength=120 required")}
+      ${dateField("Date", item?.date || "")}
+      ${inputField("Lieu", "place", item?.place, "maxlength=120 required")}
+      ${item ? '<button type="button" class="button outline" data-remove-event>Supprimer l’événement</button>' : ""}`;
+    const editor = openModuleDialog(item ? "Modifier l’événement" : "Nouvel événement", fields, data => {
+      clubYear().events ??= [];
+      saveItem(clubYear().events, {
+        id: item?.id ?? newId(), title: data.title.trim(), date: data.date,
+        place: data.place.trim(), slots: item?.slots ?? [], token: item?.token ?? ""
+      });
+      return "Événement enregistré.";
+    });
+    editor.querySelector("[data-remove-event]")?.addEventListener("click", () => {
+      if (!window.confirm("Supprimer cet événement et tous ses créneaux ?")) return;
+      clubYear().events = clubYear().events.filter(entry => entry.id !== item.id);
+      moduleDialog.close();
+      saveBureau("Événement supprimé.");
+      render();
+    });
+  }
+
+  function editEventSlot(item, slot) {
+    const posts = [...new Set((clubYear().volunteers ?? []).map(post => post.title))];
+    const fields = `<label class="field">Mission
+      <input name="title" list="event-posts" value="${escapeHtml(slot?.title || "")}" maxlength="120" required>
+      <datalist id="event-posts">${posts.map(title => option(title, title, "")).join("")}</datalist></label>
+      <div class="form-row"><label class="field">Début <input name="start" type="time" value="${escapeHtml(slot?.start || "")}" required></label>
+      <label class="field">Fin <input name="end" type="time" value="${escapeHtml(slot?.end || "")}" required></label></div>
+      ${inputField("Bénévole affecté", "owner", slot?.owner, "maxlength=120")}
+      ${slot ? '<button type="button" class="button outline" data-remove-slot>Supprimer le créneau</button>' : ""}`;
+    const editor = openModuleDialog(slot ? "Modifier le créneau" : "Ajouter un créneau", fields, (data, form) => {
+      if (data.end <= data.start) {
+        form.elements.end.setCustomValidity("La fin doit être après le début.");
+        form.elements.end.reportValidity();
+        return;
+      }
+      saveItem(item.slots, { id: slot?.id ?? newId(), ...data, title: data.title.trim(), owner: data.owner.trim() });
+      return "Créneau enregistré.";
+    });
+    editor.querySelector("[data-remove-slot]")?.addEventListener("click", () => {
+      if (!window.confirm("Supprimer ce créneau ?")) return;
+      item.slots = item.slots.filter(entry => entry.id !== slot.id);
+      moduleDialog.close();
+      saveBureau("Créneau supprimé.");
+      render();
+    });
+  }
+
+  function changeEventShare(item) {
+    item.token = item.token ? "" : Array.from(crypto.getRandomValues(new Uint8Array(16)),
+      byte => byte.toString(16).padStart(2, "0")).join("");
+    saveBureau(item.token ? "Lien d’inscription activé." : "Lien d’inscription désactivé.");
+    render();
+  }
+
+  function showEventLink(item) {
+    const url = new URL("benevoles.php", window.location.href);
+    url.searchParams.set("evenement", item.token);
+    showShareLink(url, "Lien d’inscription");
+  }
+
+  function showShareLink(url, title) {
+    moduleDialog.innerHTML = `<header><h2 id="module-dialog-title">${escapeHtml(title)}</h2>
+      <button type="button" class="row-action" data-module-action="close" aria-label="Fermer">${icon("close")}</button></header>
+      <label class="field">Lien à partager<input class="event-link" readonly value="${escapeHtml(url.href)}"></label>
+      <footer><button type="button" class="button primary" data-copy-link>Copier le lien</button></footer>`;
+    const field = moduleDialog.querySelector("input");
+    moduleDialog.querySelector("[data-copy-link]").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(url.href);
+        notify("Lien copié.");
+        moduleDialog.close();
+      } catch {
+        field.select();
+      }
+    });
+    moduleDialog.showModal();
+    field.select();
   }
 
   const decisionStates = ["À décider", "Adoptée", "Écartée"];
@@ -2866,114 +3579,11 @@
   }
 
 
-  // Recherche globale : pages, adhérents de la saison et actions courantes.
-  const roleLabels = { director: "Dirigeant", treasurer: "Trésorier", secretary: "Secrétaire" };
-
-  function paletteEntries() {
-    const reachable = remote ? remote.roles : Object.keys(workspaces);
-    const ordered = [role.value, ...reachable.filter(value => value !== role.value)];
-    const entries = [];
-    const seen = new Set();
-    for (const workspace of ordered) {
-      for (const key of workspaces[workspace]) {
-        if (seen.has(key)) continue;
-        seen.add(key);
-        entries.push({ text: pages[key], symbol: pageIcons[key] || key,
-          note: workspace === role.value ? "Page" : `Page · ${roleLabels[workspace]}`,
-          attributes: `data-nav="${key}" data-role="${workspace}"` });
-      }
-    }
-    if (workspaces[role.value].includes("members")) {
-      entries.push({ text: "Ajouter un adhérent", symbol: "plus", note: "Action", attributes: "data-add" });
-    }
-    for (const member of getMembers()) {
-      entries.push({ text: `${member.first} ${member.last}`, symbol: "members", note: `Adhérent · ${member.team}`,
-        attributes: `data-edit="${escapeHtml(member.id)}"`, person: true });
-    }
-    return entries;
-  }
-
-  function renderPalette() {
-    const query = normalize(paletteInput.value.trim());
-    const matches = paletteEntries().filter(entry => query ? normalize(entry.text).includes(query) : !entry.person).slice(0, 9);
-    paletteResults.innerHTML = matches.length ? matches.map((entry, index) =>
-      `<li role="presentation"><button type="button" class="palette-item" role="option" id="palette-option-${index}"
-        aria-selected="${index === 0}" tabindex="-1" ${entry.attributes}>${icon(entry.symbol)}<span>${escapeHtml(entry.text)}</span>
-        <small>${escapeHtml(entry.note)}</small></button></li>`).join("")
-      : `<li class="palette-empty">Aucun résultat pour « ${escapeHtml(paletteInput.value.trim())} ».</li>`;
-    paletteInput.setAttribute("aria-activedescendant", matches.length ? "palette-option-0" : "");
-  }
-
-  function openPalette() {
-    if (palette.open || remoteBusy || document.querySelector("dialog[open]")) return;
-    paletteInput.value = "";
-    renderPalette();
-    palette.showModal();
-    paletteInput.focus();
-  }
-
-  paletteInput.addEventListener("input", renderPalette);
-  paletteInput.addEventListener("keydown", event => {
-    const options = [...paletteResults.querySelectorAll(".palette-item")];
-    const active = options.findIndex(item => item.getAttribute("aria-selected") === "true");
-    if (event.key === "Enter") {
-      event.preventDefault();
-      options[active]?.click();
-    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      if (!options.length) return;
-      const next = (active + (event.key === "ArrowDown" ? 1 : options.length - 1)) % options.length;
-      options.forEach((item, index) => item.setAttribute("aria-selected", String(index === next)));
-      options[next].scrollIntoView({ block: "nearest" });
-      paletteInput.setAttribute("aria-activedescendant", options[next].id);
-    }
-  });
-  document.addEventListener("keydown", event => {
-    if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      openPalette();
-    }
-  });
-  for (const sheet of [palette, moreSheet]) {
-    sheet.addEventListener("click", event => {
-      if (event.target === sheet) sheet.close();
-    });
-  }
-  moreSheet.addEventListener("close", () => document.querySelector(".sidebar").append(sidebarFooter));
-  compactLayout.addEventListener("change", () => {
-    if (moreSheet.open) moreSheet.close();
-    render();
-  });
-  if (/Mac|iPhone|iPad/.test(navigator.platform)) document.getElementById("search-shortcut").textContent = "⌘ K";
-  document.getElementById("open-search").insertAdjacentHTML("afterbegin", icon("search"));
-  document.getElementById("more-close").innerHTML = icon("close");
-
-  // Sur téléphone, chaque ligne de tableau s’affiche en fiche : chaque valeur reprend l’intitulé de sa colonne.
-  function labelTables() {
-    for (const grid of main.querySelectorAll("table")) {
-      const headings = [...grid.querySelectorAll("thead th")].map(cell => cell.textContent.trim());
-      for (const line of grid.querySelectorAll("tbody tr, tfoot tr")) {
-        if (line.dataset.labelled) continue;
-        line.dataset.labelled = "true";
-        const cells = [...line.children];
-        const primary = cells.find(cell => cell.classList.contains("label-cell")) || cells[0];
-        let column = 0;
-        for (const cell of cells) {
-          cell.dataset.label = headings[column] || "";
-          column += cell.colSpan;
-          if (cell === primary) cell.classList.add("cell-primary");
-          else if (cell.querySelector("button")) {
-            cell.classList.add("cell-actions");
-            if (!cell.querySelector("button:not(.row-action)")) cell.classList.add("cell-icons");
-          }
-          else if (!cell.textContent.trim()) cell.classList.add("cell-void");
-        }
-      }
-    }
-  }
-  new MutationObserver(labelTables).observe(main, { childList: true, subtree: true });
-
-  elements["brand-icon"].innerHTML = icon("logo");
+  const spaceLinks = spaceCards.map(([key, , title]) => [key, title]);
+  spacesBar.innerHTML = spaceLinks.filter(([key]) => canOpenSpace(key)).map(([key, title]) =>
+    `<button type="button" class="space-pill" data-space="${key}">${title}</button>`).join("");
+  nav.innerHTML = bureauNavigation();
+  nav.dataset.workspace = !remote || officeRoles.length === 1 ? bureauRole : "combined";
   elements["close-dialog"].innerHTML = icon("close");
   elements["member-team"].innerHTML = teams.map(team => option(team, team, "")).join("");
   document.addEventListener("click", event => {
@@ -2983,38 +3593,37 @@
       event.preventDefault();
       return;
     }
-    if (palette.contains(button)) palette.close();
-    if (moreSheet.contains(button)) moreSheet.close();
-    if (button.dataset.moduleAction) {
+    if (button.dataset.space) {
+      openSpace(button.dataset.space);
+    } else if (button.dataset.moduleAction) {
       handleModuleAction(button);
-    } else if (button.hasAttribute("data-search")) {
-      openPalette();
-    } else if (button.hasAttribute("data-more")) {
-      moreSheet.append(sidebarFooter);
-      moreSheet.showModal();
-    } else if (button.hasAttribute("data-reset-filters")) {
-      filters = { search: "", team: "", payment: "", fileStatus: "" };
-      render();
-      main.querySelector("[data-filter]")?.focus();
     } else if (button.dataset.nav) {
+      const nextRole = button.dataset.role || activeRole;
+      if (remote && !remote.roles.includes(nextRole)) return;
       const nested = !nav.contains(button);
-      if (remote && button.dataset.role && button.dataset.role !== remote.role) {
-        if (!remote.roles.includes(button.dataset.role)) return;
-        role.value = button.dataset.role;
-        page = button.dataset.nav;
-        filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "", fileStatus: button.dataset.fileStatus || "" };
-        syncRemote("", false);
-        return;
-      }
-      if (button.dataset.role) role.value = button.dataset.role;
+      activeRole = nextRole;
       page = button.dataset.nav;
-      filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "", fileStatus: button.dataset.fileStatus || "" };
-      render();
-      if (nested) {
-        const heading = elements["page-title"];
-        heading.tabIndex = -1;
-        heading.focus();
+      filters = { search: "", team: button.dataset.team || "", payment: button.dataset.payment || "",
+        fileStatus: button.dataset.fileStatus || "" };
+      if (page === "invoices") {
+        invoiceFilters.kind = "";
+        invoiceFilters.status = button.dataset.invoiceStatus || "";
       }
+      const focusHeading = () => elements["page-title"].focus();
+      if (remote && nextRole !== remote.role) {
+        syncRemote("", false).then(focusHeading);
+      } else {
+        render();
+        if (nested) focusHeading();
+      }
+    } else if (button.hasAttribute("data-payment-filter")) {
+      filters.payment = button.dataset.paymentFilter;
+      updateMemberList();
+    } else if (button.hasAttribute("data-clear-filters")) {
+      filters = { search: "", team: "", payment: "", fileStatus: "" };
+      for (const control of main.querySelectorAll("[data-filter]")) control.value = "";
+      updateMemberList();
+      main.querySelector('[data-filter="search"]').focus();
     } else if (button.hasAttribute("data-add")) {
       openMember();
     } else if (button.hasAttribute("data-edit")) {
@@ -3027,11 +3636,22 @@
     }
   });
 
-  role.addEventListener("change", () => {
-    page = "dashboard";
-    if (remote) syncRemote("", false);
-    else render();
-  });
+  function openSpace(key) {
+    if (remoteBusy || !canOpenSpace(key)) return;
+    if (key === "bureau") {
+      activeRole = remote ? bureauRole : demoRole;
+      page = "dashboard";
+    } else {
+      if (spaceRoles[key]) activeRole = spaceRoles[key];
+      page = key;
+    }
+    const ready = remote && activeRole !== remote.role ? syncRemote("", false) : Promise.resolve(render());
+    return ready.then(() => {
+      window.scrollTo(0, 0);
+      elements["page-title"].focus({ preventScroll: true });
+    });
+  }
+
   season.addEventListener("change", () => {
     ledgerFilters.kind = "";
     ledgerFilters.account = "";
@@ -3045,8 +3665,7 @@
     const key = event.target.dataset.filter;
     if (!key) return;
     filters[key] = event.target.value;
-    main.querySelector("#member-rows").innerHTML = rows(filteredMembers());
-    main.querySelector("#member-count").innerHTML = memberCount();
+    updateMemberList();
   });
 
   for (const input of [form.elements.first, form.elements.last]) {
@@ -3095,10 +3714,10 @@
     else notify(saved ? message : "Modifications disponibles jusqu’à la fermeture de cette page.");
   });
 
-  function applyRemoteState(state, activeRole) {
+  function applyRemoteState(state, loadedRole) {
     remote.state = state;
-    remote.role = activeRole;
-    role.value = activeRole;
+    remote.role = loadedRole;
+    activeRole = loadedRole;
     const selected = season.value;
     season.replaceChildren(...Object.keys(state.records).sort().reverse()
       .map(year => new Option(`${year}–${Number(year) + 1}`, year)));
@@ -3109,21 +3728,21 @@
     }
   }
 
-  async function syncRemote(message, write = true) {
+  async function syncRemote(message, write = true, registrationCommand) {
     if (remoteBusy) return;
     remoteBusy = true;
     main.setAttribute("aria-busy", "true");
-    role.disabled = true;
+    for (const button of spacesBar.querySelectorAll("button")) button.disabled = true;
     season.disabled = true;
     document.getElementById("storage-mode").textContent = "Synchronisation…";
-    const activeRole = role.value;
-    const endpoint = `api.php?role=${encodeURIComponent(activeRole)}`;
+    const requestRole = activeRole;
+    const endpoint = `api.php?role=${encodeURIComponent(requestRole)}`;
     try {
       const options = { cache: "no-store" };
       if (write) {
         options.method = "POST";
         options.headers = { "Content-Type": "application/json", "X-CSRF-Token": remote.csrf };
-        options.body = JSON.stringify({ revision: remote.state.revision, records, bureau });
+        options.body = JSON.stringify({ revision: remote.state.revision, records, bureau, registrationCommand });
       }
       const response = await fetch(endpoint, options);
       if (response.status === 401) {
@@ -3131,17 +3750,19 @@
         return;
       }
       const data = await response.json();
-      if (data.state) applyRemoteState(data.state, activeRole);
+      if (data.state) applyRemoteState(data.state, requestRole);
       if (!response.ok) throw new Error(data.error);
-      applyRemoteState(data, activeRole);
+      applyRemoteState(data, requestRole);
       if (message) notify(message);
     } catch (error) {
       applyRemoteState(remote.state, remote.role);
-      if (!workspaces[role.value].includes(page) && page !== "assembly") page = "dashboard";
+      const available = page === "home" || workspaces[activeRole].includes(page) ||
+        spaceRoles[page] === activeRole || page === "assembly";
+      if (!available) page = "home";
       notify(error.message || "Synchronisation interrompue. Actualise le tableau de bord avant de réessayer.");
     } finally {
       remoteBusy = false;
-      role.disabled = false;
+      for (const button of spacesBar.querySelectorAll("button")) button.disabled = false;
       season.disabled = false;
       main.removeAttribute("aria-busy");
       document.getElementById("storage-mode").textContent = "Données partagées";
@@ -3152,6 +3773,10 @@
   if (remote) {
     document.getElementById("online-refresh").addEventListener("click", () => syncRemote("Données actualisées.", false));
   } else {
+    demoRoleSelect.addEventListener("change", () => {
+      demoRole = demoRoleSelect.value;
+      if (page !== "home") openSpace("bureau");
+    });
     document.getElementById("local-export").addEventListener("click", () =>
       downloadFile("sauvegarde-locale.json",
         [JSON.stringify({ format: "gestclub-state-v1", records, bureau }, null, 2)], "application/json"));

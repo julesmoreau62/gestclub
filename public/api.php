@@ -53,7 +53,14 @@ try {
         respond(['error' => 'Le club a été modifié sur un autre appareil. Les données ont été rechargées. Reprends ta modification.',
             'state' => scopedState($state, $role, (string) $user['id'])], 409);
     }
+    if (isset($payload['registrationCommand']) && $role !== 'secretary') {
+        $connection->rollBack();
+        respond(['error' => 'Cette action est réservée au secrétaire.'], 403);
+    }
     $next = persistAttachments($connection, $state, mergeState($state, $payload, $role, (string) $user['id']));
+    if (isset($payload['registrationCommand'])) {
+        $next = applyRegistrationCommand($next, $payload['registrationCommand']);
+    }
     $update = $connection->prepare(
         'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
          revision = revision + 1, updated_at = now() WHERE id = true RETURNING revision'
@@ -67,6 +74,6 @@ try {
     respond(['error' => $error instanceof JsonException ? 'Données JSON invalides.' : $error->getMessage()], 422);
 } catch (Throwable $error) {
     if (isset($connection) && $connection->inTransaction()) $connection->rollBack();
-    error_log('Gestclub API: ' . $error::class);
+    error_log('Fair Gestion API: ' . $error::class);
     respond(['error' => 'Enregistrement indisponible. Réessaie dans quelques instants.'], 503);
 }
