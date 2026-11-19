@@ -67,7 +67,7 @@ function currentUser(): ?array
         time() - $_SESSION['signed_in'] > 12 * 3600) {
         return null;
     }
-    $query = db()->prepare('SELECT id, email, roles FROM gestclub_users WHERE id = ? AND session_version = ? AND active');
+    $query = db()->prepare('SELECT id, email, roles, totp_secret IS NOT NULL AS two_factor FROM gestclub_users WHERE id = ? AND session_version = ? AND active');
     $query->execute([$_SESSION['user_id'], $_SESSION['version']]);
     $user = $query->fetch();
     if (!$user) return null;
@@ -97,18 +97,47 @@ function rateLimitExceeded(string $scope, int $max, int $minutes): bool
     return (int) $limit->fetchColumn() > $max;
 }
 
-function login(string $email, string $password): bool
+/** Returns 'ok' once signed in, 'code' when a two-factor code is still needed, '' when refused. */
+function login(string $email, string $password): string
 {
-    if (rateLimitExceeded('ip', 15, 15)) return false;
+    if (rateLimitExceeded('ip', 15, 15)) return '';
     $database = db();
-    $query = $database->prepare('SELECT id, password_hash, session_version FROM gestclub_users WHERE email = ? AND active');
+    $query = $database->prepare('SELECT id, password_hash, session_version, totp_secret FROM gestclub_users WHERE email = ? AND active');
     $query->execute([strtolower(trim($email))]);
     $user = $query->fetch();
     $dummyHash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
-    if (strlen($password) > 72 || !password_verify($password, $user['password_hash'] ?? $dummyHash) || !$user) return false;
+    if (strlen($password) > 72 || !password_verify($password, $user['password_hash'] ?? $dummyHash) || !$user) return '';
     session_regenerate_id(true);
-    $_SESSION = ['user_id' => $user['id'], 'version' => $user['session_version'],
-        'signed_in' => time(), 'csrf' => bin2hex(random_bytes(32))];
+    if ($user['totp_secret']) {
+        $_SESSION = ['pending_user' => $user['id'], 'pending_version' => $user['session_version'],
+            'pending_at' => time(), 'csrf' => bin2hex(random_bytes(32))];
+        return 'code';
+    }
+    startSession($user['id'], $user['session_version']);
+    return 'ok';
+}
+
+function startSession(int $userId, int $version): void
+{
+    session_regenerate_id(true);
+    $_SESSION = ['user_id' => $userId, 'version' => $version, 'signed_in' => time(), 'csrf' => bin2hex(random_bytes(32))];
+}
+
+function pendingTwoFactor(): bool
+{
+    return isset($_SESSION['pending_user'], $_SESSION['pending_at']) && time() - $_SESSION['pending_at'] < 300;
+}
+
+/** Second login step. */
+function finishTwoFactor(string $code): bool
+{
+    if (!pendingTwoFactor() || rateLimitExceeded('totp', 10, 15)) return false;
+    $database = db();
+    $database->beginTransaction();
+    $valid = verifyAccountTotp($database, (int) $_SESSION['pending_user'], $code);
+    $database->commit();
+    if (!$valid) return false;
+    startSession((int) $_SESSION['pending_user'], (int) $_SESSION['pending_version']);
     return true;
 }
 

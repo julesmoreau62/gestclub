@@ -15,6 +15,9 @@ try {
     beginWebRequest();
     $user = currentUser();
     if (!$user) respond(['error' => 'Session expirée. Reconnecte-toi.'], 401);
+    if (requiresTwoFactor($user['roles']) && !$user['two_factor']) {
+        respond(['error' => 'Active la double authentification depuis « Mon compte ».'], 403);
+    }
     $role = $_GET['role'] ?? $user['roles'][0];
     if (!is_string($role) || !in_array($role, $user['roles'], true)) {
         respond(['error' => 'Cette vue est réservée aux comptes autorisés.'], 403);
@@ -70,7 +73,14 @@ try {
     );
     $update->execute([jsonEncode($next['records']), jsonEncode($next['bureau'])]);
     $next['revision'] = (int) $update->fetchColumn();
+    recordAudit($connection, $user['email'], $role, changeSummary($state, $next, $payload['registrationCommand'] ?? null));
     $connection->commit();
+    $command = $payload['registrationCommand'] ?? null;
+    if (is_array($command) && ($command['action'] ?? null) === 'review') {
+        foreach ($next['bureau'][$command['year']]['applications'] as $application) {
+            if ($application['id'] === $command['id']) sendRegistrationMail($application, (int) $command['year']);
+        }
+    }
     respond(scopedState($next, $role, (string) $user['id']));
 } catch (InvalidArgumentException | JsonException $error) {
     if (isset($connection) && $connection->inTransaction()) $connection->rollBack();

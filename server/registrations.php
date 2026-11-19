@@ -104,12 +104,13 @@ function applyRegistrationCommand(array $state, mixed $command): array
             $members[$existing]['team'] = $team;
             $members[$existing]['fileStatus'] = 'Complet';
             $members[$existing]['fileNote'] = '';
+            $members[$existing]['email'] = $item['email'];
         } else {
             if ($matching && $memberId !== '__new__') {
                 throw new InvalidArgumentException('Une adhésion porte déjà ce nom. Actualise la liste et sélectionne-la.');
             }
             $members[] = ['id' => bin2hex(random_bytes(16)), 'first' => $item['first'], 'last' => $item['last'],
-                'team' => $team, 'fileStatus' => 'Complet', 'fileNote' => '', 'paid' => false];
+                'team' => $team, 'fileStatus' => 'Complet', 'fileNote' => '', 'email' => $item['email'], 'paid' => false];
         }
     }
     $item['status'] = $status;

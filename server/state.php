@@ -5,6 +5,13 @@ require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/registrations.php';
 require_once __DIR__ . '/partners.php';
 require_once __DIR__ . '/equipment.php';
+require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/mail.php';
+require_once __DIR__ . '/accounts.php';
+require_once __DIR__ . '/audit.php';
+require_once __DIR__ . '/helloasso.php';
+require_once __DIR__ . '/page.php';
+require_once __DIR__ . '/documents.php';
 
 const FINANCE_FIELDS = ['opening', 'entries', 'invoices', 'plan', 'expenses', 'bankLines', 'statement', 'closedAt', 'helloAssoUrl'];
 const OFFICE_FIELDS = ['meetings', 'tasks', 'decisions', 'volunteers'];
@@ -160,8 +167,13 @@ function mergeMemberRecords(array $old, mixed $input): array
                 throw new InvalidArgumentException('Adhérent incomplet.');
             }
         }
+        $email = $item['email'] ?? '';
+        if (!is_string($email) || ($email !== '' && (strlen($email) > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)))) {
+            throw new InvalidArgumentException('Adresse e-mail de contact invalide.');
+        }
         $merged[] = picked($item, ['id', 'first', 'last', 'team', 'fileStatus', 'fileNote', 'renewal']) +
-            ['paid' => (bool) ($previous[$item['id']]['paid'] ?? false)];
+            ['email' => strtolower(trim($email)), 'paid' => (bool) ($previous[$item['id']]['paid'] ?? false)] +
+            (isset($previous[$item['id']]['remindedAt']) ? ['remindedAt' => $previous[$item['id']]['remindedAt']] : []);
         unset($previous[$item['id']]);
     }
     if ($previous) throw new InvalidArgumentException('Le registre contient des adhésions manquantes.');

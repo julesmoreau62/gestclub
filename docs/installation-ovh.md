@@ -26,7 +26,7 @@ php -m
 
 Vérifie que `php -v` affiche PHP 8.4 et que `php -m` contient `pdo_pgsql` et `fileinfo`. En SSH, si `php` pointe vers une autre version, utilise le binaire PHP 8.4 proposé par ton hébergement, par exemple `/usr/local/php8.4/bin/php`. [Choisir une version PHP en SSH](https://docs.ovhcloud.com/fr/guides/web-cloud/web-hosting/ssh-on-webhosting)
 
-Dans `config.php`, renseigne le nom du club, l’adresse HTTPS exacte du site dans `origin`, ainsi que le nom d’hôte, le port, la base, l’utilisateur et le mot de passe de PostgreSQL. Garde `sslmode=require` dans la chaîne de connexion. Renseigne aussi `privacy_contact`, l’adresse que les familles et les bénévoles utiliseront pour leurs données, et `retention_days`, la durée de conservation d’un dossier d’inscription clôturé (90 jours par défaut). Le fichier est stocké exclusivement sur l’espace privé du club.
+Dans `config.php`, renseigne le nom du club, l’adresse HTTPS exacte du site dans `origin`, ainsi que le nom d’hôte, le port, la base, l’utilisateur et le mot de passe de PostgreSQL. Garde `sslmode=require` dans la chaîne de connexion. Renseigne aussi `privacy_contact`, l’adresse que les familles et les bénévoles utiliseront pour leurs données, et `retention_days`, la durée de conservation d’un dossier d’inscription clôturé (90 jours par défaut). Complète `mail_from` (section 7), `association` (identité imprimée sur les documents) et, si tu le souhaites, `require_2fa` et `helloasso` (sections 8 et 9). Le fichier est stocké exclusivement sur l’espace privé du club.
 
 [Configurer le dossier racine du domaine dans Multisite](https://docs.ovhcloud.com/fr/guides/web-cloud/web-hosting/multisites-configure-multisite)
 
@@ -40,6 +40,8 @@ php bin/gestclub.php account direction@exemple.fr director
 php bin/gestclub.php account tresorerie@exemple.fr treasurer
 php bin/gestclub.php account secretariat@exemple.fr secretary
 ```
+
+Il suffit en pratique de créer le premier compte dirigeant en SSH. Ensuite, le dirigeant invite les autres membres du bureau depuis **Mon compte → Comptes du bureau** : chacun reçoit par e-mail un lien pour choisir son mot de passe. Le dirigeant y change aussi les rôles, désactive un compte au départ d’un bénévole et retire la double authentification d’un téléphone perdu. Chacun peut ensuite changer son mot de passe ou utiliser **Mot de passe oublié ?** sur la page de connexion.
 
 Chaque commande `account` génère un mot de passe et l’affiche une fois dans le terminal. Remets-le à la personne concernée par un canal privé. Pour une personne qui cumule plusieurs fonctions, indique les rôles séparés par des virgules, par exemple `director,treasurer`. Relancer `account` pour une adresse renouvelle son mot de passe et invalide ses sessions. Pour un départ, lance `php bin/gestclub.php disable adresse@exemple.fr`.
 
@@ -74,14 +76,39 @@ L’import reprend les adhésions, la comptabilité, les données du bureau et l
 
 [Importer ou restaurer une base Web Cloud Databases](https://docs.ovhcloud.com/fr/guides/web-cloud/databases/db-restore-import-database)
 
-## 7. Protéger les données des familles
+## 7. Envoyer les e-mails et planifier la tâche de nuit
+
+**E-mails.** Fair Gestion envoie les e-mails avec la fonction d’envoi de l’hébergement Web. Dans `config.php`, renseigne `mail_from` avec une adresse du domaine du club, par exemple `Nom du club <ne-pas-repondre@exemple.fr>` : une adresse d’un autre domaine (Gmail…) finirait en indésirable. Les réponses partent vers `privacy_contact`. Sont envoyés :
+
+- à la famille : l’accusé de réception avec le lien de suivi, puis un message quand le dossier est incomplet, validé ou refusé ;
+- au secrétariat : un rappel chaque matin tant que des dossiers attendent une vérification ;
+- aux membres du bureau : l’invitation et les liens de mot de passe ;
+- aux adhérents : les relances de cotisation lancées par le trésorier.
+
+Sans `mail_from`, rien n’est envoyé et le lien d’invitation s’affiche à l’écran pour être transmis à la main.
+
+**Tâche de nuit.** Dans l’espace client, ouvre **Hébergements → Tâches planifiées - Cron** et ajoute une tâche quotidienne. Indique `gestclub/bin/cron.php` comme commande et **PHP 8.4** comme langage. Elle équivaut à `php bin/gestclub.php daily` : suppression des données arrivées à échéance (section 8), rappel au secrétariat et synchronisation HelloAsso.
+
+## 8. Protéger les données des familles
 
 Le formulaire d’inscription reçoit des données personnelles, parfois de mineurs, et des pièces qui peuvent concerner la santé. Le club en est responsable.
 
 - **Information.** Les pages d’inscription et de bénévolat affichent à quoi servent les données, qui y a accès, leur durée de conservation et l’adresse `privacy_contact`. Vérifie ce texte sur l’instance avant d’ouvrir le formulaire.
 - **Pièces demandées.** Dans les consignes du formulaire, liste uniquement les pièces dont le club a besoin. Pour un mineur, la plupart des fédérations demandent une attestation liée au questionnaire de santé plutôt qu’un certificat médical : vérifie la règle de ta fédération.
-- **Suppression automatique.** Dans l’espace client, ouvre **Hébergements → Tâches planifiées - Cron** et ajoute une tâche quotidienne. Indique `gestclub/bin/purge-cron.php` comme commande et **PHP 8.4** comme langage. Chaque nuit, la tâche supprime les dossiers validés ou refusés depuis plus de `retention_days` jours avec leurs pièces, désactive les liens bénévoles des événements passés et efface les justificatifs qui ne sont plus rattachés à rien. L’adhérent reste au registre. Tu peux aussi la lancer à la main avec `php bin/gestclub.php purge` ou `php bin/gestclub.php purge 30`.
+- **Suppression automatique.** La tâche planifiée de la section 7 supprime chaque nuit les dossiers validés ou refusés depuis plus de `retention_days` jours avec leurs pièces, désactive les liens bénévoles des événements passés et efface les justificatifs qui ne sont plus rattachés à rien. L’adhérent reste au registre. Tu peux aussi la lancer à la main avec `php bin/gestclub.php purge` ou `php bin/gestclub.php purge 30`.
 - **Abus.** Une même connexion peut envoyer 30 dossiers ou pièces par heure, et prendre 20 créneaux bénévoles par heure. Au-delà de 500 dossiers en attente, le formulaire refuse les nouveaux dépôts. Si un lien circule hors du club, ferme puis rouvre le formulaire depuis **Inscriptions** : un nouveau lien est créé.
+
+## 9. Sécurité du bureau
+
+- **Double authentification.** Chacun peut l’activer depuis **Mon compte** avec une application d’authentification (Google Authenticator, Microsoft Authenticator, Aegis…). Pour l’imposer aux comptes qui voient l’argent et les données personnelles, indique `'require_2fa' => ['director', 'treasurer']` dans `config.php`. Si un téléphone est perdu, un dirigeant la retire depuis **Comptes du bureau**, ou en SSH : `php bin/gestclub.php reset-2fa adresse@exemple.fr`.
+- **Historique.** La page **Historique** indique qui a modifié quoi et quand : opérations, factures, registre, dossiers, envois publics, synchronisations. Elle ne recopie aucune donnée personnelle. Le trésorier voit les finances, le secrétaire le registre et les réunions, le dirigeant tout. Les entrées de plus de 5 ans sont supprimées par la tâche de nuit.
+
+## 10. Cotisations, HelloAsso, documents et agenda
+
+- **HelloAsso.** Dans ton espace HelloAsso, crée une clé dans la rubrique consacrée à l’API. Renseigne `client_id` et `client_secret` dans la section `helloasso` de `config.php`. Le trésorier indique le lien de la campagne d’adhésion de la saison dans **Cotisations**. Chaque nuit, ou avec **Synchroniser maintenant** dans **Cotisations et HelloAsso**, Fair Gestion ajoute au journal une cotisation par adhésion payée dont le nom correspond à un seul adhérent du registre. Les autres paiements (homonymes, nom absent du registre) sont listés pour être traités à la main. Une écriture modifiée ou supprimée par le trésorier n’est jamais recréée. Vérifie la première synchronisation sur l’instance pilote.
+- **Relances.** Dans **Cotisations et HelloAsso**, le trésorier envoie un e-mail aux adhérents dont la cotisation est en attente et dont la fiche contient un e-mail de contact. Le secrétaire renseigne cet e-mail dans la fiche ; il est repris automatiquement à la validation d’un dossier d’inscription. Un adhérent n’est relancé qu’une fois tous les 7 jours.
+- **Documents.** La page **Documents** prépare des pages à imprimer ou à enregistrer en PDF : attestation d’adhésion (avec le montant payé quand le trésorier l’imprime), convocation à une réunion (avec un pouvoir pour une AG) et reçu au titre des dons. Ce dernier est réservé aux organismes d’intérêt général : active-le avec `'fiscal_receipts' => true` seulement si c’est le cas du club. Chaque reçu reçoit un numéro définitif (`2026-0001`…) et se réimprime à l’identique.
+- **Agenda partagé.** Dans **Mon compte**, un dirigeant active un lien d’abonnement aux matchs et événements, à coller dans Google Agenda, Outlook ou le calendrier du téléphone. Il ne contient aucun nom de bénévole. Créer un nouveau lien désactive l’ancien.
 
 ## Publier le kit sur GitHub
 

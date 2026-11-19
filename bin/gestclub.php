@@ -15,6 +15,54 @@ function emptySeason(): array
         'meetings' => [], 'tasks' => [], 'decisions' => [], 'volunteers' => [], 'events' => [], 'partners' => [], 'partnerCommitments' => []];
 }
 
+function runPurge(PDO $database, int $days): string
+{
+    $database->beginTransaction();
+    $state = fetchState($database, true);
+    $before = $state;
+    [$bureau, $removed, $links] = purgeBureau($state['bureau'], $days, new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')));
+    if ($removed || $links) {
+        $query = $database->prepare(
+            'UPDATE gestclub_state SET bureau = CAST(? AS jsonb),
+             revision = revision + 1, staff_revision = revision + 1, updated_at = now() WHERE id = true'
+        );
+        $query->execute([jsonEncode($bureau)]);
+        recordAudit($database, 'Tâche planifiée', 'system', changeSummary($before, ['records' => $state['records'], 'bureau' => $bureau]));
+    }
+    // Pièces qui ne sont plus rattachées à rien : dossier purgé, justificatif remplacé ou ligne supprimée.
+    // Le délai d’un jour laisse de côté un envoi en cours.
+    $orphans = $database->prepare(
+        "DELETE FROM gestclub_attachments WHERE created_at < now() - interval '1 day' AND NOT (id = ANY(CAST(? AS text[])))"
+    );
+    $orphans->execute(['{' . implode(',', referencedAttachments($bureau)) . '}']);
+    $files = $orphans->rowCount();
+    $history = $database->exec("DELETE FROM gestclub_audit WHERE at < now() - interval '5 years'");
+    $database->exec('DELETE FROM gestclub_password_tokens WHERE expires_at < now()');
+    $database->commit();
+    return "Dossiers d’inscription clôturés depuis plus de $days jours supprimés : $removed.\n" .
+        "Liens bénévoles d’événements passés désactivés : $links.\n" .
+        "Pièces sans rattachement supprimées : $files.\n" .
+        "Entrées d’historique de plus de 5 ans supprimées : $history.\n";
+}
+
+/** One e-mail a day to the secretaries while registration files wait for a check. */
+function sendSecretaryDigest(PDO $database): string
+{
+    $state = fetchState($database);
+    $pending = 0;
+    foreach ($state['bureau'] as $period) {
+        foreach ($period['applications'] ?? [] as $item) if ($item['status'] === 'À vérifier') $pending++;
+    }
+    if (!$pending) return "Aucun dossier à vérifier.\n";
+    $sent = 0;
+    foreach (accountEmails($database, 'secretary') as $email) {
+        $sent += (int) sendMail($email, "$pending dossier(s) d’inscription à vérifier · " . config()['club_name'],
+            "Bonjour,\n\n$pending dossier(s) d’inscription attendent une vérification dans Fair Gestion.\n" .
+            "Ouvre l’espace Inscriptions : " . appUrl('') . "\n\nCe rappel est envoyé chaque jour tant que des dossiers attendent.");
+    }
+    return "Rappel des dossiers à vérifier envoyé à $sent secrétaire(s).\n";
+}
+
 try {
     $command = $argv[1] ?? 'help';
     switch ($command) {
@@ -153,31 +201,36 @@ try {
                 ? filter_var($argv[2], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 3650]])
                 : retentionDays();
             if ($days === false) throw new InvalidArgumentException('Indique un nombre de jours, par exemple 90.');
+            echo runPurge(db(), $days);
+            break;
+        case 'daily':
+            // Tâches de la nuit. Chaque étape est indépendante : une erreur HelloAsso n’empêche pas la purge.
             $database = db();
-            $database->beginTransaction();
-            $state = fetchState($database, true);
-            [$bureau, $removed, $links] = purgeBureau($state['bureau'], $days, new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')));
-            if ($removed || $links) {
-                $query = $database->prepare(
-                    'UPDATE gestclub_state SET bureau = CAST(? AS jsonb),
-                     revision = revision + 1, staff_revision = revision + 1, updated_at = now() WHERE id = true'
-                );
-                $query->execute([jsonEncode($bureau)]);
+            echo runPurge($database, retentionDays());
+            echo sendSecretaryDigest($database);
+            if (helloAssoSettings()) {
+                try {
+                    $report = syncHelloAsso($database);
+                    foreach ($report['seasons'] as $line) {
+                        echo "HelloAsso {$line['year']} : " . count($line['added']) . ' cotisation(s) ajoutée(s), ' . count($line['unmatched']) . " à traiter à la main.\n";
+                    }
+                } catch (Throwable $failure) {
+                    if ($database->inTransaction()) $database->rollBack();
+                    fwrite(STDERR, 'HelloAsso : ' . $failure->getMessage() . "\n");
+                }
             }
-            // Pièces qui ne sont plus rattachées à rien : dossier purgé, justificatif remplacé ou ligne supprimée.
-            // Le délai d’un jour laisse de côté un envoi en cours.
-            $orphans = $database->prepare(
-                "DELETE FROM gestclub_attachments WHERE created_at < now() - interval '1 day' AND NOT (id = ANY(CAST(? AS text[])))"
-            );
-            $orphans->execute(['{' . implode(',', referencedAttachments($bureau)) . '}']);
-            $files = $orphans->rowCount();
-            $database->commit();
-            echo "Dossiers d’inscription clôturés depuis plus de $days jours supprimés : $removed.\n";
-            echo "Liens bénévoles d’événements passés désactivés : $links.\n";
-            echo "Pièces sans rattachement supprimées : $files.\n";
+            break;
+        case 'reset-2fa':
+            $query = db()->prepare('UPDATE gestclub_users SET totp_secret = NULL, totp_last_step = 0, session_version = session_version + 1 WHERE email = ?');
+            $query->execute([strtolower(trim($argv[2] ?? ''))]);
+            echo $query->rowCount() ? "Double authentification retirée.\n" : "Compte introuvable.\n";
+            break;
+        case 'helloasso':
+            $report = syncHelloAsso(db());
+            echo jsonEncode($report, JSON_PRETTY_PRINT) . "\n";
             break;
         default:
-            echo "Utilisation : php bin/gestclub.php install | account EMAIL RÔLES | disable EMAIL | season ANNÉE | import FICHIER | export | purge [JOURS]\n";
+            echo "Utilisation : php bin/gestclub.php install | account EMAIL RÔLES | disable EMAIL | season ANNÉE | import FICHIER | export | purge [JOURS] | daily | helloasso | reset-2fa EMAIL\n";
     }
 } catch (Throwable $failure) {
     fwrite(STDERR, ($failure instanceof InvalidArgumentException ? $failure->getMessage() :

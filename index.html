@@ -88,6 +88,9 @@
     .nav-button:hover { background: #203c60; color: #fff; }
     .nav-button[aria-current="page"] { background: #254567; color: #fff; font-weight: 750; box-shadow: inset 3px 0 0 var(--mint); }
     .nav-button[aria-current="page"] .icon { color: #8be8bf; }
+    .account-links { display: grid; gap: 6px; margin-bottom: 12px; }
+    .account-links a { color: inherit; font-weight: 600; text-decoration: none; }
+    .account-links a:hover, .account-links a:focus-visible { text-decoration: underline; }
     .sidebar-footer { margin-top: auto; padding: 15px 2px 1px; border-top: 1px solid #395474; }
     .sidebar-footer .text-button { background: #203c60; border-color: #55708c; color: #fff; }
     .sidebar-footer .text-button:hover { background: #304f71; }
@@ -351,6 +354,7 @@
           </select>
         </div>
         <button type="button" class="text-button" id="local-export">Exporter les données locales</button>
+        <div class="account-links" id="account-links" hidden></div>
         <div class="actions" id="online-controls" hidden>
           <button type="button" class="text-button" id="online-refresh">Actualiser</button>
           <form method="post"><input type="hidden" name="csrf" id="logout-token">
@@ -391,6 +395,7 @@
         <label class="field">Nom <input name="last" required maxlength="60"></label>
       </div>
       <label class="field">Équipe <select name="team" id="member-team"></select></label>
+      <label class="field" id="member-email-field">E-mail de contact <input name="email" type="email" maxlength="254" autocomplete="off"></label>
       <label class="field">Dossier
         <select name="fileStatus"><option>À vérifier</option><option>Incomplet</option><option>Complet</option></select>
       </label>
@@ -505,6 +510,12 @@
     document.getElementById("online-controls").hidden = false;
     document.getElementById("local-export").hidden = true;
     document.getElementById("logout-token").value = remote.csrf;
+    const accountLinks = [["compte.php", "Mon compte"], ["historique.php", "Historique"]];
+    if (remote.roles.some(role => ["director", "secretary", "treasurer"].includes(role))) accountLinks.splice(1, 0, ["documents.php", "Documents"]);
+    if (remote.roles.includes("treasurer")) accountLinks.splice(1, 0, ["relances.php", "Cotisations et HelloAsso"]);
+    const linksBox = document.getElementById("account-links");
+    linksBox.replaceChildren(...accountLinks.map(([href, label]) => Object.assign(document.createElement("a"), { href, textContent: label })));
+    linksBox.hidden = false;
   } else {
     document.getElementById("demo-controls").hidden = false;
   }
@@ -880,6 +891,9 @@
     form.elements.team.value = member?.team ?? teams[0];
     form.elements.fileStatus.value = fileStatus(member);
     form.elements.fileNote.value = member?.fileNote ?? "";
+    form.elements.email.value = member?.email ?? "";
+    // Le trésorier ne voit pas les e-mails : il ne doit pas les effacer en enregistrant.
+    document.getElementById("member-email-field").hidden = Boolean(remote && activeRole === "treasurer");
     form.elements.paid.value = String(member ? hasPaid(member) : false);
     form.elements.paid.disabled = Boolean(remote || lockedFinanceYear() || (member && hasRecordedDues(member)));
     dialog.showModal();
@@ -3692,6 +3706,7 @@
       team: form.elements.team.value,
       fileStatus: form.elements.fileStatus.value,
       fileNote: form.elements.fileNote.value.trim(),
+      email: document.getElementById("member-email-field").hidden ? existing?.email : form.elements.email.value.trim().toLowerCase(),
       paid: form.elements.paid.disabled ? Boolean(existing?.paid) : form.elements.paid.value === "true"
     };
     const index = members.findIndex(item => item.id === editingId);

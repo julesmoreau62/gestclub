@@ -30,11 +30,20 @@ Une adhésion reprise par le secrétaire apparaît dans les effectifs du dirigea
 
 Dans **Matchs et événements**, le compte dirigeant prépare le planning de la saison, ajoute des créneaux à partir des postes bénévoles et suit les places à pourvoir. Sur une instance hébergée, il peut activer un lien d’inscription par événement. Les bénévoles y prennent un créneau sans créer de compte.
 
-Dans **Inscriptions**, le compte secrétaire ouvre le formulaire pour la saison et partage son lien aux familles. Elles déposent leur dossier et suivent son état depuis un lien privé. Le secrétaire consulte les pièces, indique ce qui manque et valide le dossier pour créer ou compléter une adhésion. Les nouvelles adhésions apparaissent aussi dans le suivi des cotisations. Les familles n’ont pas besoin de compte. Le formulaire leur indique l’usage de leurs données et l’adresse à contacter. Une tâche planifiée supprime les dossiers clôturés et leurs pièces après la durée choisie par le club ([détails](docs/installation-ovh.md#7-protéger-les-données-des-familles)).
+Dans **Inscriptions**, le compte secrétaire ouvre le formulaire pour la saison et partage son lien aux familles. Elles déposent leur dossier et suivent son état depuis un lien privé. Le secrétaire consulte les pièces, indique ce qui manque et valide le dossier pour créer ou compléter une adhésion. Les nouvelles adhésions apparaissent aussi dans le suivi des cotisations. Les familles n’ont pas besoin de compte. Le formulaire leur indique l’usage de leurs données et l’adresse à contacter. Une tâche planifiée supprime les dossiers clôturés et leurs pièces après la durée choisie par le club ([détails](docs/installation-ovh.md#8-protéger-les-données-des-familles)).
 
 Dans **Partenaires**, le compte dirigeant suit les sponsors et leurs contacts, les renouvellements à préparer et les engagements du club. Il peut joindre une photo par engagement et reprendre les fiches de la saison précédente.
 
 Dans **Matériel**, le club garde un inventaire commun à toutes les saisons, suit les prêts et les retours partiels, et repère les retours en retard et le matériel à réparer. Le compte dirigeant y a accès. Le rôle **Responsable du matériel** permet de donner accès à cet espace seul.
+
+## Autour du bureau
+
+- **Comptes** : le dirigeant invite les membres du bureau par e-mail, change les rôles et retire un accès. Chacun change son mot de passe ou le réinitialise par e-mail, et peut activer la double authentification. Le club peut l’imposer au dirigeant et au trésorier.
+- **E-mails** : accusé de réception et suivi des dossiers pour les familles, rappel quotidien au secrétariat, relances de cotisation par le trésorier.
+- **HelloAsso** : les adhésions payées en ligne s’ajoutent chaque nuit au journal de trésorerie quand le nom correspond à un adhérent.
+- **Documents** : attestation d’adhésion, convocation avec pouvoir, reçu au titre des dons numéroté, prêts à imprimer ou à enregistrer en PDF.
+- **Agenda** : lien d’abonnement .ics aux matchs et événements.
+- **Historique** : qui a modifié quoi et quand, filtré selon le rôle.
 
 ## Essayer la démo
 
@@ -51,7 +60,8 @@ Le guide détaille la configuration d’un hébergement Web OVHcloud avec **PHP 
 | [`index.html`](index.html) | Interface commune à la démo et à la version hébergée |
 | [`sql/001-install.sql`](sql/001-install.sql) | Schéma PostgreSQL pour les comptes, les données de saison et les justificatifs |
 | [`config.example.php`](config.example.php) | Modèle de configuration à copier et à renseigner sur l’hébergement du club |
-| [`bin/gestclub.php`](bin/gestclub.php) | Initialisation, gestion des comptes et saisons, import et export |
+| [`bin/gestclub.php`](bin/gestclub.php) | Initialisation, gestion des comptes et saisons, import et export, tâches de nuit |
+| [`bin/cron.php`](bin/cron.php) | Tâche planifiée quotidienne : purge, rappels, synchronisation HelloAsso |
 | [`docs/installation-ovh.md`](docs/installation-ovh.md) | Installation, reprise des données et sauvegardes |
 
 Fair Gestion est au **stade pilote**. Le schéma, les contrôles d’accès et la gestion des modifications concurrentes ont été vérifiés localement. La mise en service complète sur OVHcloud reste à valider sur une instance pilote.

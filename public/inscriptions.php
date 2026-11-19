@@ -33,6 +33,7 @@ try {
         $connection = db();
         if ($post) $connection->beginTransaction();
         $state = fetchState($connection, $post);
+        $before = $state;
         $location = registrationLocation($state['bureau'], $token, $tracking);
         if ($location) {
             [$year, $index] = $location;
@@ -74,7 +75,9 @@ try {
                 else $period['applications'][] = $item;
                 unset($period);
                 savePublicBureau($connection, $state['bureau']);
+                recordAudit($connection, "Lien d’inscription", "public", changeSummary($before, $state));
                 $connection->commit();
+                if (!$tracking) sendRegistrationMail($item, (int) $year);
                 header('Location: inscriptions.php?dossier=' . $item['id'], true, 303);
                 exit;
             }

@@ -36,3 +36,31 @@ CREATE TABLE IF NOT EXISTS gestclub_attachments (
 ALTER TABLE gestclub_state ADD COLUMN IF NOT EXISTS staff_revision bigint NOT NULL DEFAULT 0;
 -- Mise à jour d’une installation existante : part de la révision actuelle.
 UPDATE gestclub_state SET staff_revision = revision WHERE staff_revision = 0;
+
+-- Réglages partagés de l'instance (jeton HelloAsso, agenda, compteur de reçus…).
+CREATE TABLE IF NOT EXISTS gestclub_settings (
+    key text PRIMARY KEY,
+    value jsonb NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Liens à usage unique envoyés par e-mail : invitation et mot de passe oublié. Seule l'empreinte est stockée.
+CREATE TABLE IF NOT EXISTS gestclub_password_tokens (
+    token_hash text PRIMARY KEY,
+    user_id bigint NOT NULL REFERENCES gestclub_users (id) ON DELETE CASCADE,
+    expires_at timestamptz NOT NULL
+);
+
+-- Double authentification (TOTP).
+ALTER TABLE gestclub_users ADD COLUMN IF NOT EXISTS totp_secret text;
+ALTER TABLE gestclub_users ADD COLUMN IF NOT EXISTS totp_last_step bigint NOT NULL DEFAULT 0;
+
+-- Historique des modifications.
+CREATE TABLE IF NOT EXISTS gestclub_audit (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    at timestamptz NOT NULL DEFAULT now(),
+    actor text NOT NULL,
+    role text NOT NULL,
+    summary jsonb NOT NULL CHECK (jsonb_typeof(summary) = 'array')
+);
+CREATE INDEX IF NOT EXISTS gestclub_audit_at ON gestclub_audit (at);

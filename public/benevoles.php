@@ -27,6 +27,7 @@ try {
         $connection = db();
         if ($isPost) $connection->beginTransaction();
         $state = fetchState($connection, $isPost);
+        $before = $state;
         $location = findSharedEvent($state['bureau'], $token);
         if ($location) {
             [$year, $index] = $location;
@@ -41,6 +42,7 @@ try {
                 $item['slots'][$selected]['owner'] = eventText($_POST['name'] ?? null);
                 $state['bureau'][$year]['events'][$index] = $item;
                 savePublicBureau($connection, $state['bureau']);
+                recordAudit($connection, "Lien bénévoles", "public", changeSummary($before, $state));
                 $confirmed = true;
             }
         }
