@@ -26,7 +26,7 @@ php -m
 
 Vérifie que `php -v` affiche PHP 8.4 et que `php -m` contient `pdo_pgsql` et `fileinfo`. En SSH, si `php` pointe vers une autre version, utilise le binaire PHP 8.4 proposé par ton hébergement, par exemple `/usr/local/php8.4/bin/php`. [Choisir une version PHP en SSH](https://docs.ovhcloud.com/fr/guides/web-cloud/web-hosting/ssh-on-webhosting)
 
-Dans `config.php`, renseigne le nom du club, l’adresse HTTPS exacte du site dans `origin`, ainsi que le nom d’hôte, le port, la base, l’utilisateur et le mot de passe de PostgreSQL. Garde `sslmode=require` dans la chaîne de connexion. Le fichier est stocké exclusivement sur l’espace privé du club.
+Dans `config.php`, renseigne le nom du club, l’adresse HTTPS exacte du site dans `origin`, ainsi que le nom d’hôte, le port, la base, l’utilisateur et le mot de passe de PostgreSQL. Garde `sslmode=require` dans la chaîne de connexion. Renseigne aussi `privacy_contact`, l’adresse que les familles et les bénévoles utiliseront pour leurs données, et `retention_days`, la durée de conservation d’un dossier d’inscription clôturé (90 jours par défaut). Le fichier est stocké exclusivement sur l’espace privé du club.
 
 [Configurer le dossier racine du domaine dans Multisite](https://docs.ovhcloud.com/fr/guides/web-cloud/web-hosting/multisites-configure-multisite)
 
@@ -50,7 +50,7 @@ Pour un compte réservé à l’inventaire, utilise `php bin/gestclub.php accoun
 1. Ouvre l’adresse HTTPS du club sur ordinateur avec le compte secrétaire. Ajoute une adhésion de test.
 2. Ouvre la même adresse en navigation privée ou sur téléphone avec le compte trésorier. Dans **Cotisations**, vérifie que l’adhésion est disponible.
 3. Fais un essai dans le compte dirigeant. Il voit les effectifs et les synthèses. Le trésorier accède aux écritures et aux justificatifs financiers. Le secrétaire gère le registre et les réunions et peut joindre la synthèse financière au PV.
-4. Pour un écran resté ouvert, utilise **Actualiser**. Si deux personnes modifient le même état depuis une version ancienne, Fair Gestion recharge la dernière version et demande de reprendre la modification.
+4. Pour un écran resté ouvert, utilise **Actualiser**. Si deux personnes du bureau modifient le même état depuis une version ancienne, Fair Gestion recharge la dernière version et demande de reprendre la modification. Un dossier déposé par une famille ou un créneau pris par un bénévole ne bloque pas l’enregistrement du bureau : Fair Gestion garde les deux.
 5. Vérifie qu’une visite en navigation privée sur le site affiche la connexion et que `/config.php`, `/server/state.php` et `/sql/001-install.sql` répondent par une erreur 404.
 
 Pour tester les inscriptions sur l’instance pilote, ouvre **Inscriptions** avec le compte secrétaire et active le formulaire de la saison. Dépose un dossier fictif avec une pièce en navigation privée et conserve son lien de suivi. Marque le dossier incomplet depuis le compte secrétaire, consulte le message et ajoute une pièce depuis le lien privé. Valide ensuite le dossier et vérifie sa présence dans le registre, puis dans les cotisations. Vérifie aussi que les comptes sans rôle secrétaire ne peuvent pas télécharger les pièces d’inscription.
@@ -70,9 +70,18 @@ L’import reprend les adhésions, la comptabilité, les données du bureau et l
 
 - **Sauvegarde complète.** Depuis **Web Cloud Databases**, télécharge régulièrement une sauvegarde PostgreSQL. Elle contient les tables, les comptes, les données et les justificatifs. Garde une copie chiffrée hors de l’hébergement Web et vérifie la restauration sur une autre base de test.
 - **Export portable.** La commande `php bin/gestclub.php export` produit un JSON des données et des pièces du club. Conserve cet export dans un emplacement privé. Crée de nouveaux comptes dans l’installation de destination.
-- **Mise à jour.** Fais une sauvegarde, remplace les fichiers du programme par la nouvelle version et conserve le `config.php` du club. Consulte les instructions de la version avant de relancer la commande d’installation.
+- **Mise à jour.** Fais une sauvegarde, remplace les fichiers du programme par la nouvelle version et conserve le `config.php` du club. Relance ensuite `php bin/gestclub.php install` : la commande ajoute les nouvelles colonnes sans toucher aux données. Ajoute dans `config.php` les réglages apparus dans `config.example.php`.
 
 [Importer ou restaurer une base Web Cloud Databases](https://docs.ovhcloud.com/fr/guides/web-cloud/databases/db-restore-import-database)
+
+## 7. Protéger les données des familles
+
+Le formulaire d’inscription reçoit des données personnelles, parfois de mineurs, et des pièces qui peuvent concerner la santé. Le club en est responsable.
+
+- **Information.** Les pages d’inscription et de bénévolat affichent à quoi servent les données, qui y a accès, leur durée de conservation et l’adresse `privacy_contact`. Vérifie ce texte sur l’instance avant d’ouvrir le formulaire.
+- **Pièces demandées.** Dans les consignes du formulaire, liste uniquement les pièces dont le club a besoin. Pour un mineur, la plupart des fédérations demandent une attestation liée au questionnaire de santé plutôt qu’un certificat médical : vérifie la règle de ta fédération.
+- **Suppression automatique.** Dans l’espace client, ouvre **Hébergements → Tâches planifiées - Cron** et ajoute une tâche quotidienne. Indique `gestclub/bin/purge-cron.php` comme commande et **PHP 8.4** comme langage. Chaque nuit, la tâche supprime les dossiers validés ou refusés depuis plus de `retention_days` jours avec leurs pièces, désactive les liens bénévoles des événements passés et efface les justificatifs qui ne sont plus rattachés à rien. L’adhérent reste au registre. Tu peux aussi la lancer à la main avec `php bin/gestclub.php purge` ou `php bin/gestclub.php purge 30`.
+- **Abus.** Une même connexion peut envoyer 30 dossiers ou pièces par heure, et prendre 20 créneaux bénévoles par heure. Au-delà de 500 dossiers en attente, le formulaire refuse les nouveaux dépôts. Si un lien circule hors du club, ferme puis rouvre le formulaire depuis **Inscriptions** : un nouveau lien est créé.
 
 ## Publier le kit sur GitHub
 

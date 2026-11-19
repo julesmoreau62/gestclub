@@ -48,7 +48,10 @@ try {
     }
     $connection->beginTransaction();
     $state = fetchState($connection, true);
-    if ($state['revision'] !== $payload['revision']) {
+    // A page loaded before a public sign-up or registration can still save: it has seen every bureau change,
+    // and the server keeps what came from the public links (see mergeState).
+    $behindPublicOnly = $payload['revision'] < $state['revision'] && $payload['revision'] >= $state['staffRevision'];
+    if ($state['revision'] !== $payload['revision'] && !$behindPublicOnly) {
         $connection->rollBack();
         respond(['error' => 'Le club a été modifié sur un autre appareil. Les données ont été rechargées. Reprends ta modification.',
             'state' => scopedState($state, $role, (string) $user['id'])], 409);
@@ -57,13 +60,13 @@ try {
         $connection->rollBack();
         respond(['error' => 'Cette action est réservée au secrétaire.'], 403);
     }
-    $next = persistAttachments($connection, $state, mergeState($state, $payload, $role, (string) $user['id']));
+    $next = persistAttachments($connection, $state, mergeState($state, $payload, $role, (string) $user['id'], $behindPublicOnly));
     if (isset($payload['registrationCommand'])) {
         $next = applyRegistrationCommand($next, $payload['registrationCommand']);
     }
     $update = $connection->prepare(
         'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-         revision = revision + 1, updated_at = now() WHERE id = true RETURNING revision'
+         revision = revision + 1, staff_revision = revision + 1, updated_at = now() WHERE id = true RETURNING revision'
     );
     $update->execute([jsonEncode($next['records']), jsonEncode($next['bureau'])]);
     $next['revision'] = (int) $update->fetchColumn();

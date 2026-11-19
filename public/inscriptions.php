@@ -22,6 +22,13 @@ try {
     } elseif (!$canSubmit) {
         http_response_code(403);
         $error = 'Formulaire expiré. Rouvre le lien avant de réessayer.';
+    } elseif ($post && trim((string) ($_POST['site'] ?? '')) !== '') {
+        // Champ invisible pour les personnes : seul un robot le remplit.
+        http_response_code(422);
+        $error = 'Vérifie les champs du formulaire.';
+    } elseif ($post && rateLimitExceeded('registration', REGISTRATION_POSTS_PER_HOUR, 60)) {
+        http_response_code(429);
+        $error = 'Trop d’envois depuis cette connexion. Réessaie dans une heure ou contacte le club.';
     } elseif (validEventToken($token)) {
         $connection = db();
         if ($post) $connection->beginTransaction();
@@ -44,10 +51,15 @@ try {
                         'email' => registrationEmail($_POST['email'] ?? null),
                         'date' => (new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')))->format('Y-m-d'),
                         'status' => 'À vérifier', 'note' => '', 'files' => []];
+                    $pending = 0;
                     foreach ($period['applications'] ?? [] as $previous) {
                         if ($previous['email'] === $item['email'] && sameApplicant($previous, $item)) {
                             throw new InvalidArgumentException('Un dossier existe déjà pour ce nom et cette adresse. Utilise ton lien de suivi ou contacte le club.');
                         }
+                        if ($previous['status'] === 'À vérifier') $pending++;
+                    }
+                    if ($pending >= REGISTRATION_PENDING_LIMIT) {
+                        throw new InvalidArgumentException('Le club a trop de dossiers en attente pour le moment. Réessaie plus tard ou contacte-le.');
                     }
                 }
                 $files = registrationUploads($_FILES['pieces'] ?? [], $available);
@@ -60,11 +72,8 @@ try {
                 $item['note'] = '';
                 if ($tracking) $period['applications'][$index] = $item;
                 else $period['applications'][] = $item;
-                $update = $connection->prepare(
-                    'UPDATE gestclub_state SET bureau = CAST(? AS jsonb), revision = revision + 1,
-                     updated_at = now() WHERE id = true'
-                );
-                $update->execute([jsonEncode($state['bureau'])]);
+                unset($period);
+                savePublicBureau($connection, $state['bureau']);
                 $connection->commit();
                 header('Location: inscriptions.php?dossier=' . $item['id'], true, 303);
                 exit;
@@ -92,6 +101,16 @@ function enteredValue(string $name): string
 {
     return is_string($_POST[$name] ?? null) ? textEscape($_POST[$name]) : '';
 }
+
+function privacyContactHtml(): string
+{
+    $contact = privacyContact();
+    if ($contact === '') return 'le secrétariat du club';
+    if (filter_var($contact, FILTER_VALIDATE_EMAIL)) {
+        return '<a href="mailto:' . textEscape($contact) . '">' . textEscape($contact) . '</a>';
+    }
+    return textEscape($contact);
+}
 ?>
 <!doctype html>
 <html lang="fr">
@@ -114,6 +133,9 @@ button { background: #13294b; color: white; cursor: pointer; font-weight: 700 }
 .notice { padding: 12px; background: #edf5fa; border-radius: 8px }
 .note { white-space: pre-wrap; overflow-wrap: anywhere }
 small { color: #4e5e70 }
+.privacy { margin-top: 24px; font-size: .875rem; color: #4e5e70 }
+.privacy a { color: #13294b }
+.trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden }
 </style>
 <main>
 <p class="brand"><img src="./assets/fair-icone.svg" alt="" width="28" height="28">Fair Gestion</p>
@@ -131,6 +153,7 @@ small { color: #4e5e70 }
 <?php if (!$tracking && $instructions !== ''): ?><p class="notice note"><?= textEscape($instructions) ?></p><?php endif; ?>
 <form method="post" enctype="multipart/form-data">
 <input type="hidden" name="csrf" value="<?= textEscape($csrf) ?>">
+<label class="trap" aria-hidden="true">Ne pas remplir <input name="site" tabindex="-1" autocomplete="off"></label>
 <?php if (!$tracking): ?>
 <label>Prénom de l’adhérent <input name="first" required maxlength="60" value="<?= enteredValue('first') ?>"></label>
 <label>Nom de l’adhérent <input name="last" required maxlength="60" value="<?= enteredValue('last') ?>"></label>
@@ -141,6 +164,17 @@ small { color: #4e5e70 }
 <small><?= $available ?> fichier(s) maximum par envoi. PDF, JPEG, PNG ou WebP, 1 Mo par fichier.</small></label>
 <button type="submit"><?= $tracking ? 'Envoyer les pièces' : 'Déposer le dossier' ?></button>
 </form>
+<?php endif; ?>
+<?php if ($year !== null): ?>
+<section class="privacy" aria-labelledby="privacy-title">
+<h2 id="privacy-title">Tes données</h2>
+<p><?= textEscape(config()['club_name']) ?> utilise ces informations et ces pièces uniquement pour traiter l’adhésion.
+Seul le secrétariat du club y a accès. N’envoie que les pièces demandées par le club.</p>
+<p>Le dossier et ses pièces sont supprimés <?= retentionDays() ?> jours après sa validation ou son refus.
+L’adhérent reste ensuite inscrit au registre du club.</p>
+<p>Pour consulter, corriger ou faire supprimer ces données, écris à <?= privacyContactHtml() ?>.
+Tu peux aussi adresser une réclamation à la <a href="https://www.cnil.fr/fr/plaintes">CNIL</a>.</p>
+</section>
 <?php endif; ?>
 </main>
 </html>

@@ -2,6 +2,11 @@
 declare(strict_types=1);
 
 const REGISTRATION_FILE_LIMIT = 3;
+// Envois par heure depuis une même connexion (dépôts et ajouts de pièces). Une permanence d’inscription
+// sur le Wi-Fi du club reste possible ; un envoi en boucle s’arrête vite.
+const REGISTRATION_POSTS_PER_HOUR = 30;
+// Dossiers « À vérifier » au-delà desquels le formulaire refuse les nouveaux dépôts.
+const REGISTRATION_PENDING_LIMIT = 500;
 
 function registrationText(mixed $value, int $limit, bool $required = false): string
 {
@@ -109,7 +114,64 @@ function applyRegistrationCommand(array $state, mixed $command): array
     }
     $item['status'] = $status;
     $item['note'] = $note;
+    if (in_array($status, ['Validé', 'Refusé'], true)) {
+        $item['closedAt'] = (new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')))->format('Y-m-d');
+    }
     return $state;
+}
+
+/** Ids of every stored file still referenced by the club data. */
+function referencedAttachments(array $bureau): array
+{
+    $ids = [];
+    foreach ($bureau as $period) {
+        foreach (['entries', 'invoices', 'expenses', 'partnerCommitments'] as $field) {
+            foreach ($period[$field] ?? [] as $item) {
+                if (isset($item['receipt']['id'])) $ids[$item['receipt']['id']] = true;
+            }
+        }
+        foreach ($period['applications'] ?? [] as $item) {
+            foreach ($item['files'] ?? [] as $file) $ids[$file['id']] = true;
+        }
+    }
+    return array_keys($ids);
+}
+
+/**
+ * Removes the registration files kept longer than needed.
+ * - closed files (Validé or Refusé) once the delay has passed since closing: the member stays in the register;
+ * - public sign-up links of events that are over;
+ * Returns the bureau and the counts for the report.
+ */
+function purgeBureau(array $bureau, int $days, DateTimeImmutable $today): array
+{
+    $limit = $today->modify("-$days days")->format('Y-m-d');
+    $todayText = $today->format('Y-m-d');
+    $removed = 0;
+    $links = 0;
+    foreach ($bureau as &$period) {
+        if (isset($period['applications'])) {
+            $kept = [];
+            foreach ($period['applications'] as $item) {
+                $closed = in_array($item['status'], ['Validé', 'Refusé'], true);
+                if ($closed && ($item['closedAt'] ?? $item['date']) < $limit) {
+                    $removed++;
+                    continue;
+                }
+                $kept[] = $item;
+            }
+            $period['applications'] = $kept;
+        }
+        foreach ($period['events'] ?? [] as &$event) {
+            if ($event['token'] !== '' && $event['date'] < $todayText) {
+                $event['token'] = '';
+                $links++;
+            }
+        }
+        unset($event);
+    }
+    unset($period);
+    return [$bureau, $removed, $links];
 }
 
 function registrationUploads(array $uploads, int $available): array
@@ -163,7 +225,8 @@ function restoreRegistrationFiles(PDO $database, array &$period): void
             'first' => registrationName($item['first'] ?? null), 'last' => registrationName($item['last'] ?? null),
             'email' => registrationEmail($item['email'] ?? null), 'date' => $date, 'status' => $status,
             'note' => registrationText($item['note'] ?? '', 600), 'files' => [],
-        ];
+        ] + (is_string($item['closedAt'] ?? null) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $item['closedAt'])
+            ? ['closedAt' => $item['closedAt']] : []);
         foreach ($files as $file) {
             if (!is_array($file)) throw new InvalidArgumentException('Pièce d’inscription invalide.');
             $item['files'][] = storeAttachment($insert, $file);

@@ -80,18 +80,27 @@ function csrfValid(mixed $token): bool
     return is_string($token) && hash_equals($_SESSION['csrf'], $token);
 }
 
-function login(string $email, string $password): bool
+/**
+ * Counts one attempt for the caller in the given scope and tells whether the limit is exceeded.
+ * Only the direct peer address is used. A caller cannot choose its own key using forwarded headers.
+ */
+function rateLimitExceeded(string $scope, int $max, int $minutes): bool
 {
-    // Only the direct peer address is used. A caller cannot choose its own rate-limit key using forwarded headers.
-    $key = hash('sha256', 'ip:' . ($_SERVER['REMOTE_ADDR'] ?? 'local'));
+    $key = hash('sha256', $scope . ':' . ($_SERVER['REMOTE_ADDR'] ?? 'local'));
     $database = db();
     $database->exec('DELETE FROM gestclub_login_limits WHERE expires_at < now()');
     $limit = $database->prepare(
-        "INSERT INTO gestclub_login_limits (key, attempts, expires_at) VALUES (?, 1, now() + interval '15 minutes')
-         ON CONFLICT (key) DO UPDATE SET attempts = gestclub_login_limits.attempts + 1 RETURNING attempts"
+        'INSERT INTO gestclub_login_limits (key, attempts, expires_at) VALUES (?, 1, now() + make_interval(mins => ?))
+         ON CONFLICT (key) DO UPDATE SET attempts = gestclub_login_limits.attempts + 1 RETURNING attempts'
     );
-    $limit->execute([$key]);
-    if ((int) $limit->fetchColumn() > 15) return false;
+    $limit->execute([$key, $minutes]);
+    return (int) $limit->fetchColumn() > $max;
+}
+
+function login(string $email, string $password): bool
+{
+    if (rateLimitExceeded('ip', 15, 15)) return false;
+    $database = db();
     $query = $database->prepare('SELECT id, password_hash, session_version FROM gestclub_users WHERE email = ? AND active');
     $query->execute([strtolower(trim($email))]);
     $user = $query->fetch();
@@ -105,8 +114,35 @@ function login(string $email, string $password): bool
 
 function fetchState(PDO $connection, bool $lock = false): array
 {
-    $row = $connection->query('SELECT revision, records, bureau FROM gestclub_state WHERE id = true' .
+    $row = $connection->query('SELECT revision, staff_revision, records, bureau FROM gestclub_state WHERE id = true' .
         ($lock ? ' FOR UPDATE' : ''))->fetch();
     if (!$row) throw new RuntimeException('Base à initialiser avec bin/gestclub.php.');
-    return ['revision' => (int) $row['revision'], 'records' => jsonDecode($row['records']), 'bureau' => jsonDecode($row['bureau'])];
+    return ['revision' => (int) $row['revision'], 'records' => jsonDecode($row['records']), 'bureau' => jsonDecode($row['bureau']),
+        'staffRevision' => (int) $row['staff_revision']];
+}
+
+/**
+ * Saves a change made from a public link (registration form, volunteer sign-up).
+ * It moves the revision forward without touching staff_revision, so the bureau can keep saving
+ * from a page loaded before that change: those links only write data the bureau cannot send back.
+ */
+function savePublicBureau(PDO $connection, array $bureau): void
+{
+    $update = $connection->prepare(
+        'UPDATE gestclub_state SET bureau = CAST(? AS jsonb), revision = revision + 1, updated_at = now() WHERE id = true'
+    );
+    $update->execute([jsonEncode($bureau)]);
+}
+
+/** Global privacy settings shown on the public pages. */
+function privacyContact(): string
+{
+    $contact = config()['privacy_contact'] ?? '';
+    return is_string($contact) ? trim($contact) : '';
+}
+
+function retentionDays(): int
+{
+    $days = config()['retention_days'] ?? 90;
+    return is_int($days) && $days >= 1 ? $days : 90;
 }

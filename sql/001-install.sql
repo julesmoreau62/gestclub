@@ -30,3 +30,9 @@ CREATE TABLE IF NOT EXISTS gestclub_attachments (
     content bytea NOT NULL CHECK (octet_length(content) BETWEEN 1 AND 1048576),
     created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Révision des seules modifications du bureau. Les liens publics (inscriptions, bénévoles)
+-- font avancer revision sans toucher à staff_revision.
+ALTER TABLE gestclub_state ADD COLUMN IF NOT EXISTS staff_revision bigint NOT NULL DEFAULT 0;
+-- Mise à jour d’une installation existante : part de la révision actuelle.
+UPDATE gestclub_state SET staff_revision = revision WHERE staff_revision = 0;

@@ -20,6 +20,9 @@ try {
     if (!$canClaim) {
         http_response_code(403);
         $error = 'Formulaire expiré. Rouvre le lien pour réessayer.';
+    } elseif ($isPost && rateLimitExceeded('volunteers', 20, 60)) {
+        http_response_code(429);
+        $error = 'Trop d’inscriptions depuis cette connexion. Réessaie dans une heure ou contacte le club.';
     } elseif (validEventToken($token)) {
         $connection = db();
         if ($isPost) $connection->beginTransaction();
@@ -37,11 +40,7 @@ try {
             } else {
                 $item['slots'][$selected]['owner'] = eventText($_POST['name'] ?? null);
                 $state['bureau'][$year]['events'][$index] = $item;
-                $query = $connection->prepare(
-                    'UPDATE gestclub_state SET bureau = CAST(? AS jsonb), revision = revision + 1,
-                     updated_at = now() WHERE id = true'
-                );
-                $query->execute([jsonEncode($state['bureau'])]);
+                savePublicBureau($connection, $state['bureau']);
                 $confirmed = true;
             }
         }
@@ -96,6 +95,7 @@ input { min-width: 0; width: 100% }
 button { background: #13294b; color: white; cursor: pointer; font-weight: 700 }
 .error { color: #8e2428 }
 .success { padding: 12px; color: #07533b; background: #e1f4eb; border-radius: 8px }
+.privacy { margin-top: 24px; font-size: .875rem; color: #4e5e70 }
 </style>
 <main>
 <p class="brand"><img src="./assets/fair-icone.svg" alt="" width="28" height="28">Fair Gestion</p>
@@ -127,6 +127,9 @@ button { background: #13294b; color: white; cursor: pointer; font-weight: 700 }
 </li>
 <?php endforeach; ?>
 </ul>
+<p class="privacy">Ton nom sert uniquement à organiser l’événement. Il n’apparaît pas sur cette page :
+seuls les dirigeants du club le voient.<?php if (privacyContact() !== ''): ?>
+Pour le faire retirer, écris à <?= textEscape(privacyContact()) ?>.<?php endif; ?></p>
 <?php endif; ?>
 </main>
 </html>

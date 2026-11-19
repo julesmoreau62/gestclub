@@ -207,7 +207,30 @@ function validateFinance(array $data): void
     }
 }
 
-function mergeState(array $state, array $payload, string $role, string $userId): array
+/**
+ * Keeps the volunteer names taken from a public link after the director's page was loaded.
+ * The director could not have seen them, so an empty slot in the incoming data is not a removal.
+ */
+function keepPublicClaims(array $existing, array $incoming): array
+{
+    $previous = [];
+    foreach ($existing as $event) {
+        foreach ($event['slots'] ?? [] as $slot) {
+            if (($slot['owner'] ?? '') !== '') $previous[$event['id'] . "\n" . $slot['id']] = $slot['owner'];
+        }
+    }
+    foreach ($incoming as &$event) {
+        foreach ($event['slots'] as &$slot) {
+            $key = $event['id'] . "\n" . $slot['id'];
+            if ($slot['owner'] === '' && isset($previous[$key])) $slot['owner'] = $previous[$key];
+        }
+        unset($slot);
+    }
+    unset($event);
+    return $incoming;
+}
+
+function mergeState(array $state, array $payload, string $role, string $userId, bool $behindPublicOnly = false): array
 {
     $incomingBureau = $payload['bureau'] ?? null;
     $incomingRecords = $payload['records'] ?? null;
@@ -243,6 +266,7 @@ function mergeState(array $state, array $payload, string $role, string $userId):
         foreach ($office as $list) recordList($list);
         if ($role === 'director' && array_key_exists('events', $incoming)) {
             $office['events'] = validateClubEvents($incoming['events']);
+            if ($behindPublicOnly) $office['events'] = keepPublicClaims($existing['events'] ?? [], $office['events']);
         }
         if ($role === 'director' && (array_key_exists('partners', $incoming) ||
             array_key_exists('partnerCommitments', $incoming))) {

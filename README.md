@@ -30,7 +30,7 @@ Une adhésion reprise par le secrétaire apparaît dans les effectifs du dirigea
 
 Dans **Matchs et événements**, le compte dirigeant prépare le planning de la saison, ajoute des créneaux à partir des postes bénévoles et suit les places à pourvoir. Sur une instance hébergée, il peut activer un lien d’inscription par événement. Les bénévoles y prennent un créneau sans créer de compte.
 
-Dans **Inscriptions**, le compte secrétaire ouvre le formulaire pour la saison et partage son lien aux familles. Elles déposent leur dossier et suivent son état depuis un lien privé. Le secrétaire consulte les pièces, indique ce qui manque et valide le dossier pour créer ou compléter une adhésion. Les nouvelles adhésions apparaissent aussi dans le suivi des cotisations.
+Dans **Inscriptions**, le compte secrétaire ouvre le formulaire pour la saison et partage son lien aux familles. Elles déposent leur dossier et suivent son état depuis un lien privé. Le secrétaire consulte les pièces, indique ce qui manque et valide le dossier pour créer ou compléter une adhésion. Les nouvelles adhésions apparaissent aussi dans le suivi des cotisations. Les familles n’ont pas besoin de compte. Le formulaire leur indique l’usage de leurs données et l’adresse à contacter. Une tâche planifiée supprime les dossiers clôturés et leurs pièces après la durée choisie par le club ([détails](docs/installation-ovh.md#7-protéger-les-données-des-familles)).
 
 Dans **Partenaires**, le compte dirigeant suit les sponsors et leurs contacts, les renouvellements à préparer et les engagements du club. Il peut joindre une photo par engagement et reprendre les fiches de la saison précédente.
 

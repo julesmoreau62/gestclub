@@ -63,7 +63,7 @@ try {
                 $state['bureau'][$year] = emptySeason();
                 $query = $database->prepare(
                     'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-                     revision = revision + 1, updated_at = now() WHERE id = true'
+                     revision = revision + 1, staff_revision = revision + 1, updated_at = now() WHERE id = true'
                 );
                 $query->execute([jsonEncode($state['records']), jsonEncode($state['bureau'])]);
             }
@@ -142,14 +142,42 @@ try {
             $payload = persistAttachments($database, ['bureau' => []], $payload);
             $query = $database->prepare(
                 'UPDATE gestclub_state SET records = CAST(? AS jsonb), bureau = CAST(? AS jsonb),
-                 revision = revision + 1, updated_at = now() WHERE id = true'
+                 revision = revision + 1, staff_revision = revision + 1, updated_at = now() WHERE id = true'
             );
             $query->execute([jsonEncode($payload['records']), jsonEncode($payload['bureau'])]);
             $database->commit();
             echo "Données et justificatifs importés.\n";
             break;
+        case 'purge':
+            $days = isset($argv[2])
+                ? filter_var($argv[2], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 3650]])
+                : retentionDays();
+            if ($days === false) throw new InvalidArgumentException('Indique un nombre de jours, par exemple 90.');
+            $database = db();
+            $database->beginTransaction();
+            $state = fetchState($database, true);
+            [$bureau, $removed, $links] = purgeBureau($state['bureau'], $days, new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')));
+            if ($removed || $links) {
+                $query = $database->prepare(
+                    'UPDATE gestclub_state SET bureau = CAST(? AS jsonb),
+                     revision = revision + 1, staff_revision = revision + 1, updated_at = now() WHERE id = true'
+                );
+                $query->execute([jsonEncode($bureau)]);
+            }
+            // Pièces qui ne sont plus rattachées à rien : dossier purgé, justificatif remplacé ou ligne supprimée.
+            // Le délai d’un jour laisse de côté un envoi en cours.
+            $orphans = $database->prepare(
+                "DELETE FROM gestclub_attachments WHERE created_at < now() - interval '1 day' AND NOT (id = ANY(CAST(? AS text[])))"
+            );
+            $orphans->execute(['{' . implode(',', referencedAttachments($bureau)) . '}']);
+            $files = $orphans->rowCount();
+            $database->commit();
+            echo "Dossiers d’inscription clôturés depuis plus de $days jours supprimés : $removed.\n";
+            echo "Liens bénévoles d’événements passés désactivés : $links.\n";
+            echo "Pièces sans rattachement supprimées : $files.\n";
+            break;
         default:
-            echo "Utilisation : php bin/gestclub.php install | account EMAIL RÔLES | disable EMAIL | season ANNÉE | import FICHIER | export\n";
+            echo "Utilisation : php bin/gestclub.php install | account EMAIL RÔLES | disable EMAIL | season ANNÉE | import FICHIER | export | purge [JOURS]\n";
     }
 } catch (Throwable $failure) {
     fwrite(STDERR, ($failure instanceof InvalidArgumentException ? $failure->getMessage() :
